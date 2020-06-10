@@ -8,5 +8,5 @@ SPEED_OF_LIGHT = sc.c
 
 ELEMENTARY_CHARGE = sc.e
 
-R_E = 6.371e6  # earth radius (meters)
+EARTH_RADIUS = 6.371e3  # earth radius (kilometers)
 g10 = -29404.8 * (1e-9) # B-field parameter from IGRF 2020 (in Teslas)
