@@ -9,7 +9,7 @@ local_path = os.path.dirname(os.path.abspath(__file__))
 
 
 setup(
-    name='GSimTraCR',
+    name='gtracr',
     version='1.0.0',
     description=
     'A GPU-based simulation that tracks cosmic rays using real geomagnetic field data from IGRF. This project is purely Pythonic (for now).',

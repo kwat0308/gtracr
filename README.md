@@ -1,9 +1,9 @@
-# GSimTraCR
-A **G**PU-based **Sim**ulation for **Tra**cking **C**osmic **R**ays
+# gtracr
+gTraCR - A **G**PU-based **Tra**cking simulation for **C**osmic **R**ays 
 
 ## Requirements
 - Python 3.7 and above
-- NumPy, matplotlib, and CuPy
+- NumPy, matplotlib
 <!-- - Python3 or above 
 - **pip** (if Python version is <=3.4)
 - numpy and matplotlib modules in Python
