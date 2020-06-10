@@ -5,14 +5,20 @@ import os
 
 from setuptools import setup, Extension, find_packages
 
-local_path = os.path.dirname(os.path.abspath(__file__))
+# local_path = os.path.dirname(os.path.abspath(__file__))
 
+
+with open("README.md", "r") as f:
+    long_description = f.read()
 
 setup(
     name='gtracr',
     version='1.0.0',
     description=
-    'A GPU-based simulation that tracks cosmic rays using real geomagnetic field data from IGRF. This project is purely Pythonic (for now).',
+    'A GPU-based simulation that tracks cosmic rays.',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/kwat0308/gtracr",
     packages=find_packages(exclude='tests'),
     classifiers=[
         'Intended Audience :: Science/Research',
@@ -27,6 +33,7 @@ setup(
         'Environment :: Console',
         'Natural Language :: English',
     ],
+    python_requires='>=3.0',
 )
 
 # extra_compile_args=[    # calls error when run by standard C++ compiler (Windows)
