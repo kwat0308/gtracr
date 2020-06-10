@@ -4,8 +4,6 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.constants import *
-
 class Particle:
 
     """
@@ -13,7 +11,7 @@ class Particle:
     Members:
         - name: the name of the particle (string)
         - pid: the particle id as in pdg (int)
-        - mass: the particle rest mass (float) [units of GeV]
+        - mass: the particle rest mass (float) [units of GeV / c^2]
         - charge: particle's charge Z (int) [units of elementary charge]
         - label: the shorthand name for the particle (string)
 
@@ -31,18 +29,14 @@ class Particle:
         self.mass = mass
         self.charge = charge
         self.label = label
-    
-    # rest energy 
-    def energy(self):
-        return self.mass*(SPEED_OF_LIGHT**2.)
 
-    # momentum
+    # momentum [units GeV/c]
     def momentum(self, energy):
-        return np.sqrt((self.mass*(SPEED_OF_LIGHT**2.))**2. + energy**2.) / SPEED_OF_LIGHT
+        return np.sqrt(self.mass**2. + energy**2.)
 
-    # rigidity (R = pc / Ze)
+    # rigidity (R = pc / Ze) [units GV]
     def rigidity(self, energy):
-        return np.sqrt((self.mass*(SPEED_OF_LIGHT**2.))**2. + energy**2.) / (np.abs(self.charge)*ELEMENTARY_CHARGE)
+        return self.momentum(energy) / (np.abs(self.charge))
     
     # string represetation for print output
     def __str__(self):
@@ -52,5 +46,5 @@ class Particle:
 if __name__ == '__main__':
     proton = Particle("Proton", 2122, 0.937272, 1, "p+")
     print(proton)
-    print(proton.energy())
+    print(proton.momentum(5))
     
