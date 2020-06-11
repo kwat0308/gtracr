@@ -4,8 +4,8 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-class Particle:
 
+class Particle:
     """
     Utility class for cosmic ray particles
     Members:
@@ -22,29 +22,33 @@ class Particle:
     Example:
     proton: proton = Particle("Proton", 2212, 0.938272, "p+")
     """
-
     def __init__(self, name, pid, mass, charge, label):
         self.name = name
         self.pid = pid
         self.mass = mass
         self.charge = charge
         self.label = label
+        # set properties as members
+        self.momentum = 0.
+        self.rigidity = self.momentum / np.abs(self.charge)
 
     # momentum [units GeV/c]
-    def momentum(self, energy):
-        return np.sqrt(self.mass**2. + energy**2.)
+    def setMomentum(self, energy):
+        self.momentum = np.sqrt(self.mass**2. + energy**2.)
+        return self.momentum
 
     # rigidity (R = pc / Ze) [units GV]
-    def rigidity(self, energy):
-        return self.momentum(energy) / (np.abs(self.charge))
-    
+    def setRigidity(self, energy):
+        self.rigidity = self.setMomentum(energy) / (np.abs(self.charge))
+
     # string represetation for print output
     def __str__(self):
-        return "{:s}: PID = {:d}, m = {:f}GeV, Z = {:d}e".format(self.name, self.pid, self.mass, self.charge)
+        return "{:s}: PID = {:d}, m = {:f}GeV, Z = {:d}e".format(
+            self.name, self.pid, self.mass, self.charge)
+
 
 # example using proton
 if __name__ == '__main__':
     proton = Particle("Proton", 2122, 0.937272, 1, "p+")
     print(proton)
-    print(proton.momentum(5))
-    
+    print(proton.momentum)

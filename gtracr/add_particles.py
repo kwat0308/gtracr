@@ -17,7 +17,7 @@ def add_to_dict(Particle):
 
 
 # create particles
-ep = Particle("positron", -11, 0.5109*(1e-3), 1, "e+")
+ep = Particle("positron", -11, 0.5109*(1e-3), 1, "e+")  
 em = Particle("electron", 11, 0.5109*(1e-3), -1, "e-")
 pp = Particle("Proton", 2122, 0.937272, 1, "p+")
 pm = Particle("anti-proton", -2122, 0.937272, -1, "p-")
