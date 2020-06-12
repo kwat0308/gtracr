@@ -13,9 +13,9 @@ with open("README.md", "r") as f:
 
 setup(
     name='gtracr',
-    version='1.0.0',
+    version='0.0.1',
     description=
-    'A GPU-based simulation that tracks cosmic rays.',
+    'A GPU-based simulation that tracks cosmic rays from any location on Earth.',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kwat0308/gtracr",
