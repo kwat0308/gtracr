@@ -2,10 +2,10 @@
 Utility script for various small things (constants, conversions)
 '''
 
-# import scipy.constants as sc
+import scipy.constants as sc
 import numpy as np
 
-# SPEED_OF_LIGHT = sc.c
+SPEED_OF_LIGHT = sc.c
 
 # ELEMENTARY_CHARGE = sc.e
 

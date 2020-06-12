@@ -12,8 +12,8 @@ from gtracr.utils import spherical_to_cartesian, EARTH_RADIUS
 
 if __name__ == "__main__":
     # traj = ParticleTrajectory("p+", startAltitude=500, stopAltitude=2, maxStep=1000)
-    traj = ParticleTrajectory("p-", startAltitude=500, maxStep=1000)
-    traj.getTrajectory(12)#, startLongitude=81, startLatitude=81)#, startZenith=50)#, startAzimuth=10))
+    traj = ParticleTrajectory("e-", startAltitude=100, maxStep=1000)
+    traj.getTrajectory(5)#, startLongitude=81, startLatitude=81)#, startZenith=50)#, startAzimuth=10))
     # traj.getTrajectory(1000, startLongitude=81, startLatitude=81, startZenith=50, startAzimuth=10)
     t = traj.results["t"]
     (x,y,z) = spherical_to_cartesian(traj.results["r"] / EARTH_RADIUS, traj.results["theta"], traj.results["phi"])

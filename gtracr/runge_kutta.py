@@ -11,7 +11,7 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.constants import EARTH_RADIUS, g10
+from gtracr.utils import EARTH_RADIUS, g10, SPEED_OF_LIGHT
 
 
 # magnetic field (ideal dipole)
@@ -19,7 +19,7 @@ from gtracr.constants import EARTH_RADIUS, g10
 def B_r(r, theta):
     return 2.*(EARTH_RADIUS/r)**3.*g10*np.cos(theta)
     # return 2.*(1./r)**3.*g10*np.cos(theta)
-
+# 
 def B_theta(r, theta):
     return (EARTH_RADIUS/r)**3.*g10*np.sin(theta)
     # return (1./r)**3.*g10*np.sin(theta)
@@ -27,18 +27,40 @@ def B_theta(r, theta):
 def B_phi(r, theta):
     return 0.
 
+# # here we test for the magnetic field (ideal dipole)
+# # radial momentum DE
+# def dprdt(t,r,th,ph,vr,vth,vph,particle):
+#     return -particle.charge*(B_theta(r,th)*vph) / particle.mass
+
+# # theta component momentum DE
+# def dpthdt(t,r,th,ph,vr,vth,vph,particle):
+#     return particle.charge*(B_r(r,th)*vph) / particle.mass
+
+# # phi comp mom. DE
+# def dpphdt(t,r,th,ph,vr,vth,vph, particle):
+#     return particle.charge*(B_theta(r,th)*vr - B_r(r,th)*vth) / particle.mass
+
 # here we test for the magnetic field (ideal dipole)
 # radial momentum DE
 def dprdt(t,r,th,ph,vr,vth,vph,particle):
-    return -particle.charge*(B_theta(r,th)*vph) / particle.mass
+    term1 = particle.charge*(vth*B_phi(r,th) - B_theta(r,th)*vph) / (particle.mass*SPEED_OF_LIGHT)
+    term2 = vth**2. / r
+    term3 = vph**2. / r
+    return term1 + term2 + term3
 
 # theta component momentum DE
 def dpthdt(t,r,th,ph,vr,vth,vph,particle):
-    return particle.charge*(B_r(r,th)*vph) / particle.mass
+    term1 = particle.charge*(vph*B_r(r,th) - B_phi(r,th)*vr) / (particle.mass*SPEED_OF_LIGHT)
+    term2 = (vr*vth) / r
+    term3 = vph**2. / (r*np.tan(th))
+    return term1 - term2 + term3
 
 # phi comp mom. DE
 def dpphdt(t,r,th,ph,vr,vth,vph, particle):
-    return particle.charge*(B_theta(r,th)*vr - B_r(r,th)*vth) / particle.mass
+    term1 = particle.charge*(B_theta(r,th)*vr - B_r(r,th)*vth) / (particle.mass*SPEED_OF_LIGHT)
+    term2 = (vr*vph) / r
+    term3 = (vth*vph) / (r*np.tan(th))
+    return term1 - term2 - term3
 
 
 def wsum(n1, n2, n3, n4):
