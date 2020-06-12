@@ -25,6 +25,8 @@ class ParticleTrajectory:
     '''
     Traces trajectory of a single particle, given the following information:
         - particleName: the name of the particle of interest, obtained from Particle class
+        - energy : the energy of particle / cosmic ray
+        - startLongitude / startLatitude : initial longitude and latitude in decimal format
         - initialAltitude : the starting altitude of the particle [km]
         - finalAltitude : the altitude in which the particle trajectory ends [km]
         - maxStep : the maximum number of steps to integrate for (default=10000)
@@ -32,43 +34,47 @@ class ParticleTrajectory:
     '''
     def __init__(self,
                  particleName,
-                 startAltitude=500,
-                 stopAltitude=2,
-                 maxStep=10000,
-                 escapeRadius=2):
+                 energy,
+                startLongitude=0.,
+                startLatitude=0.,
+                 startAltitude=1,
+                 stopAltitude=500,
+                 maxStep=10000):
         self.particle = particleDict[
             particleName]  # should be obtained from some dictionary
+        self.energy = energy
+        self.startLongitude = startLongitude
+        self.startLatitude = startLatitude
         self.startAltitude = startAltitude
         self.stopAltitude = stopAltitude
-        self.escaperadius = escapeRadius
         self.maxStep = maxStep
         self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
         self.results = {key:np.zeros(maxStep) for key in key_list}
     
+    # def __init__(self,
+    #              particleName,
+    #              startAltitude=1,
+    #              stopAltitude=500,
+    #              maxStep=10000):
+    #     self.particle = particleDict[
+    #         particleName]  # should be obtained from some dictionary
+    #     self.startAltitude = startAltitude
+    #     self.stopAltitude = stopAltitude
+    #     self.maxStep = maxStep
+    #     self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
+    #     self.results = {key:np.zeros(maxStep) for key in key_list}
+
+    # get the trajectory from a provided zenith and azimuthal angle
     
+    def getTrajectory(self, zenith = 0., azimuth = 0.):
+        # create trajectory point for initial point
+        startTraj = TrajectoryPoint(self.startLongitude, self.startLatitude,
+                                    self.startAltitude, zenith,
+                                    azimuth)    
+        
+        # get initial value
+        initial_value = self.get_initial_values(startTraj, self.energy)
 
-    # get the particle trajectory given:
-    # - energy: the energy of the cosmic ray as measured from detector
-    # - startLongitude: the magnetic longitude
-    # - startLatitude: the magnetic latitude
-    # - startZenith: the angle from the local zenith
-    # - startAzimuth: the angle from the local North
-    # default all to zero
-    def getTrajectory(self,
-                      energy,
-                      startLongitude=0.,
-                      startLatitude=0.,
-                      startZenith=0.,
-                      startAzimuth=0.):
-        startTraj = TrajectoryPoint(startLongitude, startLatitude,
-                                    self.startAltitude, startZenith,
-                                    startAzimuth)
-
-        # set rigidity
-        self.particle.set_rigidity_from_energy(energy)
-        # get initial position in spherical coordinates
-        initial_value = self.get_initial_values(startTraj, energy)
-        # perform runge_kutta
         i = 0
         while i < self.maxStep:
             (t, r, theta, phi, pr, ptheta,
@@ -89,13 +95,7 @@ class ParticleTrajectory:
 
 
             # check for some conditions over here
-            # if r >= self.escaperadius:  # if particle has escaped
-            #     break
             if r <= EARTH_RADIUS: # particle already on / within surface of earth
-                break
-            
-            # print(self.particle.rigidity)
-            if self.particle.rigidity < VertRigidityCutoff(r, theta):
                 break
 
             # update initial_value
@@ -103,7 +103,79 @@ class ParticleTrajectory:
 
             i += 1
 
+        # get the end trajectory from the last spherical coordinate values
+        endTraj = TrajectoryPoint()
+        endTraj.set_from_sphericalCoord(r, theta, phi)
+
         print(self.results)
+
+        return (startTraj, endTraj)
+        
+
+    # # get the particle trajectory given:
+    # # - energy: the energy of the cosmic ray as measured from detector
+    # # - startLongitude: the magnetic longitude
+    # # - startLatitude: the magnetic latitude
+    # # - startZenith: the angle from the local zenith
+    # # - startAzimuth: the angle from the local North
+    # # default all to zero
+    # # return tuple of start and end trajectories
+    # def getTrajectory(self,
+    #                   energy,
+    #                   startLongitude=0.,
+    #                   startLatitude=0.,
+    #                   startZenith=0.,
+    #                   startAzimuth=0.):
+    #     startTraj = TrajectoryPoint(startLongitude, startLatitude,
+    #                                 self.startAltitude, startZenith,
+    #                                 startAzimuth)
+
+    #     # set rigidity
+    #     self.particle.set_rigidity_from_energy(energy)
+    #     # get initial position in spherical coordinates
+    #     initial_value = self.get_initial_values(startTraj, energy)
+    #     # perform runge_kutta
+    #     i = 0
+    #     while i < self.maxStep:
+    #         (t, r, theta, phi, pr, ptheta,
+    #          pphi) = runge_kutta(self.particle, self.stepSize, initial_value)
+
+    #         # print(t, r, theta, phi, pr, ptheta,pphi)
+    #         # set this to particle's new position and momentum
+    #         self.particle.momentum = get_momentum_magnitude(pr, ptheta, pphi, r, theta)
+    #         self.particle.set_rigidity_from_momentum()
+    #         # append
+    #         self.results["t"][i] = t
+    #         self.results["r"][i] = r
+    #         self.results["theta"][i] = theta
+    #         self.results["phi"][i] = phi
+    #         self.results["pr"][i] = pr
+    #         self.results["ptheta"][i] = ptheta
+    #         self.results["pphi"][i] = pphi
+
+
+    #         # check for some conditions over here
+    #         # if r >= self.escaperadius:  # if particle has escaped
+    #         #     break
+    #         if r <= EARTH_RADIUS: # particle already on / within surface of earth
+    #             break
+            
+    #         # # print(self.particle.rigidity)
+    #         # if self.particle.rigidity < VertRigidityCutoff(r, theta):
+    #         #     break
+
+    #         # update initial_value
+    #         initial_value = np.array([t, r, theta, phi, pr, ptheta, pphi])
+
+    #         i += 1
+
+    #     # get the end trajectory from the last spherical coordinate values
+    #     endTraj = TrajectoryPoint()
+    #     endTraj.set_from_sphericalCoord(r, theta, phi)
+
+    #     print(self.results)
+
+    #     return (startTraj, endTraj)
 
 
     def get_initial_values(self, trajectory, energy):
