@@ -17,12 +17,15 @@ from gtracr.constants import EARTH_RADIUS, g10
 # magnetic field (ideal dipole)
 
 def B_r(r, theta):
-    # return 2.*(EARTH_RADIUS/r)**3.*g10*np.cos(theta)
-    return 2.*(1./r)**3.*g10*np.cos(theta)
+    return 2.*(EARTH_RADIUS/r)**3.*g10*np.cos(theta)
+    # return 2.*(1./r)**3.*g10*np.cos(theta)
 
 def B_theta(r, theta):
-    # return (EARTH_RADIUS/r)**3.*g10*np.sin(theta)
-    return (1./r)**3.*g10*np.sin(theta)
+    return (EARTH_RADIUS/r)**3.*g10*np.sin(theta)
+    # return (1./r)**3.*g10*np.sin(theta)
+
+def B_phi(r, theta):
+    return 0.
 
 # here we test for the magnetic field (ideal dipole)
 # radial momentum DE
