@@ -33,13 +33,17 @@ class Particle:
         self.rigidity = self.momentum / np.abs(self.charge)
 
     # momentum [units GeV/c]
-    def setMomentum(self, energy):
+    def set_momentum(self, energy):
         self.momentum = np.sqrt(self.mass**2. + energy**2.)
         return self.momentum
 
     # rigidity (R = pc / Ze) [units GV]
-    def setRigidity(self, energy):
-        self.rigidity = self.setMomentum(energy) / (np.abs(self.charge))
+    def set_rigidity_from_energy(self, energy):
+        self.rigidity = self.set_momentum(energy) / (np.abs(self.charge))
+
+    # rigidity (R = pc / Ze) [units GV]
+    def set_rigidity_from_momentum(self):
+        self.rigidity = self.momentum / (np.abs(self.charge))
 
     # string represetation for print output
     def __str__(self):
