@@ -72,19 +72,35 @@
 - [ ] We are using / borrowing some ideas from Luca Baldini's scripts; licensing will be an issue here
 
   - He uses the GPL (General Public License) from GNU
-  - But it seems like he is really for free software usage (Source: [his about me page](http://osiris.df.unipi.it/~baldini/aboutme.html)), so asking him about the licensing issue may be a play here.
+  - But it seems like he is really for free software usage (Source: [his "about me" page](http://osiris.df.unipi.it/~baldini/aboutme.html)), so asking him about the licensing issue may be a play here.
 
-- [ ] Not sure if particles are performed in a relativistic or non-relativistic sense.
+- [x] Not sure if particles are performed in a relativistic or non-relativistic sense.
+  - RESOLVED: The mass component was supposed to be relativistic, so we added the Lorentz factor to account for this
 - [ ] There are some confusions between the starting and stopping altitude:
 
-  - Whats an appropriate altitude limit? (Currently starting altitude set to be 565km, stopping to be 2km)
-  - We want to start from the detector location, not stop there. For this to work then, we should make our start altitude at the location of the detector, and the stop altitude to be something else.
-  - ~~Would we even need a stop altitude?~~ Yes, this is required as a limit to where we should stop the trajectory integration process.
+  - [x] Whats an appropriate altitude limit? (Currently starting altitude set to be 565km, stopping to be 2km)
+    - RESOLVED: we set the starting altitude to be 1km and stopping altitude to be 500km. 1km seems to be an appropriate limit, but we should be able to do this with 0km (at sea level). the 500km is still arbitrary, but seems to work out fine (for now)
+  - [x] We want to start from the detector location, not stop there. For this to work then, we should make our start altitude at the location of the detector, and the stop altitude to be something else.
+    - RESOLVED: this is now properly implemented.
+  - [x] ~~Would we even need a stop altitude?~~ Yes, this is required as a limit to where we should stop the trajectory integration process.
 
 - [ ] Only dipole approximation currently applied
+- [ ] The DEs seem to work, however I am not sure why they work. This is important to check for my reference.
+
+## Past Issues
+- I accidentally implemented the momentum within my DE instead of velocity. To fix this, I let the conversions between velocity and momentum occur in the Trajectory class and Particle class, and apply relativistic assumptions as well. This now seems to work fine (i.e. looks like a particle trajectory :thumbsup:)
 
 # Tasks
+
+## Major Tasks
 - [ ] Figure out things about the licensing with Baldini's scripts
 - [ ] Obtain a heatmap of allowed and forbidden trajectories at a single location and altitude and at all zenith and azimuthal angles (i.e. determine the geomagnetic cutoff for each location on Earth)
 - [ ] Implement this for muons (not too sure, ask Anatoli about this when the time comes)
 - [ ] Do this with neutrinos too.
+
+## Minor Tasks
+- [x] Check out how the DE works
+- [ ] Clean up the code structure
+- [ ] Get the zenith angle / azimuthal angle coordinate transformation working
+- [ ] Figure out a system to detect allowed vs forbidden trajectories
+- [ ] Get the geomagnetic cutoff code working
