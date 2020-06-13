@@ -7,7 +7,6 @@ from setuptools import setup, Extension, find_packages
 
 # local_path = os.path.dirname(os.path.abspath(__file__))
 
-
 with open("README.md", "r") as f:
     long_description = f.read()
 

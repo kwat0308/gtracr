@@ -11,21 +11,21 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.utils import EARTH_RADIUS, g10, SPEED_OF_LIGHT
-
+from gtracr.utils import EARTH_RADIUS, g10, SPEED_OF_LIGHT, gamma, vmag_spherical
+from gtracr.magnetic_field import B_r, B_theta, B_phi
 
 # magnetic field (ideal dipole)
 
-def B_r(r, theta):
-    return 2.*(EARTH_RADIUS/r)**3.*g10*np.cos(theta)
-    # return 2.*(1./r)**3.*g10*np.cos(theta)
-# 
-def B_theta(r, theta):
-    return (EARTH_RADIUS/r)**3.*g10*np.sin(theta)
-    # return (1./r)**3.*g10*np.sin(theta)
+# def B_r(r, theta):
+#     return 2.*(EARTH_RADIUS/r)**3.*g10*np.cos(theta)
+#     # return 2.*(1./r)**3.*g10*np.cos(theta)
+# #
+# def B_theta(r, theta):
+#     return (EARTH_RADIUS/r)**3.*g10*np.sin(theta)
+#     # return (1./r)**3.*g10*np.sin(theta)
 
-def B_phi(r, theta):
-    return 0.
+# def B_phi(r, theta):
+#     return 0.
 
 # # here we test for the magnetic field (ideal dipole)
 # # radial momentum DE
@@ -40,26 +40,34 @@ def B_phi(r, theta):
 # def dpphdt(t,r,th,ph,vr,vth,vph, particle):
 #     return particle.charge*(B_theta(r,th)*vr - B_r(r,th)*vth) / particle.mass
 
+
 # here we test for the magnetic field (ideal dipole)
-# radial momentum DE
-def dprdt(t,r,th,ph,vr,vth,vph,particle):
-    term1 = particle.charge*(vth*B_phi(r,th) - B_theta(r,th)*vph) / (particle.mass*SPEED_OF_LIGHT)
-    term2 = vth**2. / r
-    term3 = vph**2. / r
+# radial velocity DE
+def dvrdt(t, r, theta, phi, vr, vtheta, vphi, particle):
+    term1 = particle.charge * (
+        vtheta * B_phi(r, theta) - B_theta(r, theta) * vphi) / (
+            particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    term2 = vtheta**2. / r
+    term3 = vphi**2. / r
     return term1 + term2 + term3
 
-# theta component momentum DE
-def dpthdt(t,r,th,ph,vr,vth,vph,particle):
-    term1 = particle.charge*(vph*B_r(r,th) - B_phi(r,th)*vr) / (particle.mass*SPEED_OF_LIGHT)
-    term2 = (vr*vth) / r
-    term3 = vph**2. / (r*np.tan(th))
+
+# theta component velocity DE
+def dvthetadt(t, r, theta, phi, vr, vtheta, vphi, particle):
+    term1 = particle.charge * (vphi * B_r(r, theta) - B_phi(r, theta) * vr) / (
+        particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    term2 = (vr * vtheta) / r
+    term3 = vphi**2. / (r * np.tan(theta))
     return term1 - term2 + term3
 
+
 # phi comp mom. DE
-def dpphdt(t,r,th,ph,vr,vth,vph, particle):
-    term1 = particle.charge*(B_theta(r,th)*vr - B_r(r,th)*vth) / (particle.mass*SPEED_OF_LIGHT)
-    term2 = (vr*vph) / r
-    term3 = (vth*vph) / (r*np.tan(th))
+def dvphidt(t, r, theta, phi, vr, vtheta, vphi, particle):
+    term1 = particle.charge * (
+        B_theta(r, theta) * vr - B_r(r, theta) * vtheta) / (
+            particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    term2 = (vr * vphi) / r
+    term3 = (vtheta * vphi) / (r * np.tan(theta))
     return term1 - term2 - term3
 
 
@@ -67,14 +75,11 @@ def wsum(n1, n2, n3, n4):
     return (1. / 6.) * n1 + (1. / 3.) * n2 + (1. / 3.) * n3 + (1. / 6.) * n4
 
 
-
-
 # evaluate 4th-order Runge Kutta with 6 coupled differential equations
 # this code can be reduced greatly by removing certain arguments, however by
 # making the code more general those arguments have to stay there.
-# for this version, the drdt / dthdt / dphdt arguments are replaced with 
-# pr, pth, pph in the RK steps
 # Edit 2: this only performs one iteration of RK
+# the position DEs are replaced with the spherical definition for velocity
 def runge_kutta(particle, h, ival):
 
     #set initial conditions to array
@@ -82,55 +87,49 @@ def runge_kutta(particle, h, ival):
     r = ival[1]
     th = ival[2]
     ph = ival[3]
-    pr = ival[4]
-    pth = ival[5]
-    pph = ival[6]
+    vr = ival[4]
+    vth = ival[5]
+    vph = ival[6]
 
-    # get the RK terms 
+    # get the RK terms
     # k,l,m are for drdt, dthdt, dphdt
     # p,q,s are for momenta
-    k1 = h * pr
-    l1 = h * pth
-    m1 = h * pph
-    a1 = h * dprdt(t, r, th, ph, pr, pth, pph, particle)
-    b1 = h * dpthdt(t, r, th, ph, pr, pth, pph, particle)
-    c1 = h * dpphdt(t, r, th, ph, pr, pth, pph, particle)
+    k1 = h * vr
+    l1 = h * vth / r
+    m1 = h * vph / (r * np.sin(th))
+    a1 = h * dvrdt(t, r, th, ph, vr, vth, vph, particle)
+    b1 = h * dvthetadt(t, r, th, ph, vr, vth, vph, particle)
+    c1 = h * dvphidt(t, r, th, ph, vr, vth, vph, particle)
 
-    k2 = h * pr + 0.5 * a1
-    l2 = h * pth + 0.5 * b1
-    m2 = h * pph + 0.5 * c1
-    a2 = h * dprdt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1,
-                    ph + 0.5 * m1, pr + 0.5 * a1, pth + 0.5 * b1,
-                    pph + 0.5 * c1, particle)
-    b2 = h * dpthdt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1,
-                    ph + 0.5 * m1, pr + 0.5 * a1, pth + 0.5 * b1,
-                    pph + 0.5 * c1, particle)
-    c2 = h * dpphdt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1,
-                    ph + 0.5 * m1, pr + 0.5 * a1, pth + 0.5 * b1,
-                    pph + 0.5 * c1, particle)
+    k2 = h * vr + 0.5 * a1
+    l2 = h * vth + 0.5 * b1 / (r + 0.5 * k1)
+    m2 = h * vph + 0.5 * c1 / ((r + 0.5 * k1) * (np.sin(th + 0.5 * l1)))
+    a2 = h * dvrdt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
+                   vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, particle)
+    b2 = h * dvthetadt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
+                       vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, particle)
+    c2 = h * dvphidt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
+                     vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, particle)
 
-    k3 = h * pr + 0.5 * a2
-    l3 = h * pth + 0.5 * b2
-    m3 = h * pph + 0.5 * c2
-    a3 = h * dprdt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2,
-                    ph + 0.5 * m2, pr + 0.5 * a2, pth + 0.5 * b2,
-                    pph + 0.5 * c2, particle)
-    b3 = h * dpthdt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2,
-                    ph + 0.5 * m2, pr + 0.5 * a2, pth + 0.5 * b2,
-                    pph + 0.5 * c2, particle)
-    c3 = h * dpphdt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2,
-                    ph + 0.5 * m2, pr + 0.5 * a2, pth + 0.5 * b2,
-                    pph + 0.5 * c2, particle)
+    k3 = h * vr + 0.5 * a2
+    l3 = h * vth + 0.5 * b2 / (r + 0.5 * k2)
+    m3 = h * vph + 0.5 * c2 / ((r + 0.5 * k2) * (np.sin(th + 0.5 * l2)))
+    a3 = h * dvrdt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
+                   vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, particle)
+    b3 = h * dvthetadt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
+                       vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, particle)
+    c3 = h * dvphidt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
+                     vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, particle)
 
-    k4 = h * pr + a3
-    l4 = h * pth + b3
-    m4 = h * pph + c3
-    a4 = h * dprdt(t + h, r + k3, th + l3, ph + m3, pr + a3,
-                    pth + b3, pph + c3, particle)
-    b4 = h * dpthdt(t + h, r + k3, th + l3, ph + m3, pr + a3,
-                    pth + b3, pph + c3, particle)
-    c4 = h * dpphdt(t + h, r + k3, th + l3, ph + m3, pr + a3,
-                    pth + b3, pph + c3, particle)
+    k4 = h * vr + a3
+    l4 = h * vth + b3 / (r + k3)
+    m4 = h * vph + c3 / ((r + k3) * (np.sin(th + l3)))
+    a4 = h * dvrdt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
+                   vph + c3, particle)
+    b4 = h * dvthetahdt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
+                        vph + c3, particle)
+    c4 = h * dvphidt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
+                     vph + c3, particle)
 
     # get the weighted sum of each component
     k = wsum(k1, k2, k3, k4)
@@ -143,17 +142,18 @@ def runge_kutta(particle, h, ival):
     r = r + k
     th = th + l
     ph = ph + m
-    pr = pr + a
-    pth = pth + b
-    pph = pph + c
+    vr = vr + a
+    vth = vth + b
+    vph = vph + c
     t = t + h
 
-    return np.array([t, r, th, ph, pr, pth, pph])
+    return np.array([t, r, th, ph, vr, vth, vph])
+
 
 # # evaluate 4th-order Runge Kutta with 6 coupled differential equations
 # # this code can be reduced greatly by removing certain arguments, however by
 # # making the code more general those arguments have to stay there.
-# # for this version, the drdt / dthdt / dphdt arguments are replaced with 
+# # for this version, the drdt / dthdt / dphdt arguments are replaced with
 # # pr, pth, pph in the RK steps
 # def runge_kutta(particle, h, n, ival):
 #     i = 1
@@ -179,7 +179,7 @@ def runge_kutta(particle, h, ival):
 #     while i < n:
 #         j = i - 1  # this is the term before "n+1th" term (ie nth term)
 
-#         # get the RK terms 
+#         # get the RK terms
 #         # k,l,m are for drdt, dthdt, dphdt
 #         # p,q,s are for momenta
 #         k1 = h * pr[j]
@@ -244,20 +244,10 @@ def runge_kutta(particle, h, ival):
 
 #     return np.array(t, r, th, ph, pr, pth, pph)
 
-
-
-
-
-
-
-
-
-
-
 # # evaluate 4th-order Runge Kutta with 6 coupled differential equations
 # # this code can be reduced greatly by removing certain arguments, however by
 # # making the code more general those arguments have to stay there.
-# # for this version, the drdt / dthdt / dphdt arguments are replaced with 
+# # for this version, the drdt / dthdt / dphdt arguments are replaced with
 # # pr, pth, pph in the RK steps
 # def runge_kutta(dprdt, dpthdt, dpphdt, particle, h, n, ival):
 #     i = 1
@@ -283,7 +273,7 @@ def runge_kutta(particle, h, ival):
 #     while i < n:
 #         j = i - 1  # this is the term before "n+1th" term (ie nth term)
 
-#         # get the RK terms 
+#         # get the RK terms
 #         # k,l,m are for drdt, dthdt, dphdt
 #         # p,q,s are for momenta
 #         k1 = h * pr[j]
@@ -347,7 +337,6 @@ def runge_kutta(particle, h, ival):
 #         i += 1  # increment
 
 #     return np.array(t, r, th, ph, pr, pth, pph)
-
 
 # # evaluate 4th-order Runge Kutta with 6 coupled differential equations
 # # this code can be reduced greatly by removing certain arguments, however by
@@ -453,7 +442,6 @@ def runge_kutta(particle, h, ival):
 #         i += 1  # increment
 
 #     return (t, x, y, z, vx, vy, vz)
-
 
 # performs 4th order Runge-Kutta until value x
 # returns

@@ -4,6 +4,8 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
+from gtracr.utils import SPEED_OF_LIGHT
+
 
 class Particle:
     """
@@ -30,6 +32,7 @@ class Particle:
         self.label = label
         # set properties as members
         self.momentum = 0.
+        self.velocity = 0.
         self.rigidity = self.momentum / np.abs(self.charge)
 
     # momentum [units GeV/c]
@@ -37,11 +40,18 @@ class Particle:
         self.momentum = np.sqrt(self.mass**2. + energy**2.)
         return self.momentum
 
-    # rigidity (R = pc / Ze) [units GV]
+    # velocity [units in m/s]
+    def set_velocity(self):
+        self.velocity = ((self.momentum * SPEED_OF_LIGHT) /
+                         np.sqrt(self.momentum**2. +
+                                 (self.mass * SPEED_OF_LIGHT)**2.))
+        return self.velocity
+
+    # rigidity (R = pc / Ze) from energy [units GV]
     def set_rigidity_from_energy(self, energy):
         self.rigidity = self.set_momentum(energy) / (np.abs(self.charge))
 
-    # rigidity (R = pc / Ze) [units GV]
+    # rigidity (R = pc / Ze) from momentum [units GV]
     def set_rigidity_from_momentum(self):
         self.rigidity = self.momentum / (np.abs(self.charge))
 

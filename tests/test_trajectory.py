@@ -14,10 +14,14 @@ if __name__ == "__main__":
     # traj = ParticleTrajectory("e-", startAltitude=100, maxStep=1000)
     # traj.getTrajectory(5)
     # t = traj.results["t"]
-    traj = ParticleTrajectory("p+", 12, 89, -63)
+    traj = ParticleTrajectory(
+        "p+", 12, startLongitude=89., startLatitude=-63.
+    )  #, startLongitude=137.276599, startLatitude=36.434800)
     (startTraj, endTraj) = traj.getTrajectory()
     t = traj.results["t"]
-    (x,y,z) = spherical_to_cartesian(traj.results["r"] / EARTH_RADIUS, traj.results["theta"], traj.results["phi"])
+    (x, y, z) = spherical_to_cartesian(traj.results["r"] / EARTH_RADIUS,
+                                       traj.results["theta"],
+                                       traj.results["phi"])
 
     plt.scatter(x, y, c=t)
     plt.colorbar()

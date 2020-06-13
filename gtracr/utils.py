@@ -16,6 +16,10 @@ DEG_TO_RAD = np.pi / 180.
 RAD_TO_DEG = 180. / np.pi
 
 
+def gamma(v):
+    return np.reciprocal(np.sqrt(1 - (v / SPEED_OF_LIGHT)**2.))
+
+
 # converts from spherical coordinates to Cartesian ones
 def spherical_to_cartesian(r, theta, phi):
     x = r * np.cos(phi) * np.sin(theta)
@@ -25,11 +29,12 @@ def spherical_to_cartesian(r, theta, phi):
 
 
 # get momentum spherical components from magnitude of momentum in 3-D
-def get_sphcomp_momentum(p, r, theta):
+def vp_components_spherical(p, r, theta):
     pr = p
     ptheta = p / r
     pphi = p / (r * np.sin(theta))
     return (pr, ptheta, pphi)
 
-def get_momentum_magnitude(pr, ptheta, pphi, r, theta):
-    return np.sqrt(pr**2. + (r*ptheta)**2. + (r*np.sin(theta)*pphi)**2.)
+
+def vmag_spherical(vr, vtheta, vphi, r, theta):
+    return np.sqrt(vr**2. + (r * vtheta)**2. + (r * np.sin(theta) * vphi)**2.)
