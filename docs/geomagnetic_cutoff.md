@@ -28,6 +28,7 @@
     - 89° 59' 24", -63° 27' 11" (in DMS)
 
   - we could implement this for more locations later on
+
   - To make this easier, we could store this data in some dictionary
 
 - [ ] Choose some energy for the particle
@@ -38,11 +39,12 @@
 
 - [ ] get the trajectories for each zenith and azimuthal angle
 
-  - we want to start from high zenith angles to lower ones (higher zenith angle should be more allowed than lower zenith angle) 
+  - we want to start from high zenith angles to lower ones (higher zenith angle should be more allowed than lower zenith angle)
 
     - for azimuthal it doesnt really matter all that much
 
   - we need to have a way to convert the provided trajectory in longitude, latitude, altitude, zenith, and azimuth angle to spherical
+
   - currently we only have this for longitude, latitude, and altitude so we need this for zenith and azimuth as well
 
     - To do this, we can retain our current version or add on to it
@@ -80,5 +82,36 @@
     - we can always integrate it as a member function later on if we want to
 
 - small things like conversions will be in the utility class like always
-- we should also have a new file that can create a dictionary of locations based on longitude and latitude
--
+
+- we should also have a new file that can create a dictionary of locations based on longitude and latitude -
+
+### Implementing the zenith and azimuthal angles
+
+After drawing some geometrical figures, I think I have the equation to properly convert a 3-D vector ($s, \xi, \alpha$) defined on the local reference frame (sphere) to the geocentric coordinates ($r, \theta, \phi$) (given initial geocentric coordinates ($r_0, \theta_0, \phi_0$).)
+
+Some definitions of the variables:
+
+- $l$ is the altitude along the zenith from the tangent plane
+- $\xi$ is the zenith angle defined locally
+- $\alpha$ is the azimuthal angle defined locally
+- ($r_0, \theta_0, \phi_0$) defines the location of the detector *after* conversion from longitude and latitude coordinates to geocentric ones
+  - $r_0$ here represents the Earth's radius
+- ($r, \theta, \phi$) are our usual spherical coordinate system that will be used for the integration process
+
+With these definitions, we have our conversion equation as follows:
+
+- $(r \cos\phi)^2 = (r_0 \cos \phi_0)^2 + \left( \dfrac{l\cos\alpha}{\cos z}\right)^2 - 2r_0l \cos \alpha\cos\phi_0$
+  - derived from Law of Cosines with the projection of the vectors onto the $(r, \theta)$-plane.
+- $\theta = \theta_0 - \left(\dfrac{-l\cos \alpha \tan z}{r  \cos \phi}\right)$
+  - derived from Law of Sines and simpler triangle properties
+- $\phi = \phi_o - \arctan \left(\dfrac{l\tan z \cos\alpha}{r_0\tan\theta_0}\right)$
+  - derived from projection of 3-vector in local frame onto tangent plane with projection of tangent plane onto the $(r, \phi)$-plane
+
+So only $\phi$ can be evaluated completely using the variables provided. The other two variables $r, \theta$ must be evaluated from $\phi$. So we want to evaluate the coordinates like this:
+1. Get ($r_0, \theta_0, \phi_0$) from our already existing conversion code for latitude and longitude to geocentric coordinates
+2. Get $\phi$ from above
+3. Evaluate for $r \cos\phi$ from the first equation
+4. Use the results from 3. to determine $\theta$
+5. Divide the results from 3. by $\cos \phi$ to get $r$.
+
+Hopefully this allows a perfect conversion...
