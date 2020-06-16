@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 # from gtracr.utils import EARTH_RADIUS, g10, DEG_TO_RAD, get_sphcomp_momentum
 from gtracr.utils import *
 from gtracr.runge_kutta import runge_kutta
-from gtracr.add_particles import particleDict
+from gtracr.add_particle import particleDict
 
 
 # vertical rigidity cutoff defined in Baldini's paper
@@ -27,25 +27,25 @@ class ParticleTrajectory:
     Traces trajectory of a single particle, given the following information:
         - particleName: the name of the particle of interest, obtained from Particle class
         - energy : the energy of particle / cosmic ray
-        - startLongitude / startLatitude : initial longitude and latitude in decimal format
-        - initialAltitude : the starting altitude of the particle [km]
-        - finalAltitude : the altitude in which the particle trajectory ends [km]
+        - startLatitude / startLongitude : initial longitude and latitude in decimal format
+        - startAltitude : the starting altitude of the particle [km]
+        - stopAltitude : the altitude in which the particle trajectory ends [km]
         - maxStep : the maximum number of steps to integrate for (default=10000)
 
     '''
     def __init__(self,
                  particleName,
                  energy,
-                 startLongitude=0.,
                  startLatitude=0.,
+                 startLongitude=0.,
                  startAltitude=1.,
                  stopAltitude=500.,
                  maxStep=10000):
         self.particle = particleDict[
             particleName]  # should be obtained from some dictionary
         self.energy = energy
-        self.startLongitude = startLongitude
         self.startLatitude = startLatitude
+        self.startLongitude = startLongitude
         self.startAltitude = startAltitude
         self.stopAltitude = stopAltitude
         self.maxStep = maxStep
@@ -69,7 +69,7 @@ class ParticleTrajectory:
 
     def getTrajectory(self, zenith=0., azimuth=0.):
         # create trajectory point for initial point
-        startTraj = TrajectoryPoint(self.startLongitude, self.startLatitude,
+        startTraj = TrajectoryPoint(self.startLatitude, self.startLongitude,
                                     self.startAltitude, zenith, azimuth)
 
         # get initial value
@@ -208,20 +208,21 @@ class ParticleTrajectory:
 class TrajectoryPoint:
     '''
     Constructs a single point of the trajectory given the following information:
-        - longitude: the magnetic longitude (0 = prime meridian)
         - latitude: the magnetic latitude (0 = magnetic equator)
+        - longitude: the magnetic longitude (0 = prime meridian)
         - altitude: the distance from Earth's surface [km]
         - zenithAngle: the angle from the local zenith
         - azimuthAngle: the angle from the local North
     '''
     def __init__(self,
+                latitude=0.,
                  longitude=0.,
-                 latitude=0.,
                  altitude=1.,
                  zenithAngle=0.,
                  azimuthAngle=0.):
-        self.longitude = longitude
         self.latitude = latitude
+        self.longitude = longitude
+        
         self.altitude = altitude
         self.zenithAngle = zenithAngle
         self.azimuthAngle = azimuthAngle
@@ -237,7 +238,7 @@ class TrajectoryPoint:
         theta0 = (90. - self.latitude) * DEG_TO_RAD
         phi0 = (180. + self.longitude) * DEG_TO_RAD
 
-        print(r0, theta0, phi0)
+        # print(r0, theta0, phi0)
 
         # 3-vector for altitude, zenith angle and azimuthal angle
         # just for my own reference
@@ -249,7 +250,7 @@ class TrajectoryPoint:
         d = self.altitude * np.tan(xi) * np.cos(
             alpha)
 
-        print(d, l, xi, alpha)
+        # print(d, l, xi, alpha)
 
         phi = phi0 - np.arctan2(d, EARTH_RADIUS * np.tan(theta0))
         # rcos(phi), obtained from cosine law
@@ -261,7 +262,7 @@ class TrajectoryPoint:
         r = rcosphi / np.cos(phi)
         theta = theta0 - (d / rcosphi)
 
-        print(r, theta, phi, rcosphi)
+        # print(r, theta, phi, rcosphi)
         return np.array([r, theta, phi])
 
     def set_from_sphericalCoord(self, r, theta, phi):
