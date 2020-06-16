@@ -25,12 +25,13 @@ key_list = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
 class ParticleTrajectory:
     '''
     Traces trajectory of a single particle, given the following information:
-        - particleName: the name of the particle of interest, obtained from Particle class
-        - energy : the energy of particle / cosmic ray
-        - startLatitude / startLongitude : initial longitude and latitude in decimal format
-        - startAltitude : the starting altitude of the particle [km]
-        - stopAltitude : the altitude in which the particle trajectory ends [km]
-        - maxStep : the maximum number of steps to integrate for (default=10000)
+    - particleName: the name of the particle of interest, obtained from Particle class
+    - energy : the energy of particle / cosmic ray
+    - startLatitude : initial latitude of location in decimal notation
+    - startLongitude : initial longitude of location in decimal notation
+    - startAltitude : the starting altitude of the particle [km]
+    - stopAltitude : the altitude in which the particle trajectory ends [km]
+    - maxStep : the maximum number of steps to integrate for (default=10000)
 
     '''
     def __init__(self,
@@ -80,6 +81,11 @@ class ParticleTrajectory:
         while i < self.maxStep:
             (t, r, theta, phi, vr, vtheta,
              vphi) = runge_kutta(self.particle, self.stepSize, initial_value)
+
+             # check for some conditions over here
+            # if r <= EARTH_RADIUS:  # particle already on / within surface of earth
+            #     break
+            
             # convert velocities to momenta
             vmag = vmag_spherical(vr, vtheta, vphi, r, theta)
             # print(vmag)
@@ -104,7 +110,7 @@ class ParticleTrajectory:
             self.results["ptheta"][i] = ptheta
             self.results["pphi"][i] = pphi
 
-            # check for some conditions over here
+             # check for some conditions over here
             if r <= EARTH_RADIUS:  # particle already on / within surface of earth
                 break
 
@@ -119,7 +125,7 @@ class ParticleTrajectory:
         endTraj.set_from_sphericalCoord(r, theta, phi)
 
         print(self.results)
-        print(len(self.results["r"]))
+        # print(len(self.results["r"]))
 
         return (startTraj, endTraj)
 
@@ -266,10 +272,18 @@ class TrajectoryPoint:
         return np.array([r, theta, phi])
 
     def set_from_sphericalCoord(self, r, theta, phi):
-        self.longitude = (phi * RAD_TO_DEG) - 180.
         self.latitude = 90. - (theta * RAD_TO_DEG)
-        self.altitude = (r * EARTH_RADIUS) - EARTH_RADIUS
+        self.longitude = (phi * RAD_TO_DEG) - 180.
+        self.altitude = r - EARTH_RADIUS
 
+
+    def __str__(self):
+        return "Latitude: {0}, Longitude: {1}, Altitude: {3}".format(self.latitude, self.longitude, self.altitude)
+
+    # def __eq__(self, other):
+    #     return self.latitude == other.longitude and \
+    #         self.longitude == other.longitude and \
+    #             self.altitude == other.altitude
 
 '''
 

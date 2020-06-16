@@ -94,25 +94,49 @@ Some definitions of the variables:
 - $l$ is the altitude along the zenith from the tangent plane
 - $\xi$ is the zenith angle defined locally
 - $\alpha$ is the azimuthal angle defined locally
-- ($r_0, \theta_0, \phi_0$) defines the location of the detector *after* conversion from longitude and latitude coordinates to geocentric ones
+- ($r_0, \theta_0, \phi_0$) defines the location of the detector _after_ conversion from longitude and latitude coordinates to geocentric ones
+
   - $r_0$ here represents the Earth's radius
+
 - ($r, \theta, \phi$) are our usual spherical coordinate system that will be used for the integration process
 
 With these definitions, we have our conversion equation as follows:
 
 - $(r \cos\phi)^2 = (r_0 \cos \phi_0)^2 + \left( \dfrac{l\cos\alpha}{\cos z}\right)^2 - 2r_0l \cos \alpha\cos\phi_0$
+
   - derived from Law of Cosines with the projection of the vectors onto the $(r, \theta)$-plane.
-- $\theta = \theta_0 - \left(\dfrac{-l\cos \alpha \tan z}{r  \cos \phi}\right)$
+
+- $\theta = \theta_0 - \left(\dfrac{-l\cos \alpha \tan z}{r \cos \phi}\right)$
+
   - derived from Law of Sines and simpler triangle properties
+
 - $\phi = \phi_o - \arctan \left(\dfrac{l\tan z \cos\alpha}{r_0\tan\theta_0}\right)$
+
   - derived from projection of 3-vector in local frame onto tangent plane with projection of tangent plane onto the $(r, \phi)$-plane
   - we observed that the tanget plane is at a right angle to the initial vector, and as such transforming the projected vector on the tanget plane to the Cartesian axes was not too hard.
 
 So only $\phi$ can be evaluated completely using the variables provided. The other two variables $r, \theta$ must be evaluated from $\phi$. So we want to evaluate the coordinates like this:
+
 1. Get ($r_0, \theta_0, \phi_0$) from our already existing conversion code for latitude and longitude to geocentric coordinates
 2. Get $\phi$ from above
 3. Evaluate for $r \cos\phi$ from the first equation
-4. Use the results from 3. to determine $\theta$
-5. Divide the results from 3. by $\cos \phi$ to get $r$.
+4. Use the results from 3\. to determine $\theta$
+5. Divide the results from 3\. by $\cos \phi$ to get $r$.
 
 Hopefully this allows a perfect conversion...
+
+### Current issues
+
+- [ ] There should be a way to check each trajectory point to get a boolean yes or no for allowed / forbidden trajectories
+
+  - My idea is to either:
+
+    - Remove zenith and azimuthal angles as members of the TrajectoryPoint class and make some converter from horizontal coordinates to geodesic ones with zenith and azimuth as arguments
+
+      - most promising one right now
+
+  - remove those guys as members and create a new class that contains the trajectorypoint along with zenith and azimuthal
+
+  - Leave them as members and create the converter within the class
+
+    - least configuration necessary
