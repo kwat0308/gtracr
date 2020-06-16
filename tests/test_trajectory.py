@@ -15,9 +15,9 @@ if __name__ == "__main__":
     # traj.getTrajectory(5)
     # t = traj.results["t"]
     traj = ParticleTrajectory(
-        "p+", 12, startLongitude=89., startLatitude=-63.
-    )  #, startLongitude=137.276599, startLatitude=36.434800)
-    (startTraj, endTraj) = traj.getTrajectory()
+        # "p+", 12, startLongitude=89., startLatitude=-63., startAltitude=0.
+          "p+", 12, startLongitude=137.276599, startLatitude=36.434800)
+    (startTraj, endTraj) = traj.getTrajectory(zenith=60, azimuth=30)
     t = traj.results["t"]
     (x, y, z) = spherical_to_cartesian(traj.results["r"] / EARTH_RADIUS,
                                        traj.results["theta"],
@@ -27,16 +27,16 @@ if __name__ == "__main__":
     plt.colorbar()
     plt.show()
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    cm = ax.scatter(x, y, z, c=t, marker='o')
-    fig.colorbar(cm, ax=ax)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection="3d")
+    # cm = ax.scatter(x, y, z, c=t, marker='o')
+    # fig.colorbar(cm, ax=ax)
     # plt.colorbar()
+    # plt.savefig("test.png")
+    # plt.show()
 
-    plt.show()
+    fig2 = go.Figure(data=[go.Scatter3d(x=x,y=y,z=z,mode="markers",
+                    marker=dict(size=2.0, color=t, colorscale='Viridis'),
+                    line=dict(color='darkblue', width=2))])
 
-    # fig2 = go.Figure(data=[go.Scatter3d(x=x,y=y,z=z,mode="markers",
-    #                 marker=dict(size=2.0, color=t, colorscale='Viridis'),
-    #                 line=dict(color='darkblue', width=2))])
-
-    # fig2.show()
+    fig2.show()

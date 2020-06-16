@@ -38,8 +38,8 @@ class ParticleTrajectory:
                  energy,
                  startLongitude=0.,
                  startLatitude=0.,
-                 startAltitude=1,
-                 stopAltitude=500,
+                 startAltitude=1.,
+                 stopAltitude=500.,
                  maxStep=10000):
         self.particle = particleDict[
             particleName]  # should be obtained from some dictionary
@@ -74,6 +74,7 @@ class ParticleTrajectory:
 
         # get initial value
         initial_value = self.get_initial_values(startTraj, self.energy)
+        print(initial_value)
 
         i = 0
         while i < self.maxStep:
@@ -118,6 +119,7 @@ class ParticleTrajectory:
         endTraj.set_from_sphericalCoord(r, theta, phi)
 
         print(self.results)
+        print(len(self.results["r"]))
 
         return (startTraj, endTraj)
 
@@ -228,9 +230,38 @@ class TrajectoryPoint:
     # r [EARTH_RADIUS], theta [rad], phi [rad]
     def sphericalCoord(self):
         # r = (self.altitude + EARTH_RADIUS) / EARTH_RADIUS
-        r = self.altitude + EARTH_RADIUS
-        theta = (90. - self.latitude) * DEG_TO_RAD
-        phi = (180. + self.longitude) * DEG_TO_RAD
+
+        # r = self.altitude + EARTH_RADIUS
+        # longitude and latitude to (r0, theta0, phi0)
+        r0 = EARTH_RADIUS
+        theta0 = (90. - self.latitude) * DEG_TO_RAD
+        phi0 = (180. + self.longitude) * DEG_TO_RAD
+
+        print(r0, theta0, phi0)
+
+        # 3-vector for altitude, zenith angle and azimuthal angle
+        # just for my own reference
+        l = self.altitude
+        xi = self.zenithAngle * DEG_TO_RAD
+        alpha = self.azimuthAngle * DEG_TO_RAD
+
+        # some convenient expression
+        d = self.altitude * np.tan(xi) * np.cos(
+            alpha)
+
+        print(d, l, xi, alpha)
+
+        phi = phi0 - np.arctan2(d, EARTH_RADIUS * np.tan(theta0))
+        # rcos(phi), obtained from cosine law
+        rcosphi = np.sqrt((EARTH_RADIUS * np.cos(phi0))**2. +
+                        ((self.altitude * np.cos(alpha)) /
+                         np.cos(xi))**2. +
+                        2 * EARTH_RADIUS * self.altitude *
+                        np.cos(alpha) * np.cos(phi0))
+        r = rcosphi / np.cos(phi)
+        theta = theta0 - (d / rcosphi)
+
+        print(r, theta, phi, rcosphi)
         return np.array([r, theta, phi])
 
     def set_from_sphericalCoord(self, r, theta, phi):

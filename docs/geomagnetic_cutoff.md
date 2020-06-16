@@ -106,6 +106,7 @@ With these definitions, we have our conversion equation as follows:
   - derived from Law of Sines and simpler triangle properties
 - $\phi = \phi_o - \arctan \left(\dfrac{l\tan z \cos\alpha}{r_0\tan\theta_0}\right)$
   - derived from projection of 3-vector in local frame onto tangent plane with projection of tangent plane onto the $(r, \phi)$-plane
+  - we observed that the tanget plane is at a right angle to the initial vector, and as such transforming the projected vector on the tanget plane to the Cartesian axes was not too hard.
 
 So only $\phi$ can be evaluated completely using the variables provided. The other two variables $r, \theta$ must be evaluated from $\phi$. So we want to evaluate the coordinates like this:
 1. Get ($r_0, \theta_0, \phi_0$) from our already existing conversion code for latitude and longitude to geocentric coordinates

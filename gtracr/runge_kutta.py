@@ -126,7 +126,7 @@ def runge_kutta(particle, h, ival):
     m4 = h * vph + c3 / ((r + k3) * (np.sin(th + l3)))
     a4 = h * dvrdt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
                    vph + c3, particle)
-    b4 = h * dvthetahdt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
+    b4 = h * dvthetadt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
                         vph + c3, particle)
     c4 = h * dvphidt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
                      vph + c3, particle)
