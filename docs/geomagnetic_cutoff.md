@@ -149,6 +149,14 @@ Hopefully this allows a perfect conversion...
 - [ ] The code works, however there are still some issues as the heatmaps all result in True (i.e. no forbidden trajectories at all). This can be caused by a few things:
 
   - Incorrect conversions between coordinates, although I feel as though this is already resolved pretty well.
+
+    - This is still not resolved, there seems to be some overflow issue with the angular coordinates. Essentially we need to be able to get the latitude and longitude defined within [-90, 90] and [-180, 180] respectively. In order to do this, we want to divide by some integer so that we get the correct latitude / longitude. 
+
+      - perhaps we should divide them by 90 and 180 respectively?
+
   - Inappropriate termination conditions / checking conditions for cutoffs
 
     - right now the only factor is if the particle touches the earth again, but I am not even sure if this is implemented properly.
+
+- Here the $\phi$ is now defined from [$-\pi, \pi$] instead of [$0, 2\pi$]. This allows easier conversions for longitude with $\phi$.
+- There is still a problem with the cutoffs, seems like at any energy the particle doesnt reach the Earth at all, only for electrons at very low energies (~0.005GeV), which is definitely weird. I inputted the values from Baldini but they still do not give the correct trajectories. This is certainly weird and needs to be investigated later on.
