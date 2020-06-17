@@ -135,6 +135,7 @@ Hopefully this allows a perfect conversion...
 
       - most promising one right now
       - This might work, the conversion is relatively simple:
+
         - The projection of the 3-D vector $\vec{s}$ at the initially given latitude and longitude $(L_o, L_a)$ is given as $s\sin \xi$ with $\xi$ being the zenith angle (angle from the zenith)
         - Using this, we can get the new latitude and longitude by utilizing the azimuthal angle $\alpha$, which would be $s\sin\xi\cos\alpha$ and $s\sin\xi\sin\alpha$ respectively.
         - Since we have the altitude $l$ instead of the 3-D vector, we replace $s$ with $\dfrac{l}{\cos\xi}$ instead (as the altitude is the projection of the 3-D vector onto the zenith).
@@ -144,3 +145,10 @@ Hopefully this allows a perfect conversion...
   - Leave them as members and create the converter within the class
 
     - least configuration necessary
+
+- [ ] The code works, however there are still some issues as the heatmaps all result in True (i.e. no forbidden trajectories at all). This can be caused by a few things:
+
+  - Incorrect conversions between coordinates, although I feel as though this is already resolved pretty well.
+  - Inappropriate termination conditions / checking conditions for cutoffs
+
+    - right now the only factor is if the particle touches the earth again, but I am not even sure if this is implemented properly.
