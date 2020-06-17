@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 # from gtracr.utils import EARTH_RADIUS, g10, DEG_TO_RAD, get_sphcomp_momentum
 from gtracr.utils import *
 from gtracr.runge_kutta import runge_kutta
-from gtracr.add_particle import particleDict
+from gtracr.add_particle import particle_dict
 
 
 # vertical rigidity cutoff defined in Baldini's paper
@@ -40,9 +40,9 @@ class ParticleTrajectory:
                  startLatitude=0.,
                  startLongitude=0.,
                  startAltitude=1.,
-                 stopAltitude=10000.,
+                 stopAltitude=1000.,
                  maxStep=10000):
-        self.particle = particleDict[
+        self.particle = particle_dict[
             particleName]  # should be obtained from some dictionary
         self.energy = energy
         self.startLatitude = startLatitude
@@ -50,7 +50,8 @@ class ParticleTrajectory:
         self.startAltitude = startAltitude
         self.stopAltitude = stopAltitude
         self.maxStep = maxStep
-        self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
+        # self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
+        self.stepSize = 1.
         self.results = {key: np.zeros(maxStep) for key in key_list}
 
     # def __init__(self,
@@ -99,6 +100,7 @@ class ParticleTrajectory:
             self.particle.momentum = gamma(vmag) * self.particle.mass * vmag
             # self.particle.momentum = vmag_spherical(pr, ptheta, pphi, r, theta)
             self.particle.set_rigidity_from_momentum()
+            print(self.particle.rigidity)
 
             (pr, ptheta,
              pphi) = vp_components_spherical(self.particle.momentum, r, theta)
@@ -125,7 +127,8 @@ class ParticleTrajectory:
         # get the end trajectory from the last spherical coordinate values
         # print(r, theta, phi)
         endTraj = TrajectoryPoint()
-        endTraj.set_from_sphericalCoord(r, theta / np.pi, phi / (2.*np.pi))
+        endTraj.set_from_sphericalCoord(r, theta, phi)
+        # endTraj.set_from_sphericalCoord(r, theta / np.pi, phi / (2.*np.pi))
         # trim the zeros from the arrays if there is a break
         # self.trim_zeros()
         print(self.results)
@@ -280,7 +283,7 @@ class TrajectoryPoint:
         self.altitude = r - EARTH_RADIUS
 
     # converts into spherical coordinates
-    # r [EARTH_RADIUS], theta [rad], phi [rad]
+    # r [km], theta [rad], phi [rad]
     def sphericalCoord(self):
         # r = (self.altitude + EARTH_RADIUS) / EARTH_RADIUS
 

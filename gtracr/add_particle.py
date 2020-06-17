@@ -10,10 +10,10 @@ sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 from gtracr.lib.particle import Particle
 
-particleDict = {}
+particle_dict = {}
 
 def add_to_dict(Particle):
-    particleDict[Particle.label] = Particle
+    particle_dict[Particle.label] = Particle
 
 
 # create particles
