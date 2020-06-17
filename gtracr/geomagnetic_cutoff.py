@@ -104,5 +104,5 @@ if __name__ == "__main__":
 
                 geomag_cutoffdict["Location"][locname][energy][particle] = data
 
-    fpath = os.getcwd()
+    fpath = os.path.join(os.getcwd(), "geomagnetic_cutoff.pkl")
     export_as_pkl(fpath, geomag_cutoffdict)
