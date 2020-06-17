@@ -128,7 +128,7 @@ class ParticleTrajectory:
         endTraj.set_from_sphericalCoord(r, theta / np.pi, phi / (2.*np.pi))
         # trim the zeros from the arrays if there is a break
         # self.trim_zeros()
-        # print(self.results)
+        print(self.results)
         # print(len(self.results["r"]))
 
         return (startTraj, endTraj)
@@ -215,6 +215,8 @@ class ParticleTrajectory:
         ival = np.array([t0, r0, theta0, phi0, vr0, vth0, vph0])
         return ival
 
+    # trim zeros at end of list 
+    # an indicator for geomagnetic cutoff (array length comparison)
     def trim_zeros(self):
         for arr in list(self.results.values()):
             np.trim_zeros(arr, trim="b")

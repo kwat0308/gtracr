@@ -16,8 +16,9 @@ if __name__ == "__main__":
     # t = traj.results["t"]
     traj = ParticleTrajectory(
         # "p+", 12, startLongitude=89., startLatitude=-63., startAltitude=0.
-          "p+", 12, startLongitude=137.276599, startLatitude=36.434800)
-    (startTraj, endTraj) = traj.getTrajectory(zenith=60, azimuth=30)
+          "p+", 30, startLongitude=137.276599, startLatitude=36.434800, startAltitude=500)
+    (startPoint, endPoint) = traj.getTrajectory(zenith=70, azimuth=0)
+    print(endPoint)
     t = traj.results["t"]
     (x, y, z) = spherical_to_cartesian(traj.results["r"] / EARTH_RADIUS,
                                        traj.results["theta"],
@@ -35,8 +36,8 @@ if __name__ == "__main__":
     # plt.savefig("test.png")
     # plt.show()
 
-    fig2 = go.Figure(data=[go.Scatter3d(x=x,y=y,z=z,mode="markers",
-                    marker=dict(size=2.0, color=t, colorscale='Viridis'),
-                    line=dict(color='darkblue', width=2))])
+    # fig2 = go.Figure(data=[go.Scatter3d(x=x,y=y,z=z,mode="markers",
+    #                 marker=dict(size=2.0, color=t, colorscale='Viridis'),
+    #                 line=dict(color='darkblue', width=2))])
 
-    fig2.show()
+    # fig2.show()
