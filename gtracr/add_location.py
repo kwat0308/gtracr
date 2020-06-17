@@ -18,9 +18,9 @@ def add_to_dict(Location):
     location_dict[Location.name] = Location
 
 # some basic locations of interest
-kamioka = Location("Kamioka", 36.434800, 137.276599, 0.)
-icecube = Location("IceCube",89.99, -63.453056, 0.)
-uofa = Location("UofA", 53.523230, -113.526319, 0.)
+kamioka = Location("Kamioka", 36.434800, 137.276599, 1.)
+icecube = Location("IceCube",89.99, -63.453056, 1.)
+uofa = Location("UofA", 53.523230, -113.526319, 1.)
 
-for loc in [kamioka, ice, uofa]:
+for loc in [kamioka, icecube, uofa]:
     add_to_dict(loc)
