@@ -11,15 +11,15 @@ class Particle:
     """
     Utility class for cosmic ray particles
     Members:
-        - name: the name of the particle (string)
-        - pid: the particle id as in pdg (int)
-        - mass: the particle rest mass (float) [units of GeV / c^2]
-        - charge: particle's charge Z (int) [units of elementary charge]
-        - label: the shorthand name for the particle (string)
+    - name: the name of the particle (string)
+    - pid: the particle id as in pdg (int)
+    - mass: the particle rest mass (float) [units of GeV / c^2]
+    - charge: particle's charge Z (int) [units of elementary charge]
+    - label: the shorthand name for the particle (string)
 
     Notes:
-        - PDGID obtained from here: http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
-        - The mass of the particles are also obtained from PDG
+    - PDGID obtained from here: http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
+    - The mass of the particles are also obtained from PDG
 
     Example:
     proton: proton = Particle("Proton", 2212, 0.938272, "p+")

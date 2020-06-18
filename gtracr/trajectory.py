@@ -50,9 +50,9 @@ class ParticleTrajectory:
         self.startAltitude = startAltitude
         self.stopAltitude = stopAltitude
         self.maxStep = maxStep
-        # self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
-        self.stepSize = 1.
-        self.results = {key: np.zeros(maxStep) for key in key_list}
+        self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
+        # self.stepSize = 1000.
+        # self.results = {key: np.zeros(maxStep) for key in key_list}
 
     # def __init__(self,
     #              particleName,
@@ -80,11 +80,13 @@ class ParticleTrajectory:
         print(initial_value)
         # print(startTraj)
 
+        results = {key: np.zeros(self.maxStep) for key in key_list}
+
         i = 0
         while i < self.maxStep:
             (t, r, theta, phi, vr, vtheta,
              vphi) = runge_kutta(self.particle, self.stepSize, initial_value)
-            # print(r)
+            print(r)
             # check for some conditions over here
             if r <= EARTH_RADIUS:  # particle already on / within surface of earth
                 break
@@ -100,19 +102,19 @@ class ParticleTrajectory:
             self.particle.momentum = gamma(vmag) * self.particle.mass * vmag
             # self.particle.momentum = vmag_spherical(pr, ptheta, pphi, r, theta)
             self.particle.set_rigidity_from_momentum()
-            print(self.particle.rigidity)
+            # print(self.particle.rigidity)
 
             (pr, ptheta,
              pphi) = vp_components_spherical(self.particle.momentum, r, theta)
 
             # append
-            self.results["t"][i] = t
-            self.results["r"][i] = r
-            self.results["theta"][i] = theta
-            self.results["phi"][i] = phi 
-            self.results["pr"][i] = pr
-            self.results["ptheta"][i] = ptheta
-            self.results["pphi"][i] = pphi
+            results["t"][i] = t
+            results["r"][i] = r
+            results["theta"][i] = theta
+            results["phi"][i] = phi 
+            results["pr"][i] = pr
+            results["ptheta"][i] = ptheta
+            results["pphi"][i] = pphi
 
             # check for some conditions over here
             # if r <= EARTH_RADIUS:  # particle already on / within surface of earth
@@ -131,10 +133,11 @@ class ParticleTrajectory:
         # endTraj.set_from_sphericalCoord(r, theta / np.pi, phi / (2.*np.pi))
         # trim the zeros from the arrays if there is a break
         # self.trim_zeros()
-        print(self.results)
+        print(results)
         # print(len(self.results["r"]))
 
-        return (startTraj, endTraj)
+        # return (startTraj, endTraj)
+        return results
 
     # # get the particle trajectory given:
     # # - energy: the energy of the cosmic ray as measured from detector
@@ -234,7 +237,7 @@ class TrajectoryPoint:
         # - zenithAngle: the angle from the local zenith
         # - azimuthAngle: the angle from the local North
     '''
-    def __init__(self, latitude=0., longitude=0., altitude=1.):
+    def __init__(self, latitude=0., longitude=0., altitude=0.):
         self.latitude = latitude
         self.longitude = longitude
 
@@ -253,8 +256,12 @@ class TrajectoryPoint:
         # print(self.latitude, self.longitude)
         # print(xi, alpha)
         # print(self.altitude * np.tan(xi) * np.cos(alpha))
-        self.latitude += self.altitude * np.tan(xi) * np.sin(alpha)
-        self.longitude += self.altitude * np.tan(xi) * np.cos(alpha)
+        # if altitude is zero make latitude and longitude the same
+        if np.abs(self.altitude) < 1e-7:
+            pass
+        else:   # otherwise compute based on altitude, zenith, and azimuth
+            self.latitude += np.abs(self.altitude) * np.tan(xi) * np.sin(alpha)
+            self.longitude += np.abs(self.altitude) * np.tan(xi) * np.cos(alpha)
         # print(self.latitude, self.longitude)
 
         # some convenient expression
