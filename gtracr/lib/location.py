@@ -9,16 +9,16 @@ class Location:
         A class of locations around the globe. Used to allow easy access to geodesic coordinates of locations of interest.
         Members:
         - name : the name of the location 
-        - longitude : the geographical longitude (0 = prime meridian) in decimal degrees
-        - latitude : the geographical latitude (0 = equator) in decimal degrees 
+        - latitude : the geographical latitude (0 = equator) in decimal degrees
+        - longitude : the geographical longitude (0 = prime meridian) in decimal degrees 
         - altitude : the altitude above sea level of the location in km
     '''
 
 
     def __init__(self, name, latitude, longitude, altitude=0.):
         self.name = name
-        self.longitude = longitude
         self.latitude = latitude
+        self.longitude = longitude
         self.altitude = altitude
 
     def __str__(self):

@@ -1,19 +1,25 @@
 '''
-Utility script for various small things (constants, conversions)
+Utility script for various small things (conversions, info function for debugging)
 '''
 
-import scipy.constants as sc
+# import scipy.constants as sc
+import os, sys
 import numpy as np
 
-SPEED_OF_LIGHT = sc.c
+sys.path.append(os.getcwd())
+sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-# ELEMENTARY_CHARGE = sc.e
+from gtracr.constants import SPEED_OF_LIGHT
 
-EARTH_RADIUS = 6.371e3  # earth radius (kilometers)
-g10 = -29404.8 * (1e-9)  # B-field parameter from IGRF 2020 (in Teslas)
+# SPEED_OF_LIGHT = sc.c
 
-DEG_TO_RAD = np.pi / 180.
-RAD_TO_DEG = 180. / np.pi
+# # ELEMENTARY_CHARGE = sc.e
+
+# EARTH_RADIUS = 6.371e3  # earth radius (kilometers)
+# g10 = -29404.8 * (1e-9)  # B-field parameter from IGRF 2020 (in Teslas)
+
+# DEG_TO_RAD = np.pi / 180.
+# RAD_TO_DEG = 180. / np.pi
 
 
 def gamma(v):
@@ -35,6 +41,10 @@ def vp_components_spherical(p, r, theta):
     pphi = p / (r * np.sin(theta))
     return (pr, ptheta, pphi)
 
-
+# magnitude of velocity from spherical components
 def vmag_spherical(vr, vtheta, vphi, r, theta):
     return np.sqrt(vr**2. + (r * vtheta)**2. + (r * np.sin(theta) * vphi)**2.)
+
+# info function
+
+

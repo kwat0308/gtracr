@@ -4,7 +4,7 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.utils import SPEED_OF_LIGHT
+from gtracr.constants import SPEED_OF_LIGHT
 
 
 class Particle:
