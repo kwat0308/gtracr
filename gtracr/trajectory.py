@@ -9,6 +9,7 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 # from gtracr.utils import EARTH_RADIUS, g10, DEG_TO_RAD, get_sphcomp_momentum
+from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
 from gtracr.utils import *
 from gtracr.runge_kutta import runge_kutta
 from gtracr.add_particle import particle_dict
@@ -49,9 +50,10 @@ class ParticleTrajectory:
         self.startLongitude = startLongitude
         self.startAltitude = startAltitude
         self.stopAltitude = stopAltitude
-        self.maxStep = maxStep
-        self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
-        # self.stepSize = 1000.
+        # self.maxStep = maxStep
+        # self.stepSize = np.abs(stopAltitude - startAltitude) / maxStep
+        self.stepSize = 0.01
+        self.maxStep = int(np.abs(stopAltitude - startAltitude) / self.stepSize)
         # self.results = {key: np.zeros(maxStep) for key in key_list}
 
     # def __init__(self,
@@ -83,7 +85,9 @@ class ParticleTrajectory:
         results = {key: np.zeros(self.maxStep) for key in key_list}
 
         i = 0
-        while i < self.maxStep:
+        r=EARTH_RADIUS
+        # while i < self.maxStep:
+        while r < EARTH_RADIUS + self.stopAltitude:
             (t, r, theta, phi, vr, vtheta,
              vphi) = runge_kutta(self.particle, self.stepSize, initial_value)
             print(r)
