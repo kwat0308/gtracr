@@ -41,6 +41,12 @@ def dvrdt(t, r, theta, phi, vr, vtheta, vphi, particle):
 
     return term1 + term2 + term3
 
+    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    # lor_term = (vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
+    # accel_term = r*(vtheta**2. - vphi**2.*np.sin(theta))
+
+    # return lorenz_const*lor_term + accel_term
+
 
     # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
     # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
@@ -68,6 +74,13 @@ def dvthetadt(t, r, theta, phi, vr, vtheta, vphi, particle):
     term3 = vphi**2. / (r * np.tan(theta))
     return term1 - term2 + term3
 
+    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    # lor_term = (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr)
+    # accel_term = r*vphi**2.*np.sin(theta)*np.cos(theta) - 2.*vr*vtheta
+
+    # return (lorenz_const*lor_term + accel_term) / r
+
+
     # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
     # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
 
@@ -89,6 +102,14 @@ def dvphidt(t, r, theta, phi, vr, vtheta, vphi, particle):
     term2 = (vr * vphi) / r
     term3 = (vtheta * vphi) / (r * np.tan(theta))
     return term1 - term2 - term3
+
+
+    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    # lor_term = (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
+    # accel_term = 2.*vphi*(vr*np.sin(theta) + r*vtheta*np.cos(theta))
+
+    # return (lorenz_const*lor_term - accel_term) / (r*np.sin(theta))
+
 
     # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
     # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)

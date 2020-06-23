@@ -227,7 +227,7 @@ class ParticleTrajectory:
     def get_initial_values(self, trajectory, energy):
         # get initial position in spherical coordinates
         (r0, theta0, phi0) = trajectory.sphericalCoord()
-        info(4, (r0, theta0, phi0))
+        # info(4, (r0, theta0, phi0))
         print(r0, theta0, phi0)
         # set particle momenta and get their spherical coordinate equivalents
         self.particle.set_momentum(energy)
