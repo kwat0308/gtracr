@@ -94,7 +94,8 @@
 
 - [ ] Only dipole approximation currently applied
 
-- [ ] The DEs seem to work, however I am not sure why they work. This is important to check for my reference.
+- [x] The DEs seem to work, however I am not sure why they work. This is important to check for my reference.
+  - The other extra terms are due to the unit vector conversion factors. Only that it seems like the Lorenz factor is not differentiated? But if i do implement this, we get a super long DE that yield the same trajectory regardless of the particle energy (see runge_kutta.md for the actual DE). So I think that there must be some reason why the lorenz factor is not differentiated, so we will just leave it as this...
 
 ## Past Issues
 

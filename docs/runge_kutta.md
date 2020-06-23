@@ -5,7 +5,8 @@
 - I was checking the radius values during the RK integration to see why no trajectories were going back to Earth, and I figured out that the integration process kept going even after the stop altitude. This was due to the fact that I thought that the stepsize for the integration process was determined by the formula $h = \dfrac{b-a}{n}$ where a,b are the starting / stopping altitude and n is the maximum number of iterations. It seems that this only applies to Euler's method / numerical integration methods based on Riemann sums. 
 
   - As such, I will make the stepsize be set by the user, and determine the maximum number of steps from this. I think the formula will go like $n = \dfrac{b-a}{h}$, but this may not be the case as this is essentially identical to the formula for step size.
-    - This now seems to work. We will use this instead from now on.
+    - ~~This now seems to work. We will use this instead from now on.~~ This doesnt actually work, as doing this will make the array length a lot longer than it actually would be. The way I am doing this now is by making user inputs for both stepsize and maximum number of iterations, and trim the zero values at the end that were not used
+      - there should be a way to determine the condition that max number of iterations > max array length in which contents will be appended
 
 - My friend had told me that the extra terms that pop up at the end of the Lorenz force term are due to unit vector conversions from Cartesian to Spherical coordinates. Now that I know this fact, I decided to test this out by hand to see if I do get this equation (the Equation obtained from D.F.Smart and M.A.Shea, Advances in Spce Research, 2004).
   - It seems like they somehow did not consider the velocity term within the Lorenz factor $\gamma$ since their expression only contains a relativistic term in the Lorenz force component. This is a mystery to me, as when I evaluated this myself I got something much more complicated than his version:
@@ -13,3 +14,5 @@
 
   - This was evaluated using the relativistic acceleration equation from the relativistic version of Newton's 2nd law: $\vec{a} = \dfrac{1}{m\gamma}\left(\vec{F} - \dfrac{(\vec{v}\cdot\vec{F})\vec{v}}{c^2}\right)$ (obtained from wikipedia)
     - not really sure how this is properly derived though...
+  - Testing the equations above, this was shown to not be correct, as I get the same trajectory for any particle energy. Switching back to the original equations, we get the trajectory that is identical to Baldini's paper, which is a good relief. 
+    - However, there still seems to be 
