@@ -45,7 +45,7 @@ class Particle:
         self.velocity = ((self.momentum * SPEED_OF_LIGHT) /
                          np.sqrt(self.momentum**2. +
                                  (self.mass * SPEED_OF_LIGHT)**2.))
-        return self.velocity
+        # return self.velocity
 
     # rigidity (R = pc / Ze) from energy [units GV]
     def set_rigidity_from_energy(self, energy):

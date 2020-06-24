@@ -204,6 +204,44 @@ def runge_kutta(particle, h, ival):
     return np.array([t, r, th, ph, vr, vth, vph])
 
 
+
+
+
+# evaluate 4th-order Runge Kutta with 6 coupled differential equations
+# this code can be reduced greatly by removing certain arguments, however by
+# making the code more general those arguments have to stay there.
+# Edit 2: this only performs one iteration of RK
+# the position DEs are replaced with the spherical definition for velocity
+def euler(particle, h, ival):
+
+    #set initial conditions to array
+    t = ival[0]
+    r = ival[1]
+    th = ival[2]
+    ph = ival[3]
+    vr = ival[4]
+    vth = ival[5]
+    vph = ival[6]
+
+    vrn = vr + h*dvrdt(t, r, th, ph, vr, vth, vph, particle)
+    vthn = vth + h*dvthetadt(t, r, th, ph, vr, vth, vph, particle)
+    vphn = vph + h*dvphidt(t, r, th, ph, vr, vth, vph, particle)
+
+    r += h*vr
+    th += h*vth
+    ph += h*vph
+
+    vr = vrn
+    vth = vthn
+    vph = vphn
+
+    t += h
+
+    
+
+    return np.array([t, r, th, ph, vr, vth, vph])
+
+
 # # evaluate 4th-order Runge Kutta with 6 coupled differential equations
 # # this code can be reduced greatly by removing certain arguments, however by
 # # making the code more general those arguments have to stay there.
