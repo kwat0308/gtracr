@@ -33,7 +33,7 @@ def func(latitude, longitude, start_altitude, stop_altitude, zenith, azimuth, pa
 
     # RK variables
     maxStep = 10000
-    stepSize = 1.
+    stepSize = 0.1
     key_list = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
     results = {key: np.zeros(maxStep) for key in key_list}
 
@@ -54,7 +54,7 @@ def func(latitude, longitude, start_altitude, stop_altitude, zenith, azimuth, pa
     tf_matrix = np.array([row1, row2, row3])
 
     # get the cartesian coordinates in the local tangent plane coordinate system from zenith and azimuth
-    l = 1.
+    l = stepSize
     xi = zenith * DEG_TO_RAD
     alpha = azimuth * DEG_TO_RAD
 
@@ -451,10 +451,10 @@ if __name__ == "__main__":
     latitude = 0.
     longitude = -60.
     start_altitude = 20.
-    stop_altitude = 2000.
+    stop_altitude = 565.
 
-    particle = particle_dict["p+"]
-    energy = 1.
+    particle = particle_dict["p-"]
+    energy = 12.
 
     result = func(latitude, longitude, start_altitude, stop_altitude, 0., 0., particle, energy)
     # result2 = func(0., 0., 20., 565., 70., 90., particle, energy)
@@ -500,8 +500,8 @@ if __name__ == "__main__":
 
 
 
-    result1 = func(0., 0., 20., 565., 90., 0., particle_dict["p+"], 30.)
-    result2 = func(0., 0., 20., 565., 90., 180., particle_dict["p+"], 30.)
+    result1 = func(0., 0., 20., 565., 70., 0., particle_dict["p+"], 30.)
+    result2 = func(0., 0., 20., 565., 70., 180., particle_dict["p+"], 30.)
 
     # plot
     t1 = result1["t"]
