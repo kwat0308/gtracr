@@ -500,8 +500,8 @@ if __name__ == "__main__":
 
 
 
-    result1 = func(0., 0., 20., 565., 70., 0., particle_dict["p+"], 30.)
-    result2 = func(0., 0., 20., 565., 70., 180., particle_dict["p+"], 30.)
+    result1 = func(0., 0., 20., 565., 90., 0., particle_dict["p+"], 30.)
+    result2 = func(0., 0., 20., 565., 90., 180., particle_dict["p+"], 30.)
 
     # plot
     t1 = result1["t"]

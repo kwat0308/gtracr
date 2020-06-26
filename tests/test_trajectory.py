@@ -7,10 +7,33 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 # sys.path.append(os.path.join(os.getcwd(), "..", "gtracr"))
 
-from gtracr.trajectory import ParticleTrajectory
-from gtracr.utils import spherical_to_cartesian
+from gtracr.trajectory import Trajectory
+# from gtracr.utils import spherical_to_cartesian
 from gtracr.constants import EARTH_RADIUS
 
+if __name__ == "__main__":
+    traj = Trajectory("p+", 0., 0., 20., 0., 0., energy=12.)
+    traj.getTrajectory()
+
+    result = traj.getPlotter()
+
+    t = result["t"]
+    x = result["x"]
+    y = result["y"]
+    z = result["z"]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    cm = ax.scatter(x, y, z, c=t, marker='o')
+    fig.colorbar(cm, ax=ax)
+    # plt.colorbar()
+    # plt.savefig("test.png")
+    plt.show()
+    
+
+
+
+'''
 if __name__ == "__main__":
     
     # traj = ParticleTrajectory("e-", startAltitude=100, maxStep=1000)
@@ -81,3 +104,4 @@ if __name__ == "__main__":
     # # plt.colorbar()
     # # plt.savefig("test.png")
     # plt.show()    
+'''
