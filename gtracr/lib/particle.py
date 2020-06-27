@@ -45,7 +45,7 @@ class Particle:
         self.momentum = gamma(self.velocity) * self.mass * self.velocity
 
     def set_momentum_from_rigidity(self, rigidity):
-        return rigidity*np.abs(self.charge)
+        self.momentum = rigidity*np.abs(self.charge)
 
     # velocity [units in m/s]
     def set_velocity(self):

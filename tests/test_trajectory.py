@@ -12,8 +12,8 @@ from gtracr.trajectory import Trajectory
 from gtracr.constants import EARTH_RADIUS
 
 if __name__ == "__main__":
-    traj = Trajectory("p+", 0., 0., 20., 0., 0., energy=12.)
-    traj.getTrajectory()
+    traj = Trajectory("p-", 0., -60., 20., 90., 0., rigidity=12., escapeAltitude=565)
+    traj.getTrajectory(maxStep=1000)
 
     result = traj.getPlotter()
 
@@ -21,6 +21,13 @@ if __name__ == "__main__":
     x = result["x"]
     y = result["y"]
     z = result["z"]
+
+    plt.scatter(x, y, c=t)
+    plt.show()
+    plt.scatter(x, z, c=t)
+    plt.show()
+    plt.scatter(y, z, c=t)
+    plt.show()
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")

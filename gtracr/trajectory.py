@@ -47,15 +47,17 @@ class Trajectory:
             self.energy = energy
             # self.particle.set_momentum_from_energy(energy)
         elif energy is None:
-            self.particle.get_energy_from_rigidity(rigidity)
             self.particle.set_momentum_from_rigidity(rigidity)
-            self.energy = self.particle.energy
             self.rigidity = rigidity
+            self.particle.rigidity = rigidity
+            self.energy = self.particle.get_energy_from_rigidity(rigidity)
             # self.particle.set_momentum_from_rigidity(rigidity)
-        elif rigidity is None and energy is None:
-            raise Exception("Provide either energy or rigidity as input!")
+        # elif rigidity is None and energy is None:
+        else:
+            raise Exception(
+                "Provide either energy or rigidity as input, not both!")
 
-
+        print(self.rigidity)
         # if rigidity is None and energy is None:
         #     raise Exception("Provide either energy or rigidity as input!")
 
@@ -63,14 +65,16 @@ class Trajectory:
         # self.rigidity = self.particle.get_rigidity_from_energy(energy) if rigidity is None else rigidity
 
         self.particle.set_velocity()  # set velocity here
+        print(self.particle.momentum, self.particle.velocity)
 
-        
         self.particleEscaped = False  # check if trajectory is allowed or not
 
         # initialize required arrays here
         self.maxBuffer = maxBuffer
-        self.time_array = np.zeros(maxBuffer)
-        self.TJP_array = np.zeros(maxBuffer)
+        # self.time_array = np.zeros(maxBuffer)
+        # self.TJP_array = np.zeros(maxBuffer)
+        self.time_array = [None] * maxBuffer
+        self.TJP_array = [None] * maxBuffer  # list to append TJP objects
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
@@ -79,11 +83,18 @@ class Trajectory:
         origin_TJP = TrajectoryPoint(self.latitude, self.longitude,
                                      self.altitude)
 
+        print(origin_TJP)
+
         # transformation process for coordinate
         originCoord = origin_TJP.getCartesianCoord()
         LTPCoord = self.getLTPCoord(mag=1.)
+        print(LTPCoord)
+        print(self.tf_matrix())
         (x, y, z) = self.LTP_to_ECEF(originCoord, LTPCoord)
         (r, theta, phi) = CarCoord_to_SphCoord(x, y, z)
+
+        print(x, y, z)
+        print(r, theta, phi)
 
         # transformation for velocity
         originVel = np.array([0., 0., 0.])
@@ -98,16 +109,20 @@ class Trajectory:
         init_TJP.setSphericalCoord(r, theta, phi)
         # init_TJP.setCarVelocity(vr, vtheta, vphi)
 
+        print(init_TJP)
+
         return (origin_TJP, init_TJP)
 
     # evaluates the trajectory using Runge-Kutta methods
-    def getTrajectory(self, maxStep=100000, stepSize=0.1):
+    def getTrajectory(self, maxStep=10000, stepSize=0.1):
 
         # check if maxStep > maxBuffer, if so then update this
         # there is a better way to do this, im sure
         if maxStep > self.maxBuffer:
-            self.time_array = np.zeros(maxStep)
-            self.TJP_array = np.zeros(maxStep)
+            # self.time_array = np.zeros(maxStep)
+            # self.TJP_array = np.zeros(maxStep)
+            self.time_array.extend([None] * (maxStep - self.maxBuffer))
+            self.TJP_array.extend([None] * (maxStep - self.maxBuffer))
 
         # initialize array
         # time_array = np.zeros(maxStep)
@@ -119,6 +134,8 @@ class Trajectory:
         # append both time array and TJP
         self.time_array[0:2] = [0., stepSize]
         self.TJP_array[0:2] = [origin_TJP, init_TJP]
+
+        print(self.TJP_array[0], self.TJP_array[1])
 
         # start iteration process
         i = 2
@@ -143,8 +160,12 @@ class Trajectory:
             i += 1
 
         # trim zero values at the end
-        np.trim_zeros(self.time_array, trim="b")
-        np.trim_zeros(self.TJP_array, trim="b")
+        self.trim_arrays()
+        # np.trim_zeros(self.time_array, trim="b")
+        # np.trim_zeros(self.TJP_array, trim="b")
+
+        # print(self.time_array, self.TJP_array)
+        print(self.time_array)
 
     # evaluate the trajectory at some time, position, and velocity using TrajectoryPoints
     # returns a new time and new TrajPoint
@@ -162,6 +183,17 @@ class Trajectory:
 
         return np.array([t, new_TJP])
 
+    # trim the unnecessary values at the end of the array
+    def trim_arrays(self):
+        # np.trim_zeros(self.time_array, trim="b")
+        # np.trim_zeros(self.TJP_array, trim="b")
+        for i, val in enumerate(self.time_array):
+            if val == None:
+                self.time_array = self.time_array[:i]
+        for i, val in enumerate(self.TJP_array):
+            if val == None:
+                self.TJP_array = self.TJP_array[:i]
+
     # get the cartesian coordinates from the array of trajectory points for plotting purposes
     def getPlotter(self):
 
@@ -177,6 +209,7 @@ class Trajectory:
         }
 
         for i, TJP in enumerate(self.TJP_array):
+            print(TJP)
             (x, y, z) = TJP.getCartesianCoord()
             (vx, vy, vz) = TJP.getCartesianVelocity()
 
@@ -190,7 +223,7 @@ class Trajectory:
         return data_dict
 
     def LTP_to_ECEF(self, originCoord, LTPCoord):
-        return originCoord + np.dot(self.tf_matrix, LTPCoord)
+        return originCoord + np.dot(self.tf_matrix(), LTPCoord)
 
     def getLTPCoord(self, mag):
         xi = self.zenithAngle * DEG_TO_RAD
@@ -257,8 +290,8 @@ class TrajectoryPoint:
     def getCartesianCoord(self):
         lmbda = self.latitude * DEG_TO_RAD
         eta = self.longitude * DEG_TO_RAD
-        x = (EARTH_RADIUS + self.altitude) * np.cos(eta) * np.cos(lmbda)
-        y = (EARTH_RADIUS + self.altitude) * np.cos(eta) * np.sin(lmbda)
+        x = (EARTH_RADIUS + self.altitude) * np.cos(lmbda) * np.cos(eta)
+        y = (EARTH_RADIUS + self.altitude) * np.cos(lmbda) * np.sin(eta)
         z = (EARTH_RADIUS + self.altitude) * np.sin(lmbda)
 
         return np.array([x, y, z])
@@ -290,6 +323,11 @@ class TrajectoryPoint:
         vz = self.vr * np.cos(theta) - r * self.vtheta * np.sin(theta)
 
         return np.array([vx, vy, vz])
+
+    def __str__(self):
+        return "Latitude: {:.3f}, Longitude: {:.3f}, Altitude: {:.3f}, Velocity (vr, vtheta, vphi): ({:.6f}, {:.6f}, {:.6f})".format(
+            self.latitude, self.longitude, self.altitude, self.vr, self.vtheta,
+            self.vphi)
 
 
 # class ParticleTrajectory:
