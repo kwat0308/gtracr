@@ -12,15 +12,15 @@ from gtracr.trajectory import Trajectory
 from gtracr.constants import EARTH_RADIUS
 
 if __name__ == "__main__":
-    traj = Trajectory("p-", 0., -60., 20., 90., 0., rigidity=12., escapeAltitude=565)
+    traj = Trajectory("p-", 0., 0., 20., 70., -90., rigidity=30., escapeAltitude=565)
     traj.getTrajectory(maxStep=1000)
 
     result = traj.getPlotter()
 
     t = result["t"]
-    x = result["x"]
-    y = result["y"]
-    z = result["z"]
+    x = result["x"] / EARTH_RADIUS
+    y = result["y"] / EARTH_RADIUS
+    z = result["z"] / EARTH_RADIUS
 
     plt.scatter(x, y, c=t)
     plt.show()

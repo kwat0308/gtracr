@@ -18,6 +18,20 @@ key_list = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
 
 
 class Trajectory:
+    '''
+    Class that controls the trajectory of a particle at some given energy / rigidity
+    Members:
+    - particleName: the label of the particle
+    - latitude: the geographic latitude, with 0 defined at the equator in degrees
+    - longitude: the geographic longitude, with 0 defined at the Prime Meridian in degrees
+    - altitude: the height from sea level (0=sea level) in km
+    - zenithAngle: the angle from the local zenith, with 0 being at the local zenith
+    - azimuthAngle: the angle with 0 being in the direction of the East hemisphere from the Prime Meridian in the local tangent plane
+    - energy: the particle energy
+    - rigidity: the particle rigidity (momentum / charge)
+    - escapeAltitude: the altitude in which the particle has "escaped" Earth (default 1000km)
+    - maxBuffer: maximum length of array
+    '''
     def __init__(self,
                  particleName,
                  latitude,
@@ -25,9 +39,9 @@ class Trajectory:
                  altitude,
                  zenithAngle,
                  azimuthAngle,
-                 escapeAltitude=1000.,
-                 energy=None,
+                    energy=None,
                  rigidity=None,
+                 escapeAltitude=1000.,
                  maxBuffer=1000000):
         self.particle = particle_dict[particleName]
         self.latitude = latitude
@@ -57,7 +71,7 @@ class Trajectory:
             raise Exception(
                 "Provide either energy or rigidity as input, not both!")
 
-        print(self.rigidity)
+        # print(self.rigidity)
         # if rigidity is None and energy is None:
         #     raise Exception("Provide either energy or rigidity as input!")
 
@@ -65,7 +79,7 @@ class Trajectory:
         # self.rigidity = self.particle.get_rigidity_from_energy(energy) if rigidity is None else rigidity
 
         self.particle.set_velocity()  # set velocity here
-        print(self.particle.momentum, self.particle.velocity)
+        # print(self.particle.momentum, self.particle.velocity)
 
         self.particleEscaped = False  # check if trajectory is allowed or not
 
@@ -83,18 +97,19 @@ class Trajectory:
         origin_TJP = TrajectoryPoint(self.latitude, self.longitude,
                                      self.altitude)
 
-        print(origin_TJP)
+        # print(origin_TJP)
+        # print(origin_TJP.getSphericalCoord())
 
         # transformation process for coordinate
         originCoord = origin_TJP.getCartesianCoord()
         LTPCoord = self.getLTPCoord(mag=1.)
-        print(LTPCoord)
-        print(self.tf_matrix())
+        # print(LTPCoord)
+        # print(self.tf_matrix())
         (x, y, z) = self.LTP_to_ECEF(originCoord, LTPCoord)
         (r, theta, phi) = CarCoord_to_SphCoord(x, y, z)
 
-        print(x, y, z)
-        print(r, theta, phi)
+        # print(x, y, z)
+        # print(r, theta, phi)
 
         # transformation for velocity
         originVel = np.array([0., 0., 0.])
@@ -104,12 +119,11 @@ class Trajectory:
         (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
 
         # create new trajectory point and set the new coordinate and velocity
-
         init_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
         init_TJP.setSphericalCoord(r, theta, phi)
         # init_TJP.setCarVelocity(vr, vtheta, vphi)
 
-        print(init_TJP)
+        # print(init_TJP)
 
         return (origin_TJP, init_TJP)
 
@@ -135,14 +149,19 @@ class Trajectory:
         self.time_array[0:2] = [0., stepSize]
         self.TJP_array[0:2] = [origin_TJP, init_TJP]
 
-        print(self.TJP_array[0], self.TJP_array[1])
+        # print(self.TJP_array[0], self.TJP_array[1])
 
         # start iteration process
         i = 2
         t = stepSize
         curr_TJP = init_TJP
+        # valtup required for integration process due to conversions between theta values and latitude
+        valtup = self.valtup(t, curr_TJP)
+        # ivals = (t, init_TJP.spherical())
+        # ivals = init_TJP.spherical().insert(0, t)
         while i < maxStep - 2:
-            (t, curr_TJP) = self.evalTrajectory(t, curr_TJP, stepSize)
+            # print(t, curr_TJP)
+            (t, curr_TJP, valtup) = self.evalTrajectory(t, curr_TJP, stepSize, valtup)
 
             self.time_array[i] = t
             self.TJP_array[i] = curr_TJP
@@ -155,8 +174,10 @@ class Trajectory:
             if curr_TJP.altitude < 0.:
                 break
 
-            # some looping checker
+            # ivals = init_TJP.spherical().insert(0, t)          
+            # valtup = self.valtup(t, curr_TJP)
 
+            # some looping checker
             i += 1
 
         # trim zero values at the end
@@ -165,23 +186,35 @@ class Trajectory:
         # np.trim_zeros(self.TJP_array, trim="b")
 
         # print(self.time_array, self.TJP_array)
-        print(self.time_array)
+        # print(self.time_array)
 
     # evaluate the trajectory at some time, position, and velocity using TrajectoryPoints
     # returns a new time and new TrajPoint
-    def evalTrajectory(self, t0, TJP, stepSize):
+    def evalTrajectory(self, t0, TJP, stepSize, valtup):
 
-        (r0, theta0, phi0) = TJP.getSphericalCoord()
+        # (r0, theta0, phi0) = TJP.getSphericalCoord()
 
-        ivals = (t0, r0, theta0, phi0, TJP.vr, TJP.vtheta, TJP.vphi)
+        # print(theta0)
+
+        # valtup = (t0, r0, theta0, phi0, TJP.vr, TJP.vtheta, TJP.vphi)
+
+        # print(valtup)
 
         (t, r, theta, phi, vr, vtheta,
-         vphi) = runge_kutta(self.particle, stepSize, ivals)
+         vphi) = runge_kutta(self.particle, stepSize, valtup)
+
+        # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
+        # print(phi)
+        print(theta)
 
         new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
         new_TJP.setSphericalCoord(r, theta, phi)
+        valtup = (t, r, theta, phi, vr, vtheta,
+         vphi)
 
-        return np.array([t, new_TJP])
+        # print(new_TJP, '\n')
+
+        return np.array([t, new_TJP, valtup])
 
     # trim the unnecessary values at the end of the array
     def trim_arrays(self):
@@ -209,22 +242,24 @@ class Trajectory:
         }
 
         for i, TJP in enumerate(self.TJP_array):
-            print(TJP)
+            # print(TJP)
             (x, y, z) = TJP.getCartesianCoord()
             (vx, vy, vz) = TJP.getCartesianVelocity()
 
-            data_dict["x"][i] = x
-            data_dict["y"][i] = y
-            data_dict["z"][i] = z
+            data_dict["x"][i] = x 
+            data_dict["y"][i] = y 
+            data_dict["z"][i] = z 
             data_dict["vx"][i] = vx
             data_dict["vy"][i] = vy
             data_dict["vz"][i] = vz
 
         return data_dict
 
+    # convert between local tangent plane coordinates to ECEF coordinates
     def LTP_to_ECEF(self, originCoord, LTPCoord):
         return originCoord + np.dot(self.tf_matrix(), LTPCoord)
 
+    # get the local tangent plane coordinates (in Cartesian) from zenith and azimuthal angles
     def getLTPCoord(self, mag):
         xi = self.zenithAngle * DEG_TO_RAD
         alpha = self.azimuthAngle * DEG_TO_RAD
@@ -253,8 +288,23 @@ class Trajectory:
 
         return np.array([row1, row2, row3])
 
+    # tuple that contains time and the values at some trajectory point
+    def valtup(self, t, TJP):
+        (r, theta, phi, vr, vtheta, vphi) = TJP.spherical()
+        return (t, r, theta, phi, vr, vtheta, vphi)
+
 
 class TrajectoryPoint:
+    '''
+    Class that records a single point in the particle trajectory
+    Members:
+    - latitude: the geographic latitude, with 0 at the equator (+90 at the North Pole, -90 at South pole) in degrees
+    - longitude: the geographic longitude, with 0 at the Prime Meridian (negative degrees towards Western hemisphere) in degrees
+    - altitude: the altitude above sea level
+    - vr: the radial velocity
+    - vtheta: the velocity in the polar direction
+    - vphi: the velocity in the azimuthal direction
+    '''
     def __init__(self,
                  latitude=0.,
                  longitude=0.,
@@ -325,9 +375,17 @@ class TrajectoryPoint:
         return np.array([vx, vy, vz])
 
     def __str__(self):
-        return "Latitude: {:.3f}, Longitude: {:.3f}, Altitude: {:.3f}, Velocity (vr, vtheta, vphi): ({:.6f}, {:.6f}, {:.6f})".format(
+        return "Latitude: {:.6f}, Longitude: {:.6f}, Altitude: {:.6f}, Velocity (vr, vtheta, vphi): ({:.6f}, {:.6f}, {:.6f})".format(
             self.latitude, self.longitude, self.altitude, self.vr, self.vtheta,
             self.vphi)
+
+    # both position and velocity in spherical coordinates
+    def spherical(self):
+        return np.concatenate((self.getSphericalCoord(), np.array([self.vr, self.vtheta, self.vphi])), axis=0)
+
+    # both position and velocity in Cartesian coordinates
+    def cartesian(self):
+        return np.concatenate((self.getCartesianCoord(), self.getCartesianVelocity()), axis=0)
 
 
 # class ParticleTrajectory:
