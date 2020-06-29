@@ -39,7 +39,7 @@ def plot_heatmap(zenith, azimuth, cutoff, locname, energy, particle):
 
     # plt.show()
     plt.savefig(os.path.join(
-        os.getcwd(), "plots",
+        os.getcwd(), "..", "gtracr_plots",
         "{0}_{1}_{2}_cutoffplot.png".format(locname, particle, energy)),
                 dpi=800)
 
