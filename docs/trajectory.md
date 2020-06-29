@@ -111,3 +111,8 @@
 - This implementation now works on a basic level. Getting involved in the debugging process, there are a few problems...
   - [x] There is a duplication issue of the trajectories for anti-proton at 12GeV at (0, -60, 20) for La, Lo, Alt, and zenith angle of 50, azimuth angle of 30 degrees. Not too sure what this is causing it, but it seems like the TJP are appended with the initial TJP first rather than the TJP of the origin.
   - This is now fixed, this was due to the conversion between the theta component of the integration iteration and the geographic latitude. This was fixed by taking the integration variables directly instead of performing the conversion after each process.
+
+
+### What to do now?
+- Document the code
+- 

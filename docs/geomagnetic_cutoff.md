@@ -160,3 +160,9 @@ Hopefully this allows a perfect conversion...
 
 - Here the $\phi$ is now defined from [$-\pi, \pi$] instead of [$0, 2\pi$]. This allows easier conversions for longitude with $\phi$.
 - There is still a problem with the cutoffs, seems like at any energy the particle doesnt reach the Earth at all, only for electrons at very low energies (~0.005GeV), which is definitely weird. I inputted the values from Baldini but they still do not give the correct trajectories. This is certainly weird and needs to be investigated later on.
+
+
+### Now
+- After fixing the Trajectory class, the problem with the weird cutoff behaviour was fixed. The geomagnetic cutoff is now completely integrated with the new Trajectory class. 
+- After doing a small test trial, it seems like this works as I intended it to, as the output for one plot has some cutoffs based on the zenith and azimuth angle.
+- Now we need to perform some cleanup to make the outputs have more convenience for the user and add some utility functions.
