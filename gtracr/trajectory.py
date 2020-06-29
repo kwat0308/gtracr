@@ -89,6 +89,8 @@ class Trajectory:
         # self.TJP_array = np.zeros(maxBuffer)
         self.time_array = [None] * maxBuffer
         self.TJP_array = [None] * maxBuffer  # list to append TJP objects
+        # self.time_array = []
+        # self.TJP_array = []
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
@@ -138,6 +140,9 @@ class Trajectory:
             self.time_array.extend([None] * (maxStep - self.maxBuffer))
             self.TJP_array.extend([None] * (maxStep - self.maxBuffer))
 
+        # self.time_array = [None] * maxStep
+        # self.TJP_array = [None] * maxStep
+
         # initialize array
         # time_array = np.zeros(maxStep)
         # TJP_array = np.zeros(maxStep)
@@ -173,6 +178,9 @@ class Trajectory:
 
             if curr_TJP.altitude < 0.:
                 break
+            
+            if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
+                print("{0} iterations completed".format(i-2))
 
             # ivals = init_TJP.spherical().insert(0, t)          
             # valtup = self.valtup(t, curr_TJP)
@@ -205,7 +213,7 @@ class Trajectory:
 
         # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
         # print(phi)
-        print(theta)
+        # print(theta)
 
         new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
         new_TJP.setSphericalCoord(r, theta, phi)
@@ -223,9 +231,11 @@ class Trajectory:
         for i, val in enumerate(self.time_array):
             if val == None:
                 self.time_array = self.time_array[:i]
+                break
         for i, val in enumerate(self.TJP_array):
             if val == None:
                 self.TJP_array = self.TJP_array[:i]
+                break
 
     # get the cartesian coordinates from the array of trajectory points for plotting purposes
     def getPlotter(self):
