@@ -41,6 +41,13 @@
   - uses the IGRF coefficients for the real magnetic field
   - Currently only dipole approximation is applied
 
+### Evaluators
+
+- A geomagnetic cutoff evaluator
+
+  - evaluates the valid zenith / azimuth angles for a certain particle at a certain energy / rigidity
+  - returns a heatmap of valid ranges as a function of zenith and azimuthal angle
+
 ### Tests
 
 - some test function that can accurately test our code
@@ -68,7 +75,8 @@
   - Using more classes to regroup certain aspects of the code
   - Understanding what we need / what we dont need as a function / class
 
-- [ ] Zenith and azimuthal angle is not implemented in the code
+- [x] Zenith and azimuthal angle is not implemented in the code
+
   - More about this below.
 
 - [ ] We are using / borrowing some ideas from Luca Baldini's scripts; licensing will be an issue here
@@ -94,7 +102,7 @@
 
 - [ ] Only dipole approximation currently applied
 
-- [ ] The DEs seem to work, however I am not sure why they work. This is important to check for my reference.
+- [x] The DEs seem to work, however I am not sure why they work. This is important to check for my reference.
 
 ## Past Issues
 
@@ -105,7 +113,7 @@
 ## Major Tasks
 
 - [ ] Figure out things about the licensing with Baldini's scripts
-- [ ] Obtain a heatmap of allowed and forbidden trajectories at a single location and altitude and at all zenith and azimuthal angles (i.e. determine the geomagnetic cutoff for each location on Earth)
+- [x] Obtain a heatmap of allowed and forbidden trajectories at a single location and altitude and at all zenith and azimuthal angles (i.e. determine the geomagnetic cutoff for each location on Earth)
 - [ ] Implement this for muons (not too sure, ask Anatoli about this when the time comes)
 - [ ] Do this with neutrinos too.
 
@@ -113,6 +121,6 @@
 
 - [x] Check out how the DE works
 - [ ] Clean up the code structure
-- [ ] Get the zenith angle / azimuthal angle coordinate transformation working
-- [ ] Figure out a system to detect allowed vs forbidden trajectories
-- [ ] Get the geomagnetic cutoff code working
+- [x] Get the zenith angle / azimuthal angle coordinate transformation working
+- [x] Figure out a system to detect allowed vs forbidden trajectories
+- [x] Get the geomagnetic cutoff code working
