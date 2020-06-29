@@ -1,13 +1,18 @@
 # gtracr
 gTraCR - A **G**PU-based **Tra**cking simulation for **C**osmic **R**ays
 
-This code simulates a cosmic ray from any longitude, latitude, altitude, local zenith angle and local azimuthal angle at any energy (in GeV). 
+This code simulates a cosmic ray from any longitude, latitude, altitude, local zenith angle and local azimuthal angle at any energy (in GeV) or rigidity (in GV). 
 
 ## Current progress
 - Simulates for proton / anti-proton, electron / positron
 - Uses the ideal dipole approximation for the Earth's magnetic field
 - Works at low energies (~50GeV) but doesnt work well at higher energies (>1PeV)
-- Assumes a non-relativistic particle
+- ~~Assumes a non-relativistic particle~~ This now fully accounts for relativistic charged particles.
+- We have established a geomagnetic cutoff evaluator that evaluates the valid zenith and azimuth angles at different locations on Earth
+  - Kamioka (the location of Super-K)
+  - South Pole (location of IceCube)
+  - University of Alberta
+- Different locations can easily be set / integrated as long as one knows the geographic latitude and longitude of the location.
 
 ## Requirements
 - Python 3 and above
@@ -32,6 +37,11 @@ The modules for the user-defined Matrix class (matrices created from C-arrays) c
 
 ## Testing for performance
 This can be done by running **test_trajectory.py**. The specifications should be changed manually within the code.
+
+
+## Geomagnetic Cutoffs
+The geomagnetic cutoffs are the cutoffs to the valid particle trajectories at a specified location on Earth. A heatmap of the valid trajectories (with the necessary configurations (particle type, particle energy / rigidity, location, altitude)) can be obtained by running **geomagnetic_cutoff.py**. 
+- The locations must be set from **add_location.py**, which will create a global database for different locations on Earth. 
 <!-- Performance tests can be run by **python tests/test_from_nparray.py** and **python tests/test_from_datafile.py**, where tests are run by using numpy arrays or constructed data files as valid inputs respectively. The maximum matrix dimension (n) for a n-by-n matrix is set to 1000. A plot showing the performance as a function of dimension will be displayed. The constructed numpy array / datafile will have random values from 0-1 as elements with the provided shape.
 Available flags:
 - **--verbosity, -v**: Set verbosity level (integer from 0-4). Default is 0. 
