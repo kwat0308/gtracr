@@ -1,4 +1,4 @@
-data/**
-plots/**
+# data/**
+# plots/**
 .ipynb_checkpoints
 **.pyc
