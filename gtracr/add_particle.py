@@ -8,12 +8,12 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.particle import Particle
+from gtracr.lib.particle import Particle
 
-particleDict = {}
+particle_dict = {}
 
 def add_to_dict(Particle):
-    particleDict[Particle.label] = Particle
+    particle_dict[Particle.label] = Particle
 
 
 # create particles

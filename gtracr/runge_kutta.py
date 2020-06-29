@@ -11,21 +11,10 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.utils import EARTH_RADIUS, g10, SPEED_OF_LIGHT, gamma, vmag_spherical
+from gtracr.utils import gamma, vmag_spherical
 from gtracr.magnetic_field import B_r, B_theta, B_phi
+from gtracr.constants import SPEED_OF_LIGHT
 
-# magnetic field (ideal dipole)
-
-# def B_r(r, theta):
-#     return 2.*(EARTH_RADIUS/r)**3.*g10*np.cos(theta)
-#     # return 2.*(1./r)**3.*g10*np.cos(theta)
-# #
-# def B_theta(r, theta):
-#     return (EARTH_RADIUS/r)**3.*g10*np.sin(theta)
-#     # return (1./r)**3.*g10*np.sin(theta)
-
-# def B_phi(r, theta):
-#     return 0.
 
 # # here we test for the magnetic field (ideal dipole)
 # # radial momentum DE
@@ -41,34 +30,99 @@ from gtracr.magnetic_field import B_r, B_theta, B_phi
 #     return particle.charge*(B_theta(r,th)*vr - B_r(r,th)*vth) / particle.mass
 
 
-# here we test for the magnetic field (ideal dipole)
+# obtained from D.F.Smart, M.A.Shea, Sept. 1, 2004
 # radial velocity DE
 def dvrdt(t, r, theta, phi, vr, vtheta, vphi, particle):
     term1 = particle.charge * (
-        vtheta * B_phi(r, theta) - B_theta(r, theta) * vphi) / (
+        vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) / (
             particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
     term2 = vtheta**2. / r
     term3 = vphi**2. / r
+
     return term1 + term2 + term3
+
+    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    # lor_term = (vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
+    # accel_term = r*(vtheta**2. - vphi**2.*np.sin(theta))
+
+    # return lorenz_const*lor_term + accel_term
+
+
+    # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
+    # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
+    # # term1 = particle.charge * (
+    # #     vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) / (
+    # #         particle.mass * gam)
+
+    # lor_term1 = (vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) * (SPEED_OF_LIGHT**2. - vr**2.)
+    # lor_term2 = r*vr*vtheta*(B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))
+    # lor_term3 = r*vr*vphi*np.sin(theta)*(B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
+
+    # accel_term1 = r*vtheta**2.
+    # accel_term2 = r*np.sin(theta)**2.*vphi**2.
+
+    # return accel_term1 + accel_term2 + lor_consts*(lor_term1 - lor_term2 + lor_term3)
+            
+    
 
 
 # theta component velocity DE
 def dvthetadt(t, r, theta, phi, vr, vtheta, vphi, particle):
-    term1 = particle.charge * (vphi * B_r(r, theta) - B_phi(r, theta) * vr) / (
+    term1 = particle.charge * (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr) / (
         particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
     term2 = (vr * vtheta) / r
     term3 = vphi**2. / (r * np.tan(theta))
     return term1 - term2 + term3
 
+    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    # lor_term = (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr)
+    # accel_term = r*vphi**2.*np.sin(theta)*np.cos(theta) - 2.*vr*vtheta
 
-# phi comp mom. DE
+    # return (lorenz_const*lor_term + accel_term) / r
+
+
+    # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
+    # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
+
+    # lor_term1 = r*vr*vtheta*(vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
+    # lor_term2 = (B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))*(SPEED_OF_LIGHT**2. - (r*vtheta)**2.)
+    # lor_term3 = r**2.*vtheta*vphi*np.sin(theta)*(B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
+
+    # accel_term1 = 2.*vr*vtheta
+    # accel_term2 = r*vphi**2.*np.sin(theta)*np.cos(theta)
+
+    # return (accel_term2 - accel_term1 + lor_consts*(lor_term1 - lor_term2 + lor_term3)) / r
+
+
+# phi comp vel/. DE
 def dvphidt(t, r, theta, phi, vr, vtheta, vphi, particle):
     term1 = particle.charge * (
-        B_theta(r, theta) * vr - B_r(r, theta) * vtheta) / (
+        B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta) / (
             particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
     term2 = (vr * vphi) / r
     term3 = (vtheta * vphi) / (r * np.tan(theta))
     return term1 - term2 - term3
+
+
+    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    # lor_term = (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
+    # accel_term = 2.*vphi*(vr*np.sin(theta) + r*vtheta*np.cos(theta))
+
+    # return (lorenz_const*lor_term - accel_term) / (r*np.sin(theta))
+
+
+    # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
+    # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
+
+    # lor_term1 = r*vr*vphi*np.sin(theta)*(vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
+    # lor_term2 = r**2.*vphi*vtheta*np.sin(theta)*(B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))
+    # lor_term3 = (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)*(SPEED_OF_LIGHT**2. - (r*vphi*np.sin(theta))**2.)
+
+    # accel_term1 = 2.*vr*vphi*np.sin(theta)
+    # accel_term2 = 2.*r*vtheta*vphi*np.cos(theta)
+
+    # return (- accel_term2 - accel_term1 + lor_consts*(lor_term1 - lor_term2 + lor_term3)) / (r*np.sin(theta))
+
 
 
 def wsum(n1, n2, n3, n4):
@@ -126,7 +180,7 @@ def runge_kutta(particle, h, ival):
     m4 = h * vph + c3 / ((r + k3) * (np.sin(th + l3)))
     a4 = h * dvrdt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
                    vph + c3, particle)
-    b4 = h * dvthetahdt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
+    b4 = h * dvthetadt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
                         vph + c3, particle)
     c4 = h * dvphidt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
                      vph + c3, particle)
@@ -146,6 +200,44 @@ def runge_kutta(particle, h, ival):
     vth = vth + b
     vph = vph + c
     t = t + h
+
+    return np.array([t, r, th, ph, vr, vth, vph])
+
+
+
+
+
+# evaluate 4th-order Runge Kutta with 6 coupled differential equations
+# this code can be reduced greatly by removing certain arguments, however by
+# making the code more general those arguments have to stay there.
+# Edit 2: this only performs one iteration of RK
+# the position DEs are replaced with the spherical definition for velocity
+def euler(particle, h, ival):
+
+    #set initial conditions to array
+    t = ival[0]
+    r = ival[1]
+    th = ival[2]
+    ph = ival[3]
+    vr = ival[4]
+    vth = ival[5]
+    vph = ival[6]
+
+    vrn = vr + h*dvrdt(t, r, th, ph, vr, vth, vph, particle)
+    vthn = vth + h*dvthetadt(t, r, th, ph, vr, vth, vph, particle)
+    vphn = vph + h*dvphidt(t, r, th, ph, vr, vth, vph, particle)
+
+    r += h*vr
+    th += h*vth
+    ph += h*vph
+
+    vr = vrn
+    vth = vthn
+    vph = vphn
+
+    t += h
+
+    
 
     return np.array([t, r, th, ph, vr, vth, vph])
 
