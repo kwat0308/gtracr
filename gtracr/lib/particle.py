@@ -5,7 +5,7 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 from gtracr.constants import SPEED_OF_LIGHT
-from gtracr.utils import gamma
+# from gtracr.utils import gamma
 
 
 class Particle:
@@ -42,7 +42,7 @@ class Particle:
         # return self.momentum
 
     def set_momentum_from_velocity(self):
-        self.momentum = gamma(self.velocity) * self.mass * self.velocity
+        self.momentum = np.reciprocal(np.sqrt(1 - (self.velocity / SPEED_OF_LIGHT)**2.)) * self.mass * self.velocity
 
     def set_momentum_from_rigidity(self, rigidity):
         self.momentum = rigidity*np.abs(self.charge)

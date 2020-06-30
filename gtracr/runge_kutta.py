@@ -11,122 +11,36 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.utils import gamma, vmag_spherical
+# from gtracr.utils import gamma, vmag_spherical
 from gtracr.magnetic_field import B_r, B_theta, B_phi
 from gtracr.constants import SPEED_OF_LIGHT
 
 
-# # here we test for the magnetic field (ideal dipole)
-# # radial momentum DE
-# def dprdt(t,r,th,ph,vr,vth,vph,particle):
-#     return -particle.charge*(B_theta(r,th)*vph) / particle.mass
-
-# # theta component momentum DE
-# def dpthdt(t,r,th,ph,vr,vth,vph,particle):
-#     return particle.charge*(B_r(r,th)*vph) / particle.mass
-
-# # phi comp mom. DE
-# def dpphdt(t,r,th,ph,vr,vth,vph, particle):
-#     return particle.charge*(B_theta(r,th)*vr - B_r(r,th)*vth) / particle.mass
-
-
 # obtained from D.F.Smart, M.A.Shea, Sept. 1, 2004
 # radial velocity DE
-def dvrdt(t, r, theta, phi, vr, vtheta, vphi, particle):
-    term1 = particle.charge * (
-        vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) / (
-            particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+def dvrdt(t, r, theta, phi, vr, vtheta, vphi, coeff):
+    term1 = coeff * (vtheta * B_phi(r, theta, phi) -
+                     B_theta(r, theta, phi) * vphi)
     term2 = vtheta**2. / r
     term3 = vphi**2. / r
 
     return term1 + term2 + term3
 
-    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
-    # lor_term = (vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
-    # accel_term = r*(vtheta**2. - vphi**2.*np.sin(theta))
-
-    # return lorenz_const*lor_term + accel_term
-
-
-    # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
-    # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
-    # # term1 = particle.charge * (
-    # #     vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) / (
-    # #         particle.mass * gam)
-
-    # lor_term1 = (vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) * (SPEED_OF_LIGHT**2. - vr**2.)
-    # lor_term2 = r*vr*vtheta*(B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))
-    # lor_term3 = r*vr*vphi*np.sin(theta)*(B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
-
-    # accel_term1 = r*vtheta**2.
-    # accel_term2 = r*np.sin(theta)**2.*vphi**2.
-
-    # return accel_term1 + accel_term2 + lor_consts*(lor_term1 - lor_term2 + lor_term3)
-            
-    
-
 
 # theta component velocity DE
-def dvthetadt(t, r, theta, phi, vr, vtheta, vphi, particle):
-    term1 = particle.charge * (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr) / (
-        particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+def dvthetadt(t, r, theta, phi, vr, vtheta, vphi, coeff):
+    term1 = coeff * (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr)
     term2 = (vr * vtheta) / r
     term3 = vphi**2. / (r * np.tan(theta))
     return term1 - term2 + term3
 
-    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
-    # lor_term = (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr)
-    # accel_term = r*vphi**2.*np.sin(theta)*np.cos(theta) - 2.*vr*vtheta
-
-    # return (lorenz_const*lor_term + accel_term) / r
-
-
-    # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
-    # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
-
-    # lor_term1 = r*vr*vtheta*(vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
-    # lor_term2 = (B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))*(SPEED_OF_LIGHT**2. - (r*vtheta)**2.)
-    # lor_term3 = r**2.*vtheta*vphi*np.sin(theta)*(B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
-
-    # accel_term1 = 2.*vr*vtheta
-    # accel_term2 = r*vphi**2.*np.sin(theta)*np.cos(theta)
-
-    # return (accel_term2 - accel_term1 + lor_consts*(lor_term1 - lor_term2 + lor_term3)) / r
-
 
 # phi comp vel/. DE
-def dvphidt(t, r, theta, phi, vr, vtheta, vphi, particle):
-    term1 = particle.charge * (
-        B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta) / (
-            particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+def dvphidt(t, r, theta, phi, vr, vtheta, vphi, coeff):
+    term1 = coeff * (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
     term2 = (vr * vphi) / r
     term3 = (vtheta * vphi) / (r * np.tan(theta))
     return term1 - term2 - term3
-
-
-    # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
-    # lor_term = (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
-    # accel_term = 2.*vphi*(vr*np.sin(theta) + r*vtheta*np.cos(theta))
-
-    # return (lorenz_const*lor_term - accel_term) / (r*np.sin(theta))
-
-
-    # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
-    # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
-
-    # lor_term1 = r*vr*vphi*np.sin(theta)*(vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
-    # lor_term2 = r**2.*vphi*vtheta*np.sin(theta)*(B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))
-    # lor_term3 = (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)*(SPEED_OF_LIGHT**2. - (r*vphi*np.sin(theta))**2.)
-
-    # accel_term1 = 2.*vr*vphi*np.sin(theta)
-    # accel_term2 = 2.*r*vtheta*vphi*np.cos(theta)
-
-    # return (- accel_term2 - accel_term1 + lor_consts*(lor_term1 - lor_term2 + lor_term3)) / (r*np.sin(theta))
-
-
-
-def wsum(n1, n2, n3, n4):
-    return (1. / 6.) * n1 + (1. / 3.) * n2 + (1. / 3.) * n3 + (1. / 6.) * n4
 
 
 # evaluate 4th-order Runge Kutta with 6 coupled differential equations
@@ -151,47 +65,67 @@ def runge_kutta(particle, h, ival):
     k1 = h * vr
     l1 = h * vth / r
     m1 = h * vph / (r * np.sin(th))
-    a1 = h * dvrdt(t, r, th, ph, vr, vth, vph, particle)
-    b1 = h * dvthetadt(t, r, th, ph, vr, vth, vph, particle)
-    c1 = h * dvphidt(t, r, th, ph, vr, vth, vph, particle)
+
+    vel1 = np.sqrt(vr**2. + (r * vth)**2. + (r * np.sin(th) * vph)**2.)
+    gamma1 = np.reciprocal(np.sqrt(1 - (vel1 / SPEED_OF_LIGHT)**2.))
+    coeff1 = particle.charge / (gamma1 * particle.mass)
+    a1 = h * dvrdt(t, r, th, ph, vr, vth, vph, coeff1)
+    b1 = h * dvthetadt(t, r, th, ph, vr, vth, vph, coeff1)
+    c1 = h * dvphidt(t, r, th, ph, vr, vth, vph, coeff1)
 
     k2 = h * vr + 0.5 * a1
     l2 = h * vth + 0.5 * b1 / (r + 0.5 * k1)
     m2 = h * vph + 0.5 * c1 / ((r + 0.5 * k1) * (np.sin(th + 0.5 * l1)))
+    vel2 = np.sqrt((vr + 0.5 * a1)**2. + ((r + 0.5 * k1) *
+                                          (vth + 0.5 * b1))**2. +
+                   ((r + 0.5 * k1) * np.sin(th + 0.5 * l1) *
+                    (vph + 0.5 * c1))**2.)
+    gamma2 = np.reciprocal(np.sqrt(1 - (vel2 / SPEED_OF_LIGHT)**2.))
+    coeff2 = particle.charge / (gamma2 * particle.mass)
     a2 = h * dvrdt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
-                   vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, particle)
+                   vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, coeff2)
     b2 = h * dvthetadt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
-                       vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, particle)
+                       vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, coeff2)
     c2 = h * dvphidt(t + 0.5 * h, r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
-                     vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, particle)
+                     vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1, coeff2)
 
     k3 = h * vr + 0.5 * a2
     l3 = h * vth + 0.5 * b2 / (r + 0.5 * k2)
     m3 = h * vph + 0.5 * c2 / ((r + 0.5 * k2) * (np.sin(th + 0.5 * l2)))
+    vel3 = np.sqrt((vr + 0.5 * a2)**2. + ((r + 0.5 * k2) *
+                                          (vth + 0.5 * b2))**2. +
+                   ((r + 0.5 * k2) * np.sin(th + 0.5 * l2) *
+                    (vph + 0.5 * c2))**2.)
+    gamma3 = np.reciprocal(np.sqrt(1 - (vel3 / SPEED_OF_LIGHT)**2.))
+    coeff3 = particle.charge / (gamma3 * particle.mass)
     a3 = h * dvrdt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
-                   vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, particle)
+                   vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, coeff3)
     b3 = h * dvthetadt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
-                       vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, particle)
+                       vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, coeff3)
     c3 = h * dvphidt(t + 0.5 * h, r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
-                     vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, particle)
+                     vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2, coeff3)
 
     k4 = h * vr + a3
     l4 = h * vth + b3 / (r + k3)
     m4 = h * vph + c3 / ((r + k3) * (np.sin(th + l3)))
+    vel4 = np.sqrt((vr + a3)**2. + ((r + k3) * (vth + b3))**2. +
+                   ((r + k3) * np.sin(th + l3) * (vph + c3))**2.)
+    gamma4 = np.reciprocal(np.sqrt(1 - (vel4 / SPEED_OF_LIGHT)**2.))
+    coeff4 = particle.charge / (gamma4 * particle.mass)
     a4 = h * dvrdt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
-                   vph + c3, particle)
+                   vph + c3, coeff4)
     b4 = h * dvthetadt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
-                        vph + c3, particle)
+                       vph + c3, coeff4)
     c4 = h * dvphidt(t + h, r + k3, th + l3, ph + m3, vr + a3, vth + b3,
-                     vph + c3, particle)
+                     vph + c3, coeff4)
 
     # get the weighted sum of each component
-    k = wsum(k1, k2, k3, k4)
-    l = wsum(l1, l2, l3, l4)
-    m = wsum(m1, m2, m3, m4)
-    a = wsum(a1, a2, a3, a4)
-    b = wsum(b1, b2, b3, b4)
-    c = wsum(c1, c2, c3, c4)
+    k = (1. / 6.) * k1 + (1. / 3.) * k2 + (1. / 3.) * k3 + (1. / 6.) * k4
+    l = (1. / 6.) * l1 + (1. / 3.) * l2 + (1. / 3.) * l3 + (1. / 6.) * l4
+    m = (1. / 6.) * m1 + (1. / 3.) * m2 + (1. / 3.) * m3 + (1. / 6.) * m4
+    a = (1. / 6.) * a1 + (1. / 3.) * a2 + (1. / 3.) * a3 + (1. / 6.) * a4
+    b = (1. / 6.) * b1 + (1. / 3.) * b2 + (1. / 3.) * b3 + (1. / 6.) * b4
+    c = (1. / 6.) * c1 + (1. / 3.) * c2 + (1. / 3.) * c3 + (1. / 6.) * c4
     # iterate by weighted sum of stepsize
     r = r + k
     th = th + l
@@ -203,376 +137,125 @@ def runge_kutta(particle, h, ival):
 
     return np.array([t, r, th, ph, vr, vth, vph])
 
+    # def wsum(n1, n2, n3, n4):
+    #     return (1. / 6.) * n1 + (1. / 3.) * n2 + (1. / 3.) * n3 + (1. / 6.) * n4
 
+    # # obtained from D.F.Smart, M.A.Shea, Sept. 1, 2004
+    # # radial velocity DE
+    # def dvrdt(t, r, theta, phi, vr, vtheta, vphi, particle):
+    #     term1 = particle.charge * (
+    #         vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) / (
+    #             particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    #     term2 = vtheta**2. / r
+    #     term3 = vphi**2. / r
 
+    #     return term1 + term2 + term3
 
+    #     # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    #     # lor_term = (vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
+    #     # accel_term = r*(vtheta**2. - vphi**2.*np.sin(theta))
 
-# evaluate 4th-order Runge Kutta with 6 coupled differential equations
-# this code can be reduced greatly by removing certain arguments, however by
-# making the code more general those arguments have to stay there.
-# Edit 2: this only performs one iteration of RK
-# the position DEs are replaced with the spherical definition for velocity
-def euler(particle, h, ival):
+    #     # return lorenz_const*lor_term + accel_term
+
+    #     # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
+    #     # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
+    #     # # term1 = particle.charge * (
+    #     # #     vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) / (
+    #     # #         particle.mass * gam)
+
+    #     # lor_term1 = (vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi) * (SPEED_OF_LIGHT**2. - vr**2.)
+    #     # lor_term2 = r*vr*vtheta*(B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))
+    #     # lor_term3 = r*vr*vphi*np.sin(theta)*(B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
+
+    #     # accel_term1 = r*vtheta**2.
+    #     # accel_term2 = r*np.sin(theta)**2.*vphi**2.
+
+    #     # return accel_term1 + accel_term2 + lor_consts*(lor_term1 - lor_term2 + lor_term3)
+
+    # # theta component velocity DE
+    # def dvthetadt(t, r, theta, phi, vr, vtheta, vphi, particle):
+    #     term1 = particle.charge * (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr) / (
+    #         particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    #     term2 = (vr * vtheta) / r
+    #     term3 = vphi**2. / (r * np.tan(theta))
+    #     return term1 - term2 + term3
+
+    #     # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    #     # lor_term = (vphi * B_r(r, theta, phi) - B_phi(r, theta, phi) * vr)
+    #     # accel_term = r*vphi**2.*np.sin(theta)*np.cos(theta) - 2.*vr*vtheta
+
+    #     # return (lorenz_const*lor_term + accel_term) / r
+
+    #     # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
+    #     # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
+
+    #     # lor_term1 = r*vr*vtheta*(vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
+    #     # lor_term2 = (B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))*(SPEED_OF_LIGHT**2. - (r*vtheta)**2.)
+    #     # lor_term3 = r**2.*vtheta*vphi*np.sin(theta)*(B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
+
+    #     # accel_term1 = 2.*vr*vtheta
+    #     # accel_term2 = r*vphi**2.*np.sin(theta)*np.cos(theta)
+
+    #     # return (accel_term2 - accel_term1 + lor_consts*(lor_term1 - lor_term2 + lor_term3)) / r
+
+    # # phi comp vel/. DE
+    # def dvphidt(t, r, theta, phi, vr, vtheta, vphi, particle):
+    #     term1 = particle.charge * (
+    #         B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta) / (
+    #             particle.mass * gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    #     term2 = (vr * vphi) / r
+    #     term3 = (vtheta * vphi) / (r * np.tan(theta))
+    #     return term1 - term2 - term3
+
+    #     # lorenz_const = particle.charge / (particle.mass*gamma(vmag_spherical(vr, vtheta, vphi, r, theta)))
+    #     # lor_term = (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)
+    #     # accel_term = 2.*vphi*(vr*np.sin(theta) + r*vtheta*np.cos(theta))
+
+    #     # return (lorenz_const*lor_term - accel_term) / (r*np.sin(theta))
+
+    #     # gam = gamma(vmag_spherical(vr, vtheta, vphi, r, theta))
+    #     # lor_consts = particle.charge / (particle.mass*gam*SPEED_OF_LIGHT**2.)
+
+    #     # lor_term1 = r*vr*vphi*np.sin(theta)*(vtheta * B_phi(r, theta, phi) - B_theta(r, theta, phi) * vphi)
+    #     # lor_term2 = r**2.*vphi*vtheta*np.sin(theta)*(B_phi(r, theta, phi) * vr - vphi * B_r(r, theta, phi))
+    #     # lor_term3 = (B_theta(r, theta, phi) * vr - B_r(r, theta, phi) * vtheta)*(SPEED_OF_LIGHT**2. - (r*vphi*np.sin(theta))**2.)
+
+    #     # accel_term1 = 2.*vr*vphi*np.sin(theta)
+    #     # accel_term2 = 2.*r*vtheta*vphi*np.cos(theta)
+
+    #     # return (- accel_term2 - accel_term1 + lor_consts*(lor_term1 - lor_term2 + lor_term3)) / (r*np.sin(theta))
+
+    # evaluate 4th-order Runge Kutta with 6 coupled differential equations
+    # this code can be reduced greatly by removing certain arguments, however by
+    # making the code more general those arguments have to stay there.
+    # Edit 2: this only performs one iteration of RK
+    # the position DEs are replaced with the spherical definition for velocity
+    # def euler(particle, h, ival):
 
     #set initial conditions to array
-    t = ival[0]
-    r = ival[1]
-    th = ival[2]
-    ph = ival[3]
-    vr = ival[4]
-    vth = ival[5]
-    vph = ival[6]
+    # t = ival[0]
+    # r = ival[1]
+    # th = ival[2]
+    # ph = ival[3]
+    # vr = ival[4]
+    # vth = ival[5]
+    # vph = ival[6]
 
-    vrn = vr + h*dvrdt(t, r, th, ph, vr, vth, vph, particle)
-    vthn = vth + h*dvthetadt(t, r, th, ph, vr, vth, vph, particle)
-    vphn = vph + h*dvphidt(t, r, th, ph, vr, vth, vph, particle)
+    # vrn = vr + h * dvrdt(t, r, th, ph, vr, vth, vph, particle)
+    # vthn = vth + h * dvthetadt(t, r, th, ph, vr, vth, vph, particle)
+    # vphn = vph + h * dvphidt(t, r, th, ph, vr, vth, vph, particle)
 
-    r += h*vr
-    th += h*vth
-    ph += h*vph
+    # r += h * vr
+    # th += h * vth
+    # ph += h * vph
 
-    vr = vrn
-    vth = vthn
-    vph = vphn
+    # vr = vrn
+    # vth = vthn
+    # vph = vphn
 
-    t += h
+    # t += h
 
-    
-
-    return np.array([t, r, th, ph, vr, vth, vph])
+    # return np.array([t, r, th, ph, vr, vth, vph])
 
 
-# # evaluate 4th-order Runge Kutta with 6 coupled differential equations
-# # this code can be reduced greatly by removing certain arguments, however by
-# # making the code more general those arguments have to stay there.
-# # for this version, the drdt / dthdt / dphdt arguments are replaced with
-# # pr, pth, pph in the RK steps
-# def runge_kutta(particle, h, n, ival):
-#     i = 1
 
-#     #create arrays that will be our final solution
-#     t = np.zeros(n)
-#     r = np.zeros(n)
-#     th = np.zeros(n)
-#     ph = np.zeros(n)
-#     pr = np.zeros(n)
-#     pth = np.zeros(n)
-#     pph = np.zeros(n)
-
-#     #set initial conditions to array
-#     t[0] = ival[0]
-#     r[0] = ival[1]
-#     th[0] = ival[2]
-#     ph[0] = ival[3]
-#     pr[0] = ival[4]
-#     pth[0] = ival[5]
-#     pph[0] = ival[6]
-
-#     while i < n:
-#         j = i - 1  # this is the term before "n+1th" term (ie nth term)
-
-#         # get the RK terms
-#         # k,l,m are for drdt, dthdt, dphdt
-#         # p,q,s are for momenta
-#         k1 = h * pr[j]
-#         l1 = h * pth[j]
-#         m1 = h * pph[j]
-#         a1 = h * dprdt(t[j], r[j], th[j], ph[j], pr[j], pth[j], pph[j], particle)
-#         b1 = h * dpthdt(t[j], r[j], th[j], ph[j], pr[j], pth[j], pph[j], particle)
-#         c1 = h * dpphdt(t[j], r[j], th[j], ph[j], pr[j], pth[j], pph[j], particle)
-
-#         k2 = h * pr[j] + 0.5 * a1
-#         l2 = h * pth[j] + 0.5 * b1
-#         m2 = h * pph[j] + 0.5 * c1
-#         a2 = h * dprdt(t[j] + 0.5 * h, r[j] + 0.5 * k1, th[j] + 0.5 * l1,
-#                        ph[j] + 0.5 * m1, pr[j] + 0.5 * a1, pth[j] + 0.5 * b1,
-#                        pph[j] + 0.5 * c1, particle)
-#         b2 = h * dpthdt(t[j] + 0.5 * h, r[j] + 0.5 * k1, th[j] + 0.5 * l1,
-#                        ph[j] + 0.5 * m1, pr[j] + 0.5 * a1, pth[j] + 0.5 * b1,
-#                        pph[j] + 0.5 * c1, particle)
-#         c2 = h * dpphdt(t[j] + 0.5 * h, r[j] + 0.5 * k1, th[j] + 0.5 * l1,
-#                        ph[j] + 0.5 * m1, pr[j] + 0.5 * a1, pth[j] + 0.5 * b1,
-#                        pph[j] + 0.5 * c1, particle)
-
-#         k3 = h * pr[j] + 0.5 * a2
-#         l3 = h * pth[j] + 0.5 * b2
-#         m3 = h * pph[j] + 0.5 * c2
-#         a3 = h * dprdt(t[j] + 0.5 * h, r[j] + 0.5 * k2, th[j] + 0.5 * l2,
-#                        ph[j] + 0.5 * m2, pr[j] + 0.5 * a2, pth[j] + 0.5 * b2,
-#                        pph[j] + 0.5 * c2, particle)
-#         b3 = h * dpthdt(t[j] + 0.5 * h, r[j] + 0.5 * k2, th[j] + 0.5 * l2,
-#                        ph[j] + 0.5 * m2, pr[j] + 0.5 * a2, pth[j] + 0.5 * b2,
-#                        pph[j] + 0.5 * c2, particle)
-#         c3 = h * dpphdt(t[j] + 0.5 * h, r[j] + 0.5 * k2, th[j] + 0.5 * l2,
-#                        ph[j] + 0.5 * m2, pr[j] + 0.5 * a2, pth[j] + 0.5 * b2,
-#                        pph[j] + 0.5 * c2, particle)
-
-#         k4 = h * pr[j] + a3
-#         l4 = h * pth[j] + b3
-#         m4 = h * pph[j] + c3
-#         a4 = h * dprdt(t[j] + h, r[j] + k3, th[j] + l3, ph[j] + m3, pr[j] + a3,
-#                        pth[j] + b3, pph[j] + c3, particle)
-#         b4 = h * dpthdt(t[j] + h, r[j] + k3, th[j] + l3, ph[j] + m3, pr[j] + a3,
-#                        pth[j] + b3, pph[j] + c3, particle)
-#         c4 = h * dpphdt(t[j] + h, r[j] + k3, th[j] + l3, ph[j] + m3, pr[j] + a3,
-#                        pth[j] + b3, pph[j] + c3, particle)
-
-#         # get the weighted sum of each component
-#         k = wsum(k1, k2, k3, k4)
-#         l = wsum(l1, l2, l3, l4)
-#         m = wsum(m1, m2, m3, m4)
-#         a = wsum(a1, a2, a3, a4)
-#         b = wsum(b1, b2, b3, b4)
-#         c = wsum(c1, c2, c3, c4)
-#         # iterate by weighted sum of stepsize
-#         r[i] = r[j] + k
-#         th[i] = th[j] + l
-#         ph[i] = ph[j] + m
-#         pr[i] = pr[j] + a
-#         pth[i] = pth[j] + b
-#         pph[i] = pph[j] + c
-#         t[i] = t[j] + h
-#         i += 1  # increment
-
-#     return np.array(t, r, th, ph, pr, pth, pph)
-
-# # evaluate 4th-order Runge Kutta with 6 coupled differential equations
-# # this code can be reduced greatly by removing certain arguments, however by
-# # making the code more general those arguments have to stay there.
-# # for this version, the drdt / dthdt / dphdt arguments are replaced with
-# # pr, pth, pph in the RK steps
-# def runge_kutta(dprdt, dpthdt, dpphdt, particle, h, n, ival):
-#     i = 1
-
-#     #create arrays that will be our final solution
-#     t = np.zeros(n)
-#     r = np.zeros(n)
-#     th = np.zeros(n)
-#     ph = np.zeros(n)
-#     pr = np.zeros(n)
-#     pth = np.zeros(n)
-#     pph = np.zeros(n)
-
-#     #set initial conditions to array
-#     t[0] = ival[0]
-#     r[0] = ival[1]
-#     th[0] = ival[2]
-#     ph[0] = ival[3]
-#     pr[0] = ival[4]
-#     pth[0] = ival[5]
-#     pph[0] = ival[6]
-
-#     while i < n:
-#         j = i - 1  # this is the term before "n+1th" term (ie nth term)
-
-#         # get the RK terms
-#         # k,l,m are for drdt, dthdt, dphdt
-#         # p,q,s are for momenta
-#         k1 = h * pr[j]
-#         l1 = h * pth[j]
-#         m1 = h * pph[j]
-#         a1 = h * dprdt(t[j], r[j], th[j], ph[j], pr[j], pth[j], pph[j], particle)
-#         b1 = h * dpthdt(t[j], r[j], th[j], ph[j], pr[j], pth[j], pph[j], particle)
-#         c1 = h * dpphdt(t[j], r[j], th[j], ph[j], pr[j], pth[j], pph[j], particle)
-
-#         k2 = h * pr[j] + 0.5 * a1
-#         l2 = h * pth[j] + 0.5 * b1
-#         m2 = h * pph[j] + 0.5 * c1
-#         a2 = h * dprdt(t[j] + 0.5 * h, r[j] + 0.5 * k1, th[j] + 0.5 * l1,
-#                        ph[j] + 0.5 * m1, pr[j] + 0.5 * a1, pth[j] + 0.5 * b1,
-#                        pph[j] + 0.5 * c1, particle)
-#         b2 = h * dpthdt(t[j] + 0.5 * h, r[j] + 0.5 * k1, th[j] + 0.5 * l1,
-#                        ph[j] + 0.5 * m1, pr[j] + 0.5 * a1, pth[j] + 0.5 * b1,
-#                        pph[j] + 0.5 * c1, particle)
-#         c2 = h * dpphdt(t[j] + 0.5 * h, r[j] + 0.5 * k1, th[j] + 0.5 * l1,
-#                        ph[j] + 0.5 * m1, pr[j] + 0.5 * a1, pth[j] + 0.5 * b1,
-#                        pph[j] + 0.5 * c1, particle)
-
-#         k3 = h * pr[j] + 0.5 * a2
-#         l3 = h * pth[j] + 0.5 * b2
-#         m3 = h * pph[j] + 0.5 * c2
-#         a3 = h * dprdt(t[j] + 0.5 * h, r[j] + 0.5 * k2, th[j] + 0.5 * l2,
-#                        ph[j] + 0.5 * m2, pr[j] + 0.5 * a2, pth[j] + 0.5 * b2,
-#                        pph[j] + 0.5 * c2, particle)
-#         b3 = h * dpthdt(t[j] + 0.5 * h, r[j] + 0.5 * k2, th[j] + 0.5 * l2,
-#                        ph[j] + 0.5 * m2, pr[j] + 0.5 * a2, pth[j] + 0.5 * b2,
-#                        pph[j] + 0.5 * c2, particle)
-#         c3 = h * dpphdt(t[j] + 0.5 * h, r[j] + 0.5 * k2, th[j] + 0.5 * l2,
-#                        ph[j] + 0.5 * m2, pr[j] + 0.5 * a2, pth[j] + 0.5 * b2,
-#                        pph[j] + 0.5 * c2, particle)
-
-#         k4 = h * pr[j] + a3
-#         l4 = h * pth[j] + b3
-#         m4 = h * pph[j] + c3
-#         a4 = h * dprdt(t[j] + h, r[j] + k3, th[j] + l3, ph[j] + m3, pr[j] + a3,
-#                        pth[j] + b3, pph[j] + c3, particle)
-#         b4 = h * dpthdt(t[j] + h, r[j] + k3, th[j] + l3, ph[j] + m3, pr[j] + a3,
-#                        pth[j] + b3, pph[j] + c3, particle)
-#         c4 = h * dpphdt(t[j] + h, r[j] + k3, th[j] + l3, ph[j] + m3, pr[j] + a3,
-#                        pth[j] + b3, pph[j] + c3, particle)
-
-#         # get the weighted sum of each component
-#         k = wsum(k1, k2, k3, k4)
-#         l = wsum(l1, l2, l3, l4)
-#         m = wsum(m1, m2, m3, m4)
-#         a = wsum(a1, a2, a3, a4)
-#         b = wsum(b1, b2, b3, b4)
-#         c = wsum(c1, c2, c3, c4)
-#         # iterate by weighted sum of stepsize
-#         r[i] = r[j] + k
-#         th[i] = th[j] + l
-#         ph[i] = ph[j] + m
-#         pr[i] = pr[j] + a
-#         pth[i] = pth[j] + b
-#         pph[i] = pph[j] + c
-#         t[i] = t[j] + h
-#         i += 1  # increment
-
-#     return np.array(t, r, th, ph, pr, pth, pph)
-
-# # evaluate 4th-order Runge Kutta with 6 coupled differential equations
-# # this code can be reduced greatly by removing certain arguments, however by
-# # making the code more general those arguments have to stay there.
-# def runge_kutta(dxdt, dydt, dzdt, dvxdt, dvydt, dvzdt, h, n, ival):
-#     i = 1
-
-#     #create arrays that will be our final solution
-#     t = np.zeros(n)
-#     x = np.zeros(n)
-#     y = np.zeros(n)
-#     z = np.zeros(n)
-#     vx = np.zeros(n)
-#     vy = np.zeros(n)
-#     vz = np.zeros(n)
-
-#     #set initial conditions to array
-#     t[0] = ival[0]
-#     x[0] = ival[1]
-#     y[0] = ival[2]
-#     z[0] = ival[3]
-#     vx[0] = ival[4]
-#     vy[0] = ival[5]
-#     vz[0] = ival[6]
-
-#     while i < n:
-#         j = i - 1  # this is the term before "n+1th" term (ie nth term)
-
-#         # get the RK terms k,l,m
-#         k1 = h * dxdt(t[j], x[j], y[j], z[j], vx[j], vy[j], vz[j])
-#         l1 = h * dydt(t[j], x[j], y[j], z[j], vx[j], vy[j], vz[j])
-#         m1 = h * dzdt(t[j], x[j], y[j], z[j], vx[j], vy[j], vz[j])
-#         p1 = h * dvxdt(t[j], x[j], y[j], z[j], vx[j], vy[j], vz[j])
-#         q1 = h * dvydt(t[j], x[j], y[j], z[j], vx[j], vy[j], vz[j])
-#         s1 = h * dvzdt(t[j], x[j], y[j], z[j], vx[j], vy[j], vz[j])
-
-#         k2 = h * dxdt(t[j] + 0.5 * h, x[j] + 0.5 * k1, y[j] + 0.5 * l1,
-#                       z[j] + 0.5 * m1, vx[j] + 0.5 * p1, vy[j] + 0.5 * q1,
-#                       vz[j] + 0.5 * s1)
-#         l2 = h * dydt(t[j] + 0.5 * h, x[j] + 0.5 * k1, y[j] + 0.5 * l1,
-#                       z[j] + 0.5 * m1, vx[j] + 0.5 * p1, vy[j] + 0.5 * q1,
-#                       vz[j] + 0.5 * s1)
-#         m2 = h * dzdt(t[j] + 0.5 * h, x[j] + 0.5 * k1, y[j] + 0.5 * l1,
-#                       z[j] + 0.5 * m1, vx[j] + 0.5 * p1, vy[j] + 0.5 * q1,
-#                       vz[j] + 0.5 * s1)
-#         p2 = h * dvxdt(t[j] + 0.5 * h, x[j] + 0.5 * k1, y[j] + 0.5 * l1,
-#                        z[j] + 0.5 * m1, vx[j] + 0.5 * p1, vy[j] + 0.5 * q1,
-#                        vz[j] + 0.5 * s1)
-#         q2 = h * dvydt(t[j] + 0.5 * h, x[j] + 0.5 * k1, y[j] + 0.5 * l1,
-#                        z[j] + 0.5 * m1, vx[j] + 0.5 * p1, vy[j] + 0.5 * q1,
-#                        vz[j] + 0.5 * s1)
-#         s2 = h * dvzdt(t[j] + 0.5 * h, x[j] + 0.5 * k1, y[j] + 0.5 * l1,
-#                        z[j] + 0.5 * m1, vx[j] + 0.5 * p1, vy[j] + 0.5 * q1,
-#                        vz[j] + 0.5 * s1)
-
-#         k3 = h * dxdt(t[j] + 0.5 * h, x[j] + 0.5 * k2, y[j] + 0.5 * l2,
-#                       z[j] + 0.5 * m2, vx[j] + 0.5 * p2, vy[j] + 0.5 * q2,
-#                       vz[j] + 0.5 * s2)
-#         l3 = h * dydt(t[j] + 0.5 * h, x[j] + 0.5 * k2, y[j] + 0.5 * l2,
-#                       z[j] + 0.5 * m2, vx[j] + 0.5 * p2, vy[j] + 0.5 * q2,
-#                       vz[j] + 0.5 * s2)
-#         m3 = h * dzdt(t[j] + 0.5 * h, x[j] + 0.5 * k2, y[j] + 0.5 * l2,
-#                       z[j] + 0.5 * m2, vx[j] + 0.5 * p2, vy[j] + 0.5 * q2,
-#                       vz[j] + 0.5 * s2)
-#         p3 = h * dvxdt(t[j] + 0.5 * h, x[j] + 0.5 * k2, y[j] + 0.5 * l2,
-#                        z[j] + 0.5 * m2, vx[j] + 0.5 * p2, vy[j] + 0.5 * q2,
-#                        vz[j] + 0.5 * s2)
-#         q3 = h * dvydt(t[j] + 0.5 * h, x[j] + 0.5 * k2, y[j] + 0.5 * l2,
-#                        z[j] + 0.5 * m2, vx[j] + 0.5 * p2, vy[j] + 0.5 * q2,
-#                        vz[j] + 0.5 * s2)
-#         s3 = h * dvzdt(t[j] + 0.5 * h, x[j] + 0.5 * k2, y[j] + 0.5 * l2,
-#                        z[j] + 0.5 * m2, vx[j] + 0.5 * p2, vy[j] + 0.5 * q2,
-#                        vz[j] + 0.5 * s2)
-
-#         k4 = h * dxdt(t[j] + h, x[j] + k3, y[j] + l3, z[j] + m3, vx[j] + p3,
-#                       vy[j] + q3, vz[j] + s3)
-#         l4 = h * dydt(t[j] + h, x[j] + k3, y[j] + l3, z[j] + m3, vx[j] + p3,
-#                       vy[j] + q3, vz[j] + s3)
-#         m4 = h * dzdt(t[j] + h, x[j] + k3, y[j] + l3, z[j] + m3, vx[j] + p3,
-#                       vy[j] + q3, vz[j] + s3)
-#         p4 = h * dvxdt(t[j] + h, x[j] + k3, y[j] + l3, z[j] + m3, vx[j] + p3,
-#                        vy[j] + q3, vz[j] + s3)
-#         q4 = h * dvydt(t[j] + h, x[j] + k3, y[j] + l3, z[j] + m3, vx[j] + p3,
-#                        vy[j] + q3, vz[j] + s3)
-#         s4 = h * dvzdt(t[j] + h, x[j] + k3, y[j] + l3, z[j] + m3, vx[j] + p3,
-#                        vy[j] + q3, vz[j] + s3)
-
-#         # get the weighted sum of each component
-#         k = wsum(k1, k2, k3, k4)
-#         l = wsum(l1, l2, l3, l4)
-#         m = wsum(m1, m2, m3, m4)
-#         p = wsum(p1, p2, p3, p4)
-#         q = wsum(q1, q2, q3, q4)
-#         s = wsum(s1, s2, s3, s4)
-#         # iterate by weighted sum of stepsize
-#         x[i] = x[j] + k
-#         y[i] = y[j] + l
-#         z[i] = z[j] + m
-#         vx[i] = vx[j] + p
-#         vy[i] = vy[j] + q
-#         vz[i] = vz[j] + s
-#         t[i] = t[j] + h
-#         i += 1  # increment
-
-#     return (t, x, y, z, vx, vy, vz)
-
-# performs 4th order Runge-Kutta until value x
-# returns
-# inputs:
-#   - diff_eq: the DE that we are trying to solve for (assume time-independent)
-#   - max_iter: the maximum iteration to perform RK for (not yet)
-#   - h : the step size
-#   - ftup : tuple of final values (tf, rf, thetaf, phif)
-#   - itup : tuple of initial value (t0, r0, theta0, phi0)
-# def runge_kutta(diff_eq, h, ftup, itup):
-#     # get max iterations from step
-#     max_iter = np.floor((ftup[0] - itup[0])/h)
-
-#     # set initial values
-#     t = itup[0]
-#     r = itup[1]
-#     theta = itup[2]
-#     phi = itup[3]
-
-#     for i in range(max_iter):
-#         k1 = h*dxdt(taui, xi, yi, zi, params)
-#         l1 = h*dydt(taui, xi, yi, zi, params)
-#         m1 = h*dzdt(taui, xi, yi, zi, params)
-
-#         k2 = h*dxdt(taui + 0.5*h, xi + 0.5*k1, yi + 0.5*l1, zi + 0.5*m1, params)
-#         l2 = h*dydt(taui + 0.5*h, xi + 0.5*k1, yi + 0.5*l1, zi + 0.5*m1, params)
-#         m2 = h*dzdt(taui + 0.5*h, xi + 0.5*k1, yi + 0.5*l1, zi + 0.5*m1, params)
-
-#         k3 = h*dxdt(taui + 0.5*h, xi + 0.5*k2, yi + 0.5*l2, zi + 0.5*m2, params)
-#         l3 = h*dydt(taui + 0.5*h, xi + 0.5*k2, yi + 0.5*l2, zi + 0.5*m2, params)
-#         m3 = h*dzdt(taui + 0.5*h, xi + 0.5*k2, yi + 0.5*l2, zi + 0.5*m2, params)
-
-#         k4 = h*dxdt(taui + h, xi + k3, yi + l3, zi + m3, params)
-#         l4 = h*dydt(taui + h, xi + k3, yi + l3, zi + m3, params)
-#         m4 = h*dzdt(taui + h, xi + k3, yi + l3, zi + m3, params)
-
-#         # get the weighted sum of each component
-#         k = wsum(k1, k2, k3, k4)
-#         l = wsum(l1, l2, l3, l4)
-#         m = wsum(m1, m2, m3, m4)
-
-#         return k, l, m

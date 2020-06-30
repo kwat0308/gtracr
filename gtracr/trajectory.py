@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 # from gtracr.utils import EARTH_RADIUS, g10, DEG_TO_RAD, get_sphcomp_momentum
 from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
-from gtracr.utils import *
+from gtracr.utils import CarCoord_to_SphCoord, CarVel_to_SphVel
 from gtracr.runge_kutta import runge_kutta
 from gtracr.add_particle import particle_dict
 
@@ -174,9 +174,13 @@ class Trajectory:
             # conditions
             if curr_TJP.altitude > self.escapeAltitude:
                 self.particleEscaped = True
+                self.time_array = self.time_array[:i]
+                self.TJP_array = self.TJP_array[:i]
                 break
 
             if curr_TJP.altitude < 0.:
+                self.time_array = self.time_array[:i]
+                self.TJP_array = self.TJP_array[:i]
                 break
             
             if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
@@ -189,7 +193,7 @@ class Trajectory:
             i += 1
 
         # trim zero values at the end
-        self.trim_arrays()
+        # self.trim_arrays()
         # np.trim_zeros(self.time_array, trim="b")
         # np.trim_zeros(self.TJP_array, trim="b")
 
@@ -215,27 +219,30 @@ class Trajectory:
         # print(phi)
         # print(theta)
 
-        new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
-        new_TJP.setSphericalCoord(r, theta, phi)
+        # new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
+        TJP.vr = vr
+        TJP.vtheta = vtheta
+        TJP.vphi = vphi
+        TJP.setSphericalCoord(r, theta, phi)
         valtup = (t, r, theta, phi, vr, vtheta,
          vphi)
 
-        # print(new_TJP, '\n')
+        # print(TJP, '\n')
 
-        return np.array([t, new_TJP, valtup])
+        return np.array([t, TJP, valtup])
 
     # trim the unnecessary values at the end of the array
-    def trim_arrays(self):
-        # np.trim_zeros(self.time_array, trim="b")
-        # np.trim_zeros(self.TJP_array, trim="b")
-        for i, val in enumerate(self.time_array):
-            if val == None:
-                self.time_array = self.time_array[:i]
-                break
-        for i, val in enumerate(self.TJP_array):
-            if val == None:
-                self.TJP_array = self.TJP_array[:i]
-                break
+    # def trim_arrays(self):
+    #     # np.trim_zeros(self.time_array, trim="b")
+    #     # np.trim_zeros(self.TJP_array, trim="b")
+    #     for i, val in enumerate(self.time_array):
+    #         if val == None:
+    #             self.time_array = self.time_array[:i]
+    #             break
+    #     for i, val in enumerate(self.TJP_array):
+    #         if val == None:
+    #             self.TJP_array = self.TJP_array[:i]
+    #             break
 
     # get the cartesian coordinates from the array of trajectory points for plotting purposes
     def getPlotter(self):
