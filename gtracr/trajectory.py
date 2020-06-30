@@ -11,7 +11,8 @@ sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 # from gtracr.utils import EARTH_RADIUS, g10, DEG_TO_RAD, get_sphcomp_momentum
 from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
 from gtracr.utils import CarCoord_to_SphCoord, CarVel_to_SphVel
-from gtracr.runge_kutta import runge_kutta
+# from gtracr.runge_kutta import runge_kutta
+from gtracr.runge_kutta import RKIntegrator
 from gtracr.add_particle import particle_dict
 
 key_list = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
@@ -157,16 +158,34 @@ class Trajectory:
         # print(self.TJP_array[0], self.TJP_array[1])
 
         # start iteration process
+        RKI = RKIntegrator(self.particle.mass, self.particle.charge)
         i = 2
-        t = stepSize
         curr_TJP = init_TJP
+        t = stepSize
+        (r, theta, phi, vr, vtheta, vphi) = curr_TJP.spherical()
         # valtup required for integration process due to conversions between theta values and latitude
-        valtup = self.valtup(t, curr_TJP)
+        # valtup = self.valtup(t, curr_TJP)
+        
+        # valtup = (t, r, theta, phi, vr, vtheta, vphi)
         # ivals = (t, init_TJP.spherical())
         # ivals = init_TJP.spherical().insert(0, t)
         while i < maxStep - 2:
             # print(t, curr_TJP)
-            (t, curr_TJP, valtup) = self.evalTrajectory(t, curr_TJP, stepSize, valtup)
+            # (t, curr_TJP, valtup) = self.evalTrajectory(t, curr_TJP, stepSize, valtup)
+            (t, r, theta, phi, vr, vtheta,
+            vphi) = RKI.evaluate(stepSize, (t, r, theta, phi, vr, vtheta, vphi))
+
+            # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
+            # print(phi)
+            # print(theta)
+
+            # new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
+            curr_TJP.vr = vr
+            curr_TJP.vtheta = vtheta
+            curr_TJP.vphi = vphi
+            curr_TJP.setSphericalCoord(r, theta, phi)
+            # valtup = (t, r, theta, phi, vr, vtheta,
+            # vphi)
 
             self.time_array[i] = t
             self.TJP_array[i] = curr_TJP
@@ -202,34 +221,34 @@ class Trajectory:
 
     # evaluate the trajectory at some time, position, and velocity using TrajectoryPoints
     # returns a new time and new TrajPoint
-    def evalTrajectory(self, t0, TJP, stepSize, valtup):
+    # def evalTrajectory(self, t0, TJP, stepSize, valtup):
 
-        # (r0, theta0, phi0) = TJP.getSphericalCoord()
+    #     # (r0, theta0, phi0) = TJP.getSphericalCoord()
 
-        # print(theta0)
+    #     # print(theta0)
 
-        # valtup = (t0, r0, theta0, phi0, TJP.vr, TJP.vtheta, TJP.vphi)
+    #     # valtup = (t0, r0, theta0, phi0, TJP.vr, TJP.vtheta, TJP.vphi)
 
-        # print(valtup)
+    #     # print(valtup)
 
-        (t, r, theta, phi, vr, vtheta,
-         vphi) = runge_kutta(self.particle, stepSize, valtup)
+    #     (t, r, theta, phi, vr, vtheta,
+    #      vphi) = runge_kutta(self.particle, stepSize, valtup)
 
-        # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
-        # print(phi)
-        # print(theta)
+    #     # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
+    #     # print(phi)
+    #     # print(theta)
 
-        # new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
-        TJP.vr = vr
-        TJP.vtheta = vtheta
-        TJP.vphi = vphi
-        TJP.setSphericalCoord(r, theta, phi)
-        valtup = (t, r, theta, phi, vr, vtheta,
-         vphi)
+    #     # new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
+    #     TJP.vr = vr
+    #     TJP.vtheta = vtheta
+    #     TJP.vphi = vphi
+    #     TJP.setSphericalCoord(r, theta, phi)
+    #     valtup = (t, r, theta, phi, vr, vtheta,
+    #      vphi)
 
-        # print(TJP, '\n')
+    #     # print(TJP, '\n')
 
-        return np.array([t, TJP, valtup])
+    #     return np.array([t, TJP, valtup])
 
     # trim the unnecessary values at the end of the array
     # def trim_arrays(self):

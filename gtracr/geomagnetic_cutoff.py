@@ -84,10 +84,14 @@ if __name__ == "__main__":
     # create particle trajectory with desired particle and energy
     # rigidity_list = [0.5, 10, 20, 50, 100, 1000]
     # energy_list = [5, 30, 50]
-    rigidity_list = [5, 10, 30, 50]
+    # rigidity_list = [5, 10, 30, 50]
     # rigidity_list = [5, 30]
 
-    # particle_list = ["p+"]
+    rigidity_list = [5]
+
+    particle_list = [("p+", particle_dict["p+"])]
+
+    location_list = [("Kamioka", location_dict["Kamioka"])]
 
     geomag_cutoffdict = {
         "Zenith": zenith_arr,
@@ -96,9 +100,11 @@ if __name__ == "__main__":
     }
 
     # locations: kamioka, icecube, uofa
-    for locname, loc in list(location_dict.items()):
+    # for locname, loc in list(location_dict.items()):
+    for (locname, loc) in location_list:
         geomag_cutoffdict["Location"][locname] = {}
-        for pname, particle in list(particle_dict.items()):
+        # for pname, particle in list(particle_dict.items()):
+        for (pname, particle) in particle_list:
             geomag_cutoffdict["Location"][locname][pname] = {}
             # for energy in energy_list:
             for rigidity in rigidity_list:
