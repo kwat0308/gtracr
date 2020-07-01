@@ -23,4 +23,13 @@ Other notes:
 
 Some fixes that I have implemented:
 - Effectively removed the gamma and vmag_spherical functions and wrote them explicitly in locations where they were used
+  - This reduced the time by half!! Reducing Pythonic function calls really did help :thumbsup:
 - Created classes for runge_kutta and magnetic field, and initialized them when the getTrajectory member function is called.
+  - This didnt change anything... (maybe a few milliseconds??)
+
+## Transitioning to C++
+To further optimize the code, I brought the RungeKutta part (and subsequently the MagneticField part) to C++. This will greatly increase performance as the time taken from function calls in runtime will be effectively removed as this will all be done in compile time in C++.
+
+### Current progress
+- I was able to make this work within C++. I created a test function within c++ and ran a simple testor with this. The variables clearly change with each iteration. 
+  - However, the values still do not update when brought into python. Further investigation is required.
