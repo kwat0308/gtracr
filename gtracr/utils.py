@@ -36,7 +36,7 @@ def SphCoord_to_CarCoord(r, theta, phi):
 def CarCoord_to_SphCoord(x, y, z):
     r = np.sqrt(x**2. + y**2. + z**2.)
     theta = np.arccos(z / r)
-    phi = np.arctan(y / x)
+    phi = np.arctan2(y, x)
     return np.array([r, theta, phi])
 
 
