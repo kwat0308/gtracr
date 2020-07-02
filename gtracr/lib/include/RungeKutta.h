@@ -8,8 +8,8 @@ class RungeKutta
 {
 private:
     MagneticField *bfield; 
-    const double& coeff;  // mass / charge
-    const double& h;  // step size
+    double coeff;  // mass / charge
+    double h;  // step size
 
 public:
     // Constructors
@@ -17,19 +17,26 @@ public:
     RungeKutta(const int, const double &, const double&);  // charge, mass, and stepsize
     // Destructor
     ~RungeKutta() {delete bfield;};
+
+    //getters
+    double stepSize() {return h;}
+
+    // setters
+    void set_stepSize(double h_new) {h = h_new;}
+
     // ODEs
-    const double &dvrdt(const double&, const double&, const double&, const double&, const double&, const double&);
+    double dvrdt(double, double, double, double, double, double);
 
-    const double &dvthetadt(const double&, const double&, const double&, const double&, const double&, const double&);
+    double dvthetadt(double, double, double, double, double, double);
 
-    const double &dvphidt(const double&, const double&, const double&, const double&, const double&, const double&);
+    double dvphidt(double, double, double, double, double, double);
 
     // utility functions
-    const double &velocity(const double&, const double&, const double&, const double&, const double&);
-    const double &gamma(const double&, const double&, const double&, const double&, const double&);
+    double velocity(double, double, double, double, double);
+    double gamma(double, double, double, double, double);
     // evaluator
     // pybind11::array_t<double> evaluate( pybind11::array_t<double>);
-    std::vector<double> evaluate( std::vector<double>);
+    std::vector<double> evaluate(const std::vector<double>&);
 };
 
 #endif //__RUNGEKUTTA_H_

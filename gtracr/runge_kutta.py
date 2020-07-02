@@ -32,7 +32,7 @@ class RungeKutta:
 
         # return term1 + term2 + term3
         lor_term = (vtheta * self.bfield.Bphi(r, theta, phi) - self.bfield.Btheta(r, theta, phi) * vphi)
-        accel_term = r*(vtheta**2. - vphi**2.*np.sin(theta))
+        accel_term = r*(vtheta**2. + vphi**2.*np.sin(theta)**2.)
 
         return (self.coeff / gamma)*lor_term + accel_term
 

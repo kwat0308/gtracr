@@ -12,8 +12,8 @@ sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
 from gtracr.utils import CarCoord_to_SphCoord, CarVel_to_SphVel
 # from gtracr.runge_kutta import runge_kutta
-from gtracr.runge_kutta import RungeKutta
-# from RungeKutta import RungeKutta
+# from gtracr.runge_kutta import RungeKutta
+from RungeKutta import RungeKutta
 # import RungeKutta
 from gtracr.add_particle import particle_dict
 
@@ -183,9 +183,9 @@ class Trajectory:
             # print(t, curr_TJP)
             # (t, curr_TJP, valtup) = self.evalTrajectory(t, curr_TJP, stepSize, valtup)
             [t, r, theta, phi, vr, vtheta,
-            vphi] = RKI.evaluate(np.array([t, r, theta, phi, vr, vtheta, vphi]))
+            vphi] = RKI.evaluate([t, r, theta, phi, vr, vtheta, vphi])
 
-            # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
+            print(t, r, theta, phi, vr, vtheta, vphi, '\n')
             # print(phi)
             # print(theta)
 
