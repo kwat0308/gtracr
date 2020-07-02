@@ -43,6 +43,7 @@ def plot_heatmap(zenith, azimuth, cutoff, locname, energy, particle):
         "{0}_{1}_{2}_cutoffplot.png".format(locname, particle, energy)),
                 dpi=800)
 
+
 # def get_cutoffs(zenith, azimuth):
 #     data = []
 #     for i, azimuth in enumerate(azimuth_arr):
@@ -56,7 +57,7 @@ def plot_heatmap(zenith, azimuth, cutoff, locname, energy, particle):
 
 #             print(endPoint)
 
-#             # if particle touches Earth's surface again 
+#             # if particle touches Earth's surface again
 #             # if startPoint.altitude == endPoint.altitude
 #             if endPoint.altitude < 0:
 #                 cutoff = 0
@@ -66,11 +67,8 @@ def plot_heatmap(zenith, azimuth, cutoff, locname, energy, particle):
 #             # geomag_cutoffdict["Location"][locname][energy]["Cutoff"].append(False)
 #             # geomag_cutoffdict["Location"][locname][energy][particle]["Cutoff"].append(cutoff)
 #             data[i][j] = cutoff
-    
+
 #     return data
-
-                
-
 
 if __name__ == "__main__":
 
@@ -115,23 +113,31 @@ if __name__ == "__main__":
                 for i, azimuth in enumerate(azimuth_arr):
                     cutoff_arr.append(np.zeros(num))
                     for j, zenith in enumerate(zenith_arr):
-                        print("Zenith Angle: {0}, Azimuth Angle {1}\n".format(zenith, azimuth))
-                # geomag_cutoffdict["Location"][locname][pname][rigidity] = {
-                #     "Cutoff": np.zeros(num)
-                # }
-                # traj = ParticleTrajectory(pname, energy, loc.latitude,
-                #                           loc.longitude, loc.altitude)
+                        print("Zenith Angle: {0}, Azimuth Angle {1}\n".format(
+                            zenith, azimuth))
+                        # geomag_cutoffdict["Location"][locname][pname][rigidity] = {
+                        #     "Cutoff": np.zeros(num)
+                        # }
+                        # traj = ParticleTrajectory(pname, energy, loc.latitude,
+                        #                           loc.longitude, loc.altitude)
 
-                # cutoff_arr = get_cutoffs(zenith_arr, azimuth_arr)
-                        traj = Trajectory(pname, loc.latitude, loc.longitude, loc.altitude, zenith, azimuth, rigidity=rigidity)
+                        # cutoff_arr = get_cutoffs(zenith_arr, azimuth_arr)
+                        traj = Trajectory(pname,
+                                          loc.latitude,
+                                          loc.longitude,
+                                          loc.altitude,
+                                          zenith,
+                                          azimuth,
+                                          rigidity=rigidity)
                         traj.getTrajectory()
                         cutoff_arr[i][j] = traj.particleEscaped
                         print(traj.particleEscaped)
 
-                plot_heatmap(zenith_arr, azimuth_arr, cutoff_arr, locname, rigidity,
-                            pname)
+                plot_heatmap(zenith_arr, azimuth_arr, cutoff_arr, locname,
+                             rigidity, pname)
 
-                geomag_cutoffdict["Location"][locname][pname][rigidity] = cutoff_arr
+                geomag_cutoffdict["Location"][locname][pname][
+                    rigidity] = cutoff_arr
 
     fpath = os.path.join(os.getcwd(), "geomagnetic_cutoff.pkl")
     export_as_pkl(fpath, geomag_cutoffdict)

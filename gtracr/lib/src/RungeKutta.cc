@@ -51,8 +51,8 @@ RungeKutta::RungeKutta(const int charge, const double &mass, const double &stepS
 double RungeKutta::dvrdt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {
     double dvrdt = ((coeff / gamma(vr, vtheta, vphi, r, theta)) * (vtheta * bfield->Bphi(r, theta, phi) -
-                                                                          bfield->Btheta(r, theta, phi) * vphi)) +
-                          (r*vtheta*vtheta) + (r*vphi*vphi*sin(theta)*sin(theta));
+                                                                   bfield->Btheta(r, theta, phi) * vphi)) +
+                   (r * vtheta * vtheta) + (r * vphi * vphi * sin(theta) * sin(theta));
     return dvrdt;
 }
 
@@ -60,8 +60,9 @@ double RungeKutta::dvrdt(double r, double theta, double phi, double vr, double v
 double RungeKutta::dvthetadt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {
     double dvthetadt = (((coeff / gamma(vr, vtheta, vphi, r, theta)) * (vphi * bfield->Br(r, theta, phi) -
-                                                                              bfield->Bphi(r, theta, phi) * vr)) / r) +
-                              (vphi*vphi*sin(theta)*cos(theta)) - (2.*vr*vtheta / r);
+                                                                        bfield->Bphi(r, theta, phi) * vr)) /
+                        r) +
+                       (vphi * vphi * sin(theta) * cos(theta)) - (2. * vr * vtheta / r);
     return dvthetadt;
 }
 
@@ -69,8 +70,9 @@ double RungeKutta::dvthetadt(double r, double theta, double phi, double vr, doub
 double RungeKutta::dvphidt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {
     double dvphidt = (((coeff / gamma(vr, vtheta, vphi, r, theta)) * (vr * bfield->Btheta(r, theta, phi) -
-                                                                            bfield->Br(r, theta, phi) * vtheta)) / (r*sin(theta))) -
-                            ((2.*vphi*vr) / r) + ((2.*vphi*vtheta) / tan(theta));
+                                                                      bfield->Br(r, theta, phi) * vtheta)) /
+                      (r * sin(theta))) -
+                     ((2. * vphi * vr) / r) + ((2. * vphi * vtheta) / tan(theta));
     return dvphidt;
 }
 
@@ -89,7 +91,7 @@ double RungeKutta::gamma(double vr, double vtheta, double vphi, double r, double
 
 // evaluate one step of the RK integration
 // The for loop of the evaluation should be brought into C++ in the near future
-std::vector<double> RungeKutta::evaluate(const std::vector<double>& values)
+std::vector<double> RungeKutta::evaluate(const std::vector<double> &values)
 {
     // pybind11::buffer_info buf = values.request();
 

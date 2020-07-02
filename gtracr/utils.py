@@ -74,8 +74,10 @@ def CarVel_to_SphVel(vx, vy, vz, r, theta, phi):
 #     pphi = p / (r * np.sin(theta))
 #     return (pr, ptheta, pphi)
 
+
 # magnitude of velocity from spherical components
 def vmag_spherical(vr, vtheta, vphi, r, theta):
     return np.sqrt(vr**2. + (r * vtheta)**2. + (r * np.sin(theta) * vphi)**2.)
+
 
 # # info function

@@ -42,7 +42,7 @@ class Trajectory:
                  altitude,
                  zenithAngle,
                  azimuthAngle,
-                    energy=None,
+                 energy=None,
                  rigidity=None,
                  escapeAltitude=1000.,
                  maxBuffer=10000):
@@ -102,38 +102,46 @@ class Trajectory:
         origin_TJP = TrajectoryPoint(self.latitude, self.longitude,
                                      self.altitude)
 
-        print(origin_TJP)
+        # print(origin_TJP)
         # print(origin_TJP.getSphericalCoord())
 
         # transformation process for coordinate
         originCoord = origin_TJP.getCartesianCoord()
         LTPCoord = self.getLTPCoord(mag=1e-10)
-        print(originCoord, LTPCoord)
-        print(self.tf_matrix())
+        # print(originCoord, LTPCoord)
+        # print(self.tf_matrix())
         (x, y, z) = self.LTP_to_ECEF(originCoord, LTPCoord)
-        (r, theta, phi) = CarCoord_to_SphCoord(x, y, z)
+        # (r, theta, phi) = CarCoord_to_SphCoord(x, y, z)
+        r = np.sqrt(x**2. + y**2. + z**2.)
+        theta = np.arccos(z / r)
+        phi = np.arctan2(y, x)
 
-        print(x, y, z)
-        print(r, theta, phi)
+        # print(x, y, z)
+        # print(r, theta, phi)
 
         # transformation for velocity
         originVel = np.array([0., 0., 0.])
         LTPVel = self.getLTPCoord(mag=self.particle.velocity)
         (vx, vy, vz) = self.LTP_to_ECEF(originVel, LTPVel)
 
-        (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
+        # (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
+        vr = vx * np.sin(theta) * np.cos(phi) + vy * np.sin(theta) * np.sin(
+            phi) + vz * np.cos(theta)
+        vtheta = (vx * np.cos(theta) * np.cos(phi) +
+                  vy * np.cos(theta) * np.sin(phi) - vz * np.sin(theta)) / r
+        vphi = (-vx * np.sin(phi) + vy * np.cos(phi)) / (r * np.sin(theta))
 
         # create new trajectory point and set the new coordinate and velocity
         init_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
         init_TJP.setSphericalCoord(r, theta, phi)
         # init_TJP.setCarVelocity(vr, vtheta, vphi)
 
-        print(init_TJP)
+        # print(init_TJP)
 
         return (origin_TJP, init_TJP)
 
     # evaluates the trajectory using Runge-Kutta methods
-    def getTrajectory(self, maxStep=10000, stepSize=0.1):
+    def getTrajectory(self, maxStep=10000, stepSize=0.01):
 
         # check if maxStep > maxBuffer, if so then update this
         # there is a better way to do this, im sure
@@ -175,7 +183,7 @@ class Trajectory:
         (r, theta, phi, vr, vtheta, vphi) = curr_TJP.spherical()
         # valtup required for integration process due to conversions between theta values and latitude
         # valtup = self.valtup(t, curr_TJP)
-        
+
         # valtup = (t, r, theta, phi, vr, vtheta, vphi)
         # ivals = (t, init_TJP.spherical())
         # ivals = init_TJP.spherical().insert(0, t)
@@ -183,9 +191,9 @@ class Trajectory:
             # print(t, curr_TJP)
             # (t, curr_TJP, valtup) = self.evalTrajectory(t, curr_TJP, stepSize, valtup)
             [t, r, theta, phi, vr, vtheta,
-            vphi] = RKI.evaluate([t, r, theta, phi, vr, vtheta, vphi])
+             vphi] = RKI.evaluate([t, r, theta, phi, vr, vtheta, vphi])
 
-            print(t, r, theta, phi, vr, vtheta, vphi, '\n')
+            # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
             # print(phi)
             # print(theta)
 
@@ -218,11 +226,11 @@ class Trajectory:
                 self.time_array = self.time_array[:i]
                 self.TJP_array = self.TJP_array[:i]
                 break
-            
-            if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
-                print("{0} iterations completed".format(i-2))
 
-            # ivals = init_TJP.spherical().insert(0, t)          
+            # if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
+            #     print("{0} iterations completed".format(i-2))
+
+            # ivals = init_TJP.spherical().insert(0, t)
             # valtup = self.valtup(t, curr_TJP)
 
             # some looping checker
@@ -301,9 +309,9 @@ class Trajectory:
             (x, y, z) = TJP.getCartesianCoord()
             (vx, vy, vz) = TJP.getCartesianVelocity()
 
-            data_dict["x"][i] = x 
-            data_dict["y"][i] = y 
-            data_dict["z"][i] = z 
+            data_dict["x"][i] = x
+            data_dict["y"][i] = y
+            data_dict["z"][i] = z
             data_dict["vx"][i] = vx
             data_dict["vy"][i] = vy
             data_dict["vz"][i] = vz
@@ -319,7 +327,7 @@ class Trajectory:
         xi = self.zenithAngle * DEG_TO_RAD
         alpha = self.azimuthAngle * DEG_TO_RAD
 
-        print(xi, alpha)
+        # print(xi, alpha)
 
         xt = mag * np.sin(xi) * np.cos(alpha)
         yt = mag * np.sin(xi) * np.sin(alpha)
@@ -440,11 +448,14 @@ class TrajectoryPoint:
 
     # both position and velocity in spherical coordinates
     def spherical(self):
-        return np.concatenate((self.getSphericalCoord(), np.array([self.vr, self.vtheta, self.vphi])), axis=0)
+        return np.concatenate((self.getSphericalCoord(),
+                               np.array([self.vr, self.vtheta, self.vphi])),
+                              axis=0)
 
     # both position and velocity in Cartesian coordinates
     def cartesian(self):
-        return np.concatenate((self.getCartesianCoord(), self.getCartesianVelocity()), axis=0)
+        return np.concatenate(
+            (self.getCartesianCoord(), self.getCartesianVelocity()), axis=0)
 
 
 # class ParticleTrajectory:
