@@ -57,11 +57,25 @@
 ### Relavent formulas
 
 - Differential equation used for equation of motion of charged particles:
-- $\begin{array}{l}\dfrac{\mathrm{d} v_{r}}{\mathrm{d} t}=\dfrac{e\left(v_{\theta} B_{\phi}-v_{\phi} B_{\theta}\right)}{m c}+\dfrac{v_{\theta}^{2}}{r}+\dfrac{v_{\phi}^{2}}{r}; \qquad \dfrac{\mathrm{d} v_{\theta}}{\mathrm{d} t}=\dfrac{e\left(v_{\phi} B_{r}-v_{r} B_{\phi}\right)}{m c}-\dfrac{v_{r} v_{\theta}}{r}+\dfrac{v_{\phi}^{2}}{r \tan \theta}; \qquad \dfrac{\mathrm{d} v_{\phi}}{\mathrm{d} t}=\dfrac{e\left(v_{r} B_{\theta}-v_{\theta} B_{r}\right)}{m c}-\dfrac{v_{r} v_{\phi}}{r}-\dfrac{v_{\theta} v_{\phi}}{r \tan \theta} \end{array}$
+- ~~$\begin{array}{l}\dfrac{\mathrm{d} v_{r}}{\mathrm{d} t}=\dfrac{e\left(v_{\theta} B_{\phi}-v_{\phi} B_{\theta}\right)}{m c}+\dfrac{v_{\theta}^{2}}{r}+\dfrac{v_{\phi}^{2}}{r}; \qquad \dfrac{\mathrm{d} v_{\theta}}{\mathrm{d} t}=\dfrac{e\left(v_{\phi} B_{r}-v_{r} B_{\phi}\right)}{m c}-\dfrac{v_{r} v_{\theta}}{r}+\dfrac{v_{\phi}^{2}}{r \tan \theta}; \qquad \dfrac{\mathrm{d} v_{\phi}}{\mathrm{d} t}=\dfrac{e\left(v_{r} B_{\theta}-v_{\theta} B_{r}\right)}{m c}-\dfrac{v_{r} v_{\phi}}{r}-\dfrac{v_{\theta} v_{\phi}}{r \tan \theta} \end{array}$~~
 
-  - Not really sure why the extra terms pop out, I should check this somewhere
-  - Source of equation: <https://www.dartmouth.edu/~sshepherd/research/Shielding/docs/Smart_00.pdf>
-  - In this source, they say that $m$ is the relativistic mass, so I do believe that this considers particles that are relativistic. This needs a thorough check however.
+  - ~~Not really sure why the extra terms pop out, I should check this somewhere~~
+  - ~~Source of equation: <https://www.dartmouth.edu/~sshepherd/research/Shielding/docs/Smart_00.pdf>~~
+  - ~~In this source, they say that $m$ is the relativistic mass, so I do believe that this considers particles that are relativistic. This needs a thorough check however.~~
+
+- ^ The above equation is not used anymore, instead we use the following set of ODEs:
+
+  - $\dfrac{dv_r}{dt} = \dfrac{q}{m\gamma}(v_\theta B_\phi - B_\theta v_\phi) + rv_\theta^2 + rv_\phi^2\sin^2\theta$
+  - $\dfrac{dv_\theta}{dt} = \dfrac{q}{m\gamma r}(v_rB_\phi - v_\phi B_r) - \dfrac{2v_r v_\theta}{r}+ v_\phi^2\sin\theta\cos\theta$
+  - $\dfrac{dv_\phi}{dt} = \dfrac{q}{m\gamma r\sin\theta}(v_rB_\theta - v_\theta B_r) - \dfrac{2v_r v_\phi}{r} - \dfrac{2v_\theta v_\phi}{\tan\theta}$
+  - These set of ODEs are derived from the relativistic acceleration formula in terms of the relativistic force:
+
+    - $\vec{a} = \dfrac{\vec{F}}{m\gamma} = \dfrac{q}{m\gamma}\left(\vec{v}\times\vec{B}\right)$
+    - Simplifications were made from the actual equation: $\vec{a} = \dfrac{1}{m\gamma}\left(\vec{F} - \dfrac{(\vec{v}\cdot\vec{F})\vec{v}}{c^2}\right)$ since $\vec{v}\cdot\vec{F} = q \vec{v}\cdot \left(\vec{v}\times\vec{B}\right) = 0$
+
+  - The extra terms are obtained from using the expression of acceleration defined in spherical coordinates (from Wikipedia):
+
+    - $\vec{a} = \left(\dfrac{dv_r}{dt} - rv_\theta^2 - rv_\phi^2\sin^2\theta\right)\hat{r}$ $+ \left(r\dfrac{dv_\theta}{dt} +2v_r v_\theta - v_\phi^2\sin\theta\cos\theta\right)\hat{\theta}$ $+ \left(r\sin\theta\dfrac{dv_\phi}{dt} + 2v_r v_\phi\sin\theta + 2rv_\theta v_\phi\cos\theta\right)\hat{\phi}$
 
 - Vertical rigidity cutoff: $R_V = \dfrac{R_0\sin^4\theta}{r^2}$
 
