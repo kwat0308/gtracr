@@ -181,34 +181,11 @@ We did this with 4 different particles at 4 different rigidities ($R = \dfrac{pc
 - Particles: positron, electron, proton, anti-proton
 - Rigidities: 5, 10, 30, 50 (in GV)
 
-The results are presented below:
+### After showing results to Anatoli...
 
-#### Kamioka
+- They werent visually appealing (black and white is a no go)
+- We should reduce the number of plots required
+- The colorbar was not used at all, so instead of presenting cutoff plots for each energy, we can do this all together in one plot with different shades + transparancy
+- Optimization of the code is necessary, reduce the time of the actual process.
 
-##### Positron
-
-##### Electron
-
-##### Proton
-
-##### Anti-Proton
-
-#### IceCube
-
-##### Positron
-
-##### Electron
-
-##### Proton
-
-##### Anti-Proton
-
-#### University of Alberta
-
-##### Positron
-
-##### Electron
-
-##### Proton
-
-##### Anti-Proton
+  - our goal is ~4 milliseconds, but 4 seconds is good for now.
