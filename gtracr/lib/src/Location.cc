@@ -7,38 +7,38 @@ Members:
 - longitude : the geographical longitude (0 = prime meridian) in decimal degrees 
 - altitude : the altitude above sea level of the location in km
 */
+#include <string>
 #include "Location.h"
 
 // Constructor
 // Default constructor at 0, 0
 Location::Location()
-    : lm{"Null Island"}, lat{0.}, lng{0.}, alt{0.}
+    : ln{"Null Island"}, lat{0.}, lng{0.}, alt{0.}
 {
 }
 
 // Constructor with default altitude
-Location::Location(const char *name, const double &latitude, const double &longitude)
-    : lm{name}, lat{latitude}, lng{longitude}, alt{0.}
+Location::Location(const std::string &name, const double &latitude, const double &longitude)
+    : ln{name}, lat{latitude}, lng{longitude}, alt{0.}
 {
 }
 
 // Constructor with variable altitude
-Location::Location(const char *name, const double &latitude, const double &longitude, const double &altitude)
-    : lm{name}, lat{latitude}, lng{longitude}, alt{altitude}
+Location::Location(const std::string &name, const double &latitude, const double &longitude, const double &altitude)
+    : ln{name}, lat{latitude}, lng{longitude}, alt{altitude}
 {
 }
 
 // copy constructor
 Location::Location(const Location &loc)
-    : lm{loc.lm}, lat{loc.lat}, lng{loc.lng}, alt{loc.alt}
+    : ln{loc.ln}, lat{loc.lat}, lng{loc.lng}, alt{loc.alt}
 {
 }
 
 // Copy assignment operator
 Location &Location::operator=(const Location &loc)
 {
-    delete[] lm;
-    lm = loc.lm;
+    ln = loc.ln;
     lat = loc.lat;
     lng = loc.lng;
     alt = loc.alt;

@@ -5,11 +5,11 @@
 class Particle
 {
 private:
-    const char *nm;  // Name
+    std::string nm;  // Name
     int pid;         // PDG ID
     double m;        // mass
     int ch;          // charge
-    const char *lbl; // label
+    std::string lbl; // label
 
     double p; // momentum
     double v; // velocity
@@ -18,38 +18,32 @@ private:
 public:
     // constructor
     Particle();
-    Particle(const char *, const int, const double &, const int, const char *);                 // no energy
-    Particle(const char *, const int, const double &, const int, const char *, const double &); // energy
+    Particle(const std::string &, const int, const double &, const int, const std::string &);                 // no energy
+    Particle(const std::string &, const int, const double &, const int, const std::string &, const double &); // energy
     // destructor
     ~Particle();
     // copy constructor / operator
     Particle(const Particle &);
     Particle &operator=(const Particle &);
     // getters
-    const char *name() { return nm; }
+    const std::string &name() { return nm; }
     const double &mass() { return m; }
     const int charge() { return ch; }
     const int pdgid() { return pid; }
-    const char *label() { return lbl; }
+    const std::string &label() { return lbl; }
     const double &momentum() { return p; }
     const double &velocity() { return v; }
     const double &rigidity() { return R; }
     // setters (only for p, v, R for now)
-    // void set_momentum_energy(const double&);
-    // void set_momentum_rigidity(const double&);
-    // void set_momentum_velocity(const double&);
-    // void set_velocity_energy(const double&);
-    // void set_velocity_momentum(const double&);
-    // void set_velocity_rigidity(const double&);
-    // void set_rigidity_energy(const double&);
-    // void set_rigidity_momentum(const double&);
-    // void set_rigidity_velocity(const double&);
-    // void set_from_energy(const double&);
-    // void set_from_momentum(const double&);
-    // void set_from_rigidity(const double&);
-    // void set_from_velocity(const double&);
-    // other member functions
-    const double &get_energy_rigidity(const double &);
+    void set_from_energy(const double&);
+    void set_from_momentum(const double&);
+    void set_from_rigidity(const double&);
+    void set_from_velocity(const double&);
+    // utility function
+    const double &gamma();  // using object velocity
+    const double &gamma(const double&); // user input velocity
+    // other member functions 
+    const double &get_energy_rigidity();
 };
 
 #endif //__PARTICLE_H_

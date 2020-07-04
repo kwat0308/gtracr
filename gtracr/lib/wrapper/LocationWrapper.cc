@@ -10,10 +10,10 @@ PYBIND11_MODULE(Location, M)
     M.doc() = "Location library set from geodesic coordinates.";
     py::class_<Location>(M, "Location")
         .def(py::init<>())
-        .def(py::init<const char *, const double &, const double &>())
-        .def(py::init<const char *, const double &, const double &, const double &>())
-        .def_readonly("name", &Particle::name)
-        .def_readonly("latitude", &Particle::latitude)
-        .def_readonly("longitude", &Particle::longitude)
-        .def_readonly("altitude", &Particle::altitude);
+        .def(py::init<const std::string &, const double &, const double &>())
+        .def(py::init<const std::string &, const double &, const double &, const double &>())
+        .def("name", &Location::name)
+        .def("latitude", &Location::latitude)
+        .def("longitude", &Location::longitude)
+        .def("altitude", &Location::altitude);
 }

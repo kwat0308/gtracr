@@ -1,11 +1,11 @@
 // Runge Kutta integrator class
 
-// #include <pybind11/pybind11.h>
-// #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 // #include <pybind11/stl.h>
 #include <vector>
 #include <math.h>
-#include <iostream>
+// #include <iostream>
 #include "constants.h"
 #include "MagneticField.h"
 #include "RungeKutta.h"
@@ -91,16 +91,16 @@ double RungeKutta::gamma(double vr, double vtheta, double vphi, double r, double
 
 // evaluate one step of the RK integration
 // The for loop of the evaluation should be brought into C++ in the near future
-std::vector<double> RungeKutta::evaluate(const std::vector<double> &values)
+std::vector<double> RungeKutta::evaluate(std::vector<double> values)
 {
     // pybind11::buffer_info buf = values.request();
 
     // double *ptr = (double *)buf.ptr;
 
-    // // double* rk1 = new double[7];    // stores 1st RungeKutta variables
-    // // double* rk2 = new double[7];    // stores 2nd RungeKutta variables
-    // // double* rk3 = new double[7];    // stores 3rd RungeKutta variables
-    // // double* rk4 = new double[7];    // stores 4th RungeKutta variables
+    // double* rk1 = new double[7];    // stores 1st RungeKutta variables
+    // double* rk2 = new double[7];    // stores 2nd RungeKutta variables
+    // double* rk3 = new double[7];    // stores 3rd RungeKutta variables
+    // double* rk4 = new double[7];    // stores 4th RungeKutta variables
 
     // double t = ptr[0];
     // double r = ptr[1];
@@ -170,15 +170,27 @@ std::vector<double> RungeKutta::evaluate(const std::vector<double> &values)
 
     // std::cout << k4 << ' ' << l4 << ' ' << m4 << ' ' << a4 << ' ' << b4 << ' ' << c4 << std::endl;
 
-    std::vector<double> vec(7, 0.);
+    // std::vector<double> vec(7, 0.);
 
-    vec[1] = r + (1. / 6.) * k1 + (1. / 3.) * k2 + (1. / 3.) * k3 + (1. / 6.) * k4;
-    vec[2] = th + (1. / 6.) * l1 + (1. / 3.) * l2 + (1. / 3.) * l3 + (1. / 6.) * l4;
-    vec[3] = ph + (1. / 6.) * m1 + (1. / 3.) * m2 + (1. / 3.) * m3 + (1. / 6.) * m4;
-    vec[4] = vr + (1. / 6.) * a1 + (1. / 3.) * a2 + (1. / 3.) * a3 + (1. / 6.) * a4;
-    vec[5] = vth + (1. / 6.) * b1 + (1. / 3.) * b2 + (1. / 3.) * b3 + (1. / 6.) * b4;
-    vec[6] = vph + (1. / 6.) * c1 + (1. / 3.) * c2 + (1. / 3.) * c3 + (1. / 6.) * c4;
-    vec[0] = t + h;
+    // auto nextvals = pybind11::array_t<double>(7);
+
+    // pybind11::buffer_info newbuf = nextvals.request();
+
+    // double* nextptr = (double*) newbuf.ptr;
+
+    values[1] = r + (1. / 6.) * k1 + (1. / 3.) * k2 + (1. / 3.) * k3 + (1. / 6.) * k4;
+    values[2] = th + (1. / 6.) * l1 + (1. / 3.) * l2 + (1. / 3.) * l3 + (1. / 6.) * l4;
+    values[3] = ph + (1. / 6.) * m1 + (1. / 3.) * m2 + (1. / 3.) * m3 + (1. / 6.) * m4;
+    values[4] = vr + (1. / 6.) * a1 + (1. / 3.) * a2 + (1. / 3.) * a3 + (1. / 6.) * a4;
+    values[5] = vth + (1. / 6.) * b1 + (1. / 3.) * b2 + (1. / 3.) * b3 + (1. / 6.) * b4;
+    values[6] = vph + (1. / 6.) * c1 + (1. / 3.) * c2 + (1. / 3.) * c3 + (1. / 6.) * c4;
+    values[0] = t + h;
+
+    //     for (int i=0; i<7; ++i) {
+    //     newbuf.ptr[i] = nextptr[i];
+    // }
+
+    // delete[] nextptr;
 
     // std::cout << h << std::endl;
 
@@ -188,7 +200,7 @@ std::vector<double> RungeKutta::evaluate(const std::vector<double> &values)
     //     std::cout << val << '\t';
     // }
 
-    return vec;
+    return values;
 }
 // pybind11::array_t<double> newarr(7) {t, r, th, ph, vr, vth, vph};
 

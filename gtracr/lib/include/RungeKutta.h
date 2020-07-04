@@ -19,10 +19,10 @@ public:
     ~RungeKutta() { delete bfield; };
 
     //getters
-    double stepSize() { return h; }
+    const double& stepSize() { return h; }
 
     // setters
-    void set_stepSize(double h_new) { h = h_new; }
+    void set_stepSize(const double& h_new) { h = h_new; }
 
     // ODEs
     double dvrdt(double, double, double, double, double, double);
@@ -35,8 +35,8 @@ public:
     double velocity(double, double, double, double, double);
     double gamma(double, double, double, double, double);
     // evaluator
-    // pybind11::array_t<double> evaluate( pybind11::array_t<double>);
-    std::vector<double> evaluate(const std::vector<double> &);
+    // pybind11::array_t<double> evaluate( const pybind11::array_t<double>&);
+    std::vector<double> evaluate(std::vector<double>);
 };
 
 #endif //__RUNGEKUTTA_H_

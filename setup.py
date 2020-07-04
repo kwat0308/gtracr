@@ -29,22 +29,31 @@ class get_pybind_include(object):
 ext_module = [
     Extension(
         'RungeKutta',
-        sources=["gtracr/lib/src/RungeKutta.cc", "gtracr/lib/src/RungeKuttaWrapper.cc", "gtracr/lib/src/MagneticField.cc"],
+        sources=["gtracr/lib/src/RungeKutta.cc", "gtracr/lib/wrapper/RungeKuttaWrapper.cc", "gtracr/lib/src/MagneticField.cc"],
+        # depends=["gtracr/lib/src/MagneticField.cc"],
+        library_dirs=["gtracr/lib"],
+        language='c++',
+        include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
+        extra_compile_args=["-O3"]
+    ),
+    Extension(
+        'Location',
+        sources=["gtracr/lib/src/Location.cc", "gtracr/lib/wrapper/LocationWrapper.cc"],
+        # depends=["gtracr/lib/src/MagneticField.cc"],
+        library_dirs=["gtracr/lib"],
+        language='c++',
+        include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
+        extra_compile_args=["-O3"]
+    ),
+    Extension(
+        'Particle',
+        sources=["gtracr/lib/src/Particle.cc", "gtracr/lib/wrapper/ParticleWrapper.cc"],
         # depends=["gtracr/lib/src/MagneticField.cc"],
         library_dirs=["gtracr/lib"],
         language='c++',
         include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
         extra_compile_args=["-O3"]
     )
-    # Extension(
-    #     'RungeKutta',
-    #     sources=["gtracr/lib/src/rk.cc"],
-    #     # depends=["gtracr/lib/src/MagneticField.cc"],
-    #     # library_dirs=["gtracr/lib"],
-    #     language='c++',
-    #     # include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
-    #     extra_compile_args=["-O3"]
-    # )
 ]
 
 with open("README.md", "r") as f:

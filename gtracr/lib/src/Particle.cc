@@ -21,7 +21,7 @@ Notes:
 Example:
 proton: proton = Particle("Proton", 2212, 0.938272, "p+")
 */
-
+#include <string>
 #include <math.h>
 #include "constants.h"
 #include "Particle.h"
@@ -41,7 +41,7 @@ Particle::Particle()
 
 // Construct with given initial configurations
 // default energy set to 1GeV
-Particle::Particle(const char *name, const int pdgid, const double &mass, const int charge, const char *label)
+Particle::Particle(const std::string &name, const int pdgid, const double &mass, const int charge, const std::string &label)
     : nm{name}, pid{pdgid}, m{mass}, ch{charge}, lbl{label}
 {
     p = sqrt(m * m + 1.);
@@ -52,7 +52,7 @@ Particle::Particle(const char *name, const int pdgid, const double &mass, const 
 }
 
 // Constructor with some provided energy
-Particle::Particle(const char *name, const int pdgid, const double &mass, const int charge, const char *label, const double &energy)
+Particle::Particle(const std::string &name, const int pdgid, const double &mass, const int charge, const std::string &label, const double &energy)
     : nm{name}, pid{pdgid}, m{mass}, ch{charge}, lbl{label}
 {
     p = sqrt(m * m + energy * energy);
@@ -65,8 +65,6 @@ Particle::Particle(const char *name, const int pdgid, const double &mass, const 
 // Destructor
 Particle::~Particle()
 {
-    delete[] nm;
-    delete[] lbl;
 }
 
 // copy constructor
@@ -81,11 +79,6 @@ Particle::Particle(const Particle &part)
 // copy assignment operator
 Particle &Particle::operator=(const Particle &part)
 {
-    // const char* nam = part.nm;
-    // const char* lb = part.lbl;
-    // delete member pointers
-    delete[] nm;
-    delete[] lbl;
     nm = part.nm;
     pid = part.pid;
     m = part.m;
@@ -97,8 +90,58 @@ Particle &Particle::operator=(const Particle &part)
     R = part.R;
 }
 
+// Lorentz factor
+const double &Particle::gamma()
+{
+    return 1. / sqrt(1. - (v / constants::sc) * (v / constants::sc));
+}
+
+const double &Particle::gamma(const double &vel)
+{
+    return 1. / sqrt(1. - (vel / constants::sc) * (vel / constants::sc));
+}
+
 // setters
-// void set_momentum_energy(const double& energy)
-// {
-//     p = sqrt(mass()*mass() + energy*energy);
-// }
+void Particle::set_from_energy(const double &energy)
+{
+    p = sqrt(energy * energy - mass() * mass());
+    v = ((momentum() * constants::sc) /
+         sqrt(
+             momentum() * momentum() +
+             (mass() * constants::sc) * (mass() * constants::sc)));
+    R = momentum() / abs(charge());
+}
+
+void Particle::set_from_momentum(const double &mmtum)
+{
+    p = mmtum;
+    v = ((momentum() * constants::sc) /
+         sqrt(
+             momentum() * momentum() +
+             (mass() * constants::sc) * (mass() * constants::sc)));
+    R = momentum() / abs(charge());
+}
+
+void Particle::set_from_rigidity(const double &rgdty)
+{
+    p = rgdty * abs(charge());
+    v = ((momentum() * constants::sc) /
+         sqrt(
+             momentum() * momentum() +
+             (mass() * constants::sc) * (mass() * constants::sc)));
+    R = rgdty;
+}
+
+void Particle::set_from_velocity(const double &vel)
+{
+    p = gamma(vel) * mass() * vel;
+    v = vel;
+    R = momentum() / abs(charge());
+}
+
+// other member functions
+// obtain energy from rigidity
+const double &Particle::get_energy_rigidity()
+{
+    return sqrt(momentum()*momentum() + mass()*mass()) * rigidity() * abs(charge());
+}
