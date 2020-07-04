@@ -22,6 +22,8 @@ Example:
 proton: proton = Particle("Proton", 2212, 0.938272, "p+")
 */
 #include <string>
+#include <stdexcept>
+#include <iostream>
 #include <math.h>
 #include "constants.h"
 #include "Particle.h"
@@ -52,14 +54,22 @@ Particle::Particle(const std::string &name, const int pdgid, const double &mass,
 }
 
 // Constructor with some provided energy
-Particle::Particle(const std::string &name, const int pdgid, const double &mass, const int charge, const std::string &label, const double &energy)
+Particle::Particle(const std::string &name, const int pdgid, const double &mass, const int charge, const std::string &label, const double &energy = 0., const double &rigidity = 0.)
     : nm{name}, pid{pdgid}, m{mass}, ch{charge}, lbl{label}
 {
-    p = sqrt(m * m + energy * energy);
-    v = (p * constants::sc) /
-        sqrt(
-            (p * p) + (m * constants::sc) * (m * constants::sc));
-    R = p / abs(ch);
+    // set kinematical variables if energy xor rigidity is given
+    if (abs(energy) < 1e-10)
+    {
+        set_from_energy(energy);
+    }
+    else if (abs(rigidity) < 1e-10)
+    {
+        set_from_rigidity(rigidity);
+    }
+    else
+    {
+        throw std::runtime_error("Input energy or rigidity, but not both or none!");
+    }
 }
 
 // Destructor
@@ -88,6 +98,7 @@ Particle &Particle::operator=(const Particle &part)
     p = part.p;
     v = part.v;
     R = part.R;
+    return *this;
 }
 
 // Lorentz factor
@@ -143,5 +154,17 @@ void Particle::set_from_velocity(const double &vel)
 // obtain energy from rigidity
 const double &Particle::get_energy_rigidity()
 {
-    return sqrt(momentum()*momentum() + mass()*mass()) * rigidity() * abs(charge());
+    return sqrt(momentum() * momentum() + mass() * mass()) * rigidity() * abs(charge());
+}
+
+// print contents
+void Particle::print()
+{
+    std::cout << "Particle: " << nm << " (" << lbl << "), "
+              << "PDG ID: " << pid << ", "
+              << "Mass [GeV]: " << m << ", "
+              << "Charge [e]: " << ch << std::endl;
+    std::cout << "Current Momentum [GeV]: " << p << ", "
+              << "Current Velocity: " << v << ", "
+              << "Current Rigidity: " << R << std::endl;
 }

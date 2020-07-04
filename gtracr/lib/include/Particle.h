@@ -19,7 +19,7 @@ public:
     // constructor
     Particle();
     Particle(const std::string &, const int, const double &, const int, const std::string &);                 // no energy
-    Particle(const std::string &, const int, const double &, const int, const std::string &, const double &); // energy
+    Particle(const std::string &, const int, const double &, const int, const std::string &, const double &, const double &);  // with energy / rigidity
     // destructor
     ~Particle();
     // copy constructor / operator
@@ -42,6 +42,7 @@ public:
     // utility function
     const double &gamma();  // using object velocity
     const double &gamma(const double&); // user input velocity
+    void print();
     // other member functions 
     const double &get_energy_rigidity();
 };

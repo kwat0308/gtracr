@@ -8,6 +8,7 @@ Members:
 - altitude : the altitude above sea level of the location in km
 */
 #include <string>
+#include <iostream>
 #include "Location.h"
 
 // Constructor
@@ -17,14 +18,14 @@ Location::Location()
 {
 }
 
-// Constructor with default altitude
-Location::Location(const std::string &name, const double &latitude, const double &longitude)
-    : ln{name}, lat{latitude}, lng{longitude}, alt{0.}
+// Constructor with variable altitude
+Location::Location(const double &latitude, const double &longitude, const double &altitude)
+    : ln{"DEFAULT"}, lat{latitude}, lng{longitude}, alt{altitude}
 {
 }
 
-// Constructor with variable altitude
-Location::Location(const std::string &name, const double &latitude, const double &longitude, const double &altitude)
+// Constructor with default altitude
+Location::Location(const std::string &name, const double &latitude, const double &longitude, const double &altitude = 0.)
     : ln{name}, lat{latitude}, lng{longitude}, alt{altitude}
 {
 }
@@ -42,4 +43,15 @@ Location &Location::operator=(const Location &loc)
     lat = loc.lat;
     lng = loc.lng;
     alt = loc.alt;
+    return *this;
+}
+
+// print contents
+void Location::print()
+{
+    std::cout << "Location Name: " << ln << ", "
+              << "Latitude: " << lat << ", "
+              << "Longitude: " << lng << ", "
+              << "Altitude: " << alt
+              << std::endl;
 }

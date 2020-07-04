@@ -9,6 +9,7 @@ namespace constants
     constexpr double RE = 6371.2;
     constexpr double pi = 3.14159265;
     constexpr double DEG_TO_RAD = pi / (180.);
+    constexpr double RAD_TO_DEG = 180. / pi;
 }
 
 #endif //__CONSTANTS_H_
