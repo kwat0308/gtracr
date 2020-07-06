@@ -8,12 +8,13 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.lib.particle import Particle
+# from gtracr.lib.particle import Particle
+from Particle import Particle
 
 particle_dict = {}
 
-def add_to_dict(Particle):
-    particle_dict[Particle.label] = Particle
+def add_to_dict(part):
+    particle_dict[part.label()] = part
 
 
 # create particles
@@ -24,3 +25,6 @@ pm = Particle("anti-proton", -2122, 0.937272, -1, "p-")
 
 for part in [ep, em, pp, pm]:
     add_to_dict(part)
+
+print(Particle())
+print(particle_dict)

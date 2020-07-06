@@ -12,7 +12,9 @@ sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
 from gtracr.utils import CarCoord_to_SphCoord, CarVel_to_SphVel
 # from gtracr.runge_kutta import runge_kutta
-from gtracr.runge_kutta import RKIntegrator
+# from gtracr.runge_kutta import RungeKutta
+from RungeKutta import RungeKutta
+# import RungeKutta
 from gtracr.add_particle import particle_dict
 
 key_list = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
@@ -40,10 +42,10 @@ class Trajectory:
                  altitude,
                  zenithAngle,
                  azimuthAngle,
-                    energy=None,
+                 energy=None,
                  rigidity=None,
                  escapeAltitude=1000.,
-                 maxBuffer=1000000):
+                 maxBuffer=10000):
         self.particle = particle_dict[particleName]
         self.latitude = latitude
         self.longitude = longitude
@@ -105,11 +107,14 @@ class Trajectory:
 
         # transformation process for coordinate
         originCoord = origin_TJP.getCartesianCoord()
-        LTPCoord = self.getLTPCoord(mag=1.)
-        # print(LTPCoord)
+        LTPCoord = self.getLTPCoord(mag=1e-10)
+        # print(originCoord, LTPCoord)
         # print(self.tf_matrix())
         (x, y, z) = self.LTP_to_ECEF(originCoord, LTPCoord)
-        (r, theta, phi) = CarCoord_to_SphCoord(x, y, z)
+        # (r, theta, phi) = CarCoord_to_SphCoord(x, y, z)
+        r = np.sqrt(x**2. + y**2. + z**2.)
+        theta = np.arccos(z / r)
+        phi = np.arctan2(y, x)
 
         # print(x, y, z)
         # print(r, theta, phi)
@@ -119,7 +124,12 @@ class Trajectory:
         LTPVel = self.getLTPCoord(mag=self.particle.velocity)
         (vx, vy, vz) = self.LTP_to_ECEF(originVel, LTPVel)
 
-        (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
+        # (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
+        vr = vx * np.sin(theta) * np.cos(phi) + vy * np.sin(theta) * np.sin(
+            phi) + vz * np.cos(theta)
+        vtheta = (vx * np.cos(theta) * np.cos(phi) +
+                  vy * np.cos(theta) * np.sin(phi) - vz * np.sin(theta)) / r
+        vphi = (-vx * np.sin(phi) + vy * np.cos(phi)) / (r * np.sin(theta))
 
         # create new trajectory point and set the new coordinate and velocity
         init_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
@@ -131,15 +141,20 @@ class Trajectory:
         return (origin_TJP, init_TJP)
 
     # evaluates the trajectory using Runge-Kutta methods
-    def getTrajectory(self, maxStep=10000, stepSize=0.1):
+    def getTrajectory(self, maxStep=10000, stepSize=0.01):
 
         # check if maxStep > maxBuffer, if so then update this
         # there is a better way to do this, im sure
         if maxStep > self.maxBuffer:
             # self.time_array = np.zeros(maxStep)
             # self.TJP_array = np.zeros(maxStep)
-            self.time_array.extend([None] * (maxStep - self.maxBuffer))
-            self.TJP_array.extend([None] * (maxStep - self.maxBuffer))
+            self.time_array.extend([None] * ((maxStep) - self.maxBuffer))
+            self.TJP_array.extend([None] * ((maxStep) - self.maxBuffer))
+        elif maxStep < self.maxBuffer:
+            self.time_array = self.time_array[:maxStep]
+            self.TJP_array = self.TJP_array[:maxStep]
+
+        # print(self.time_array, self.TJP_array)
 
         # self.time_array = [None] * maxStep
         # self.TJP_array = [None] * maxStep
@@ -154,41 +169,51 @@ class Trajectory:
         # append both time array and TJP
         self.time_array[0:2] = [0., stepSize]
         self.TJP_array[0:2] = [origin_TJP, init_TJP]
+        # self.time_array[0] = stepSize
+        # self.TJP_array[0] = init_TJP
 
         # print(self.TJP_array[0], self.TJP_array[1])
 
         # start iteration process
-        RKI = RKIntegrator(self.particle.mass, self.particle.charge)
+        # RKI = RKIntegrator(self.particle.mass, self.particle.charge)
+        RKI = RungeKutta(self.particle.charge, self.particle.mass, stepSize)
         i = 2
         curr_TJP = init_TJP
         t = stepSize
         (r, theta, phi, vr, vtheta, vphi) = curr_TJP.spherical()
         # valtup required for integration process due to conversions between theta values and latitude
         # valtup = self.valtup(t, curr_TJP)
-        
+
         # valtup = (t, r, theta, phi, vr, vtheta, vphi)
         # ivals = (t, init_TJP.spherical())
         # ivals = init_TJP.spherical().insert(0, t)
-        while i < maxStep - 2:
+        while i < maxStep:
             # print(t, curr_TJP)
             # (t, curr_TJP, valtup) = self.evalTrajectory(t, curr_TJP, stepSize, valtup)
-            (t, r, theta, phi, vr, vtheta,
-            vphi) = RKI.evaluate(stepSize, (t, r, theta, phi, vr, vtheta, vphi))
+            [t, r, theta, phi, vr, vtheta,
+             vphi] = RKI.evaluate([t, r, theta, phi, vr, vtheta, vphi])
 
             # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
             # print(phi)
             # print(theta)
 
-            # new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
-            curr_TJP.vr = vr
-            curr_TJP.vtheta = vtheta
-            curr_TJP.vphi = vphi
-            curr_TJP.setSphericalCoord(r, theta, phi)
+            # (t, r, theta, phi, vr, vtheta, vphi) = RungeKutta.evaluate(self.particle.mass, self.particle.charge, stepSize, t, r, theta, phi, vr, vtheta, vphi)
+
+            new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
+            new_TJP.vr = vr
+            new_TJP.vtheta = vtheta
+            new_TJP.vphi = vphi
+            new_TJP.setSphericalCoord(r, theta, phi)
+            # curr_TJP.vr = vr
+            # curr_TJP.vtheta = vtheta
+            # curr_TJP.vphi = vphi
+            # curr_TJP.setSphericalCoord(r, theta, phi)
             # valtup = (t, r, theta, phi, vr, vtheta,
             # vphi)
+            curr_TJP = new_TJP
 
             self.time_array[i] = t
-            self.TJP_array[i] = curr_TJP
+            self.TJP_array[i] = new_TJP
 
             # conditions
             if curr_TJP.altitude > self.escapeAltitude:
@@ -201,11 +226,11 @@ class Trajectory:
                 self.time_array = self.time_array[:i]
                 self.TJP_array = self.TJP_array[:i]
                 break
-            
-            if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
-                print("{0} iterations completed".format(i-2))
 
-            # ivals = init_TJP.spherical().insert(0, t)          
+            # if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
+            #     print("{0} iterations completed".format(i-2))
+
+            # ivals = init_TJP.spherical().insert(0, t)
             # valtup = self.valtup(t, curr_TJP)
 
             # some looping checker
@@ -219,8 +244,10 @@ class Trajectory:
         # print(self.time_array, self.TJP_array)
         # print(self.time_array)
 
+        print("All done!\n")
+
     # evaluate the trajectory at some time, position, and velocity using TrajectoryPoints
-    # returns a new time and new TrajPoint
+    # # returns a new time and new TrajPoint
     # def evalTrajectory(self, t0, TJP, stepSize, valtup):
 
     #     # (r0, theta0, phi0) = TJP.getSphericalCoord()
@@ -232,7 +259,7 @@ class Trajectory:
     #     # print(valtup)
 
     #     (t, r, theta, phi, vr, vtheta,
-    #      vphi) = runge_kutta(self.particle, stepSize, valtup)
+    #      vphi) = runge_kutta(self.particle.mass, self.particle.charge, stepSize, *valtup)
 
     #     # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
     #     # print(phi)
@@ -282,9 +309,9 @@ class Trajectory:
             (x, y, z) = TJP.getCartesianCoord()
             (vx, vy, vz) = TJP.getCartesianVelocity()
 
-            data_dict["x"][i] = x 
-            data_dict["y"][i] = y 
-            data_dict["z"][i] = z 
+            data_dict["x"][i] = x
+            data_dict["y"][i] = y
+            data_dict["z"][i] = z
             data_dict["vx"][i] = vx
             data_dict["vy"][i] = vy
             data_dict["vz"][i] = vz
@@ -300,6 +327,8 @@ class Trajectory:
         xi = self.zenithAngle * DEG_TO_RAD
         alpha = self.azimuthAngle * DEG_TO_RAD
 
+        # print(xi, alpha)
+
         xt = mag * np.sin(xi) * np.cos(alpha)
         yt = mag * np.sin(xi) * np.sin(alpha)
         zt = mag * np.cos(xi)
@@ -311,6 +340,8 @@ class Trajectory:
     def tf_matrix(self):
         lmbda = self.latitude * DEG_TO_RAD
         eta = self.longitude * DEG_TO_RAD
+
+        # print(lmbda, eta)
 
         row1 = np.array([
             -np.sin(eta), -np.cos(eta) * np.sin(lmbda),
@@ -360,14 +391,14 @@ class TrajectoryPoint:
         r = EARTH_RADIUS + self.altitude
         theta = (
             90. - self.latitude
-        ) * DEG_TO_RAD  # theta defined in [0, pi], theta = 0 at equator
+        ) * DEG_TO_RAD  # theta defined in [0, pi], theta = 90 at equator
         phi = self.longitude * DEG_TO_RAD  # phi defined in [-pi, pi], phi = 0 at prime meridian
 
         return np.array([r, theta, phi])
 
     # set latitude, longitude, altitude from spherical coordiantes
     def setSphericalCoord(self, r, theta, phi):
-        self.latitude = (theta * RAD_TO_DEG) - 90.
+        self.latitude = 90. - (theta * RAD_TO_DEG)
         # self.longitude = (phi * RAD_TO_DEG) - 180.
         self.longitude = phi * RAD_TO_DEG
         self.altitude = r - EARTH_RADIUS
@@ -417,11 +448,14 @@ class TrajectoryPoint:
 
     # both position and velocity in spherical coordinates
     def spherical(self):
-        return np.concatenate((self.getSphericalCoord(), np.array([self.vr, self.vtheta, self.vphi])), axis=0)
+        return np.concatenate((self.getSphericalCoord(),
+                               np.array([self.vr, self.vtheta, self.vphi])),
+                              axis=0)
 
     # both position and velocity in Cartesian coordinates
     def cartesian(self):
-        return np.concatenate((self.getCartesianCoord(), self.getCartesianVelocity()), axis=0)
+        return np.concatenate(
+            (self.getCartesianCoord(), self.getCartesianVelocity()), axis=0)
 
 
 # class ParticleTrajectory:

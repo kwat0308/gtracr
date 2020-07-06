@@ -12,34 +12,53 @@ from gtracr.trajectory import Trajectory
 from gtracr.constants import EARTH_RADIUS
 
 if __name__ == "__main__":
-    traj = Trajectory("p-", 0., 0., 20., 70., -90., rigidity=30., escapeAltitude=565)
-    traj.getTrajectory(maxStep=1000)
+    traj1 = Trajectory("p+",
+                       0.,
+                       0.,
+                       20.,
+                       70.,
+                       -90,
+                       rigidity=30.,
+                       escapeAltitude=565)
+    traj1.getTrajectory(maxStep=10000, stepSize=0.01)
 
-    result = traj.getPlotter()
+    result = traj1.getPlotter()
 
     t = result["t"]
     x = result["x"] / EARTH_RADIUS
     y = result["y"] / EARTH_RADIUS
     z = result["z"] / EARTH_RADIUS
 
-    plt.scatter(x, y, c=t)
-    plt.show()
-    plt.scatter(x, z, c=t)
-    plt.show()
-    plt.scatter(y, z, c=t)
-    plt.show()
+    # traj2 = Trajectory("p+", 0., 0., 20., 70., 90., rigidity=30., escapeAltitude=565)
+    # traj2.getTrajectory(maxStep=1000, stepSize=0.01)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    cm = ax.scatter(x, y, z, c=t, marker='o')
-    fig.colorbar(cm, ax=ax)
-    # plt.colorbar()
-    # plt.savefig("test.png")
-    plt.show()
-    
+    # result2 = traj2.getPlotter()
 
+    # x2 = result2["x"] / EARTH_RADIUS
+    # y2 = result2["y"] / EARTH_RADIUS
+    # z2 = result2["z"] / EARTH_RADIUS
 
+    # fig1, ax1 = plt.subplots()
+    # ax1.scatter(x, y, c=t)
+    # ax1.scatter(x2, y2, c="r")
+    # plt.show()
+    # fig2, ax2 = plt.subplots()
+    # ax2.scatter(x, z, c=t)
+    # ax2.scatter(x2, z2, c="r")
+    # plt.show()
+    # fig3, ax3 = plt.subplots()
+    # ax3.scatter(y, z, c=t)
+    # ax3.scatter(y2, z2, c="r")
+    # plt.show()
 
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection="3d")
+    # cm = ax.scatter(x, y, z, c=t, marker='o')
+    # ax.scatter(x2, y2, z2, c="r", marker='o')
+    # fig.colorbar(cm, ax=ax)
+    # # plt.colorbar()
+    # # plt.savefig("test.png")
+    # plt.show()
 '''
 if __name__ == "__main__":
     
