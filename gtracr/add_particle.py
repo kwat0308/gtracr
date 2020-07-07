@@ -14,7 +14,7 @@ from Particle import Particle
 particle_dict = {}
 
 def add_to_dict(part):
-    particle_dict[part.label()] = part
+    particle_dict[part.label] = part
 
 
 # create particles

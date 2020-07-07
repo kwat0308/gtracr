@@ -22,21 +22,21 @@ if __name__ == "__main__":
                        escapeAltitude=565)
     traj1.getTrajectory(maxStep=10000, stepSize=0.01)
 
-    result = traj1.getPlotter()
+    result = traj1.getPlottingVariables()
 
     t = result["t"]
     x = result["x"] / EARTH_RADIUS
     y = result["y"] / EARTH_RADIUS
     z = result["z"] / EARTH_RADIUS
 
-    # traj2 = Trajectory("p+", 0., 0., 20., 70., 90., rigidity=30., escapeAltitude=565)
-    # traj2.getTrajectory(maxStep=1000, stepSize=0.01)
+    traj2 = Trajectory("p+", 0., 0., 20., 70., 90., rigidity=30., escapeAltitude=565)
+    traj2.getTrajectory(maxStep=1000, stepSize=0.01)
 
-    # result2 = traj2.getPlotter()
+    result2 = traj2.getPlottingVariables()
 
-    # x2 = result2["x"] / EARTH_RADIUS
-    # y2 = result2["y"] / EARTH_RADIUS
-    # z2 = result2["z"] / EARTH_RADIUS
+    x2 = result2["x"] / EARTH_RADIUS
+    y2 = result2["y"] / EARTH_RADIUS
+    z2 = result2["z"] / EARTH_RADIUS
 
     # fig1, ax1 = plt.subplots()
     # ax1.scatter(x, y, c=t)

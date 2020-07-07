@@ -115,39 +115,39 @@ const double &Particle::gamma(const double &vel)
 // setters
 void Particle::set_from_energy(const double &energy)
 {
-    p = sqrt(energy * energy - mass() * mass());
-    v = ((momentum() * constants::sc) /
+    p = sqrt(energy * energy - m * m);
+    v = ((p * constants::sc) /
          sqrt(
-             momentum() * momentum() +
-             (mass() * constants::sc) * (mass() * constants::sc)));
-    R = momentum() / abs(charge());
+             p * p +
+             (m * constants::sc) * (m * constants::sc)));
+    R = p / abs(ch);
 }
 
 void Particle::set_from_momentum(const double &mmtum)
 {
     p = mmtum;
-    v = ((momentum() * constants::sc) /
+    v = ((p * constants::sc) /
          sqrt(
-             momentum() * momentum() +
-             (mass() * constants::sc) * (mass() * constants::sc)));
-    R = momentum() / abs(charge());
+             p * p +
+             (m * constants::sc) * (m * constants::sc)));
+    R = p / abs(ch);
 }
 
 void Particle::set_from_rigidity(const double &rgdty)
 {
-    p = rgdty * abs(charge());
-    v = ((momentum() * constants::sc) /
+    p = rgdty * abs(ch);
+    v = ((p * constants::sc) /
          sqrt(
-             momentum() * momentum() +
-             (mass() * constants::sc) * (mass() * constants::sc)));
+             p * p +
+             (m * constants::sc) * (m * constants::sc)));
     R = rgdty;
 }
 
 void Particle::set_from_velocity(const double &vel)
 {
-    p = gamma(vel) * mass() * vel;
+    p = gamma(vel) * m * vel;
     v = vel;
-    R = momentum() / abs(charge());
+    R = p / abs(ch);
 }
 
 // other member functions

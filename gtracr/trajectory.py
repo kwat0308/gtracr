@@ -124,7 +124,7 @@ class Trajectory:
 
         # transformation for velocity
         originVel = np.array([0., 0., 0.])
-        LTPVel = self.getLTPCoord(mag=self.particle.velocity())
+        LTPVel = self.getLTPCoord(mag=self.particle.velocity)
         (vx, vy, vz) = self.LTP_to_ECEF(originVel, LTPVel)
 
         # (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
@@ -179,7 +179,7 @@ class Trajectory:
 
         # start iteration process
         # RKI = RKIntegrator(self.particle.mass, self.particle.charge)
-        RKI = RungeKutta(self.particle.charge(), self.particle.mass(),
+        RKI = RungeKutta(self.particle.charge, self.particle.mass,
                          stepSize)
         i = 2
         curr_TJP = init_TJP

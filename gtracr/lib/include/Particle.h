@@ -34,6 +34,15 @@ public:
     const double &momentum() const { return p; }
     const double &velocity() const { return v; }
     const double &rigidity() const { return R; }
+    // setters
+    void set_name(const std::string &_nm) { nm = _nm; }
+    void set_mass(const double &_m) { m = _m; }
+    void set_charge(const double &_ch) { ch = _ch; }
+    void set_pdgid(const int _pid) { pid = _pid; }
+    void set_label(const std::string &_lbl) { lbl = _lbl; }
+    void set_momentum(const double &_p) { p = _p; }
+    void set_velocity(const double &_v) { v = _v; }
+    void set_rigidity(const double &_R) { R = _R; }
     // setters (only for p, v, R for now)
     void set_from_energy(const double &);
     void set_from_momentum(const double &);
