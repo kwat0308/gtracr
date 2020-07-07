@@ -20,10 +20,15 @@ public:
     Location(const Location &);
     Location &operator=(const Location &);
     // getters
-    const std::string &name() { return ln; }
+    const std::string &name() const { return ln; }
     const double &latitude() const { return lat; }
     const double &longitude() const { return lng; }
     const double &altitude() const { return alt; }
+    // setters
+    void set_name(const std::string &_ln) { ln = _ln; }
+    void set_latitude(const double &_lat) { lat = _lat; }
+    void set_longitude(const double &_lng) { lng = _lng; }
+    void set_altitude(const double &_alt) { alt = _alt; }
     // utility functions
     void print();
 };

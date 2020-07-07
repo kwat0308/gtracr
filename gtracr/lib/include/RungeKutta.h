@@ -1,8 +1,7 @@
 //header file for Runge Kutta Integrator
 #ifndef __RUNGEKUTTA_H_
 #define __RUNGEKUTTA_H_
-
-class MagneticField;
+#include "MagneticField.h"
 
 class RungeKutta
 {
@@ -13,16 +12,20 @@ private:
 
 public:
     // Constructors
+    RungeKutta();                                          // default
     RungeKutta(const int, const double &);                 // charge and mass
     RungeKutta(const int, const double &, const double &); // charge, mass, and stepsize
     // Destructor
     ~RungeKutta() { delete bfield; };
+    // copy constructor and assignment operator
+    RungeKutta(const RungeKutta &);
+    RungeKutta &operator=(const RungeKutta &);
 
     //getters
-    const double& stepSize() { return h; }
+    const double &stepSize() { return h; }
 
     // setters
-    void set_stepSize(const double& h_new) { h = h_new; }
+    void set_stepSize(const double &h_new) { h = h_new; }
 
     // ODEs
     double dvrdt(double, double, double, double, double, double);

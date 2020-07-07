@@ -16,12 +16,12 @@ from Location import Location
 location_dict = {}
 
 def add_to_dict(Loc):
-    location_dict[loc.name()] = Loc
+    location_dict[loc.name] = Loc
 
 # some basic locations of interest
 kamioka = Location("Kamioka", 36.434800, 137.276599, 0.)
 icecube = Location("IceCube",-89.99, 0., 0.)
-uofa = Location(b"UofA", 53.523230, -113.526319, 0.)
+uofa = Location("UofA", 53.523230, -113.526319, 0.)
 
 # print(kamioka.name())
 
@@ -31,4 +31,4 @@ for loc in [kamioka, icecube, uofa]:
     add_to_dict(loc)
     # print(loc)
 
-print(location_dict)
+# print(location_dict)
