@@ -7,7 +7,9 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 # sys.path.append(os.path.join(os.getcwd(), "..", "gtracr"))
 
+# from Particle import Particle
 from gtracr.trajectory import Trajectory
+# from Trajectory import Trajectory
 # from gtracr.utils import spherical_to_cartesian
 from gtracr.constants import EARTH_RADIUS
 
@@ -20,14 +22,15 @@ if __name__ == "__main__":
                        -90,
                        rigidity=30.,
                        escapeAltitude=565)
-    traj1.getTrajectory(maxStep=10000, stepSize=0.01)
+    # traj1 = Trajectory()
+    traj1.getTrajectory(maxStep=10000, stepSize=0.001)
 
     result = traj1.getPlottingVariables()
 
     t = result["t"]
-    x = result["x"] / EARTH_RADIUS
-    y = result["y"] / EARTH_RADIUS
-    z = result["z"] / EARTH_RADIUS
+    x = np.array(result["x"]) / EARTH_RADIUS
+    y = np.array(result["y"]) / EARTH_RADIUS
+    z = np.array(result["z"]) / EARTH_RADIUS
 
     traj2 = Trajectory("p+", 0., 0., 20., 70., 90., rigidity=30., escapeAltitude=565)
     traj2.getTrajectory(maxStep=1000, stepSize=0.01)

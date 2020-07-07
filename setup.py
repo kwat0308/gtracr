@@ -9,9 +9,9 @@ from setuptools import setup, Extension, find_packages
 
 local_path = os.path.dirname(os.path.abspath(__file__))
 # change compiler
-os.environ["CC"] = "clang++"
+# os.environ["CC"] = "clang++"
 
-# os.environ["CC"] = "g++"
+os.environ["CC"] = "g++"
 # os.environ["CC"] = "cl"
 
 
@@ -28,8 +28,8 @@ class get_pybind_include(object):
 
 ext_module = [
     Extension(
-        'RungeKutta',
-        sources=["gtracr/lib/src/RungeKutta.cc", "gtracr/lib/wrapper/RungeKuttaWrapper.cc", "gtracr/lib/src/MagneticField.cc"],
+        'Trajectory',
+        sources=["gtracr/lib/src/Trajectory.cc", "gtracr/lib/wrapper/TrajectoryWrapper.cc", "gtracr/lib/src/TrajectoryPoint.cc","gtracr/lib/src/Location.cc","gtracr/lib/src/Particle.cc","gtracr/lib/src/Matrix.cc","gtracr/lib/src/Vector.cc","gtracr/lib/src/RungeKutta.cc", "gtracr/lib/src/MagneticField.cc"],
         # depends=["gtracr/lib/src/MagneticField.cc"],
         library_dirs=["gtracr/lib"],
         language='c++',
@@ -48,6 +48,15 @@ ext_module = [
     Extension(
         'Particle',
         sources=["gtracr/lib/src/Particle.cc", "gtracr/lib/wrapper/ParticleWrapper.cc"],
+        # depends=["gtracr/lib/src/MagneticField.cc"],
+        library_dirs=["gtracr/lib"],
+        language='c++',
+        include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
+        extra_compile_args=["-O3"]
+    ),
+    Extension(
+        'RungeKutta',
+        sources=["gtracr/lib/src/RungeKutta.cc", "gtracr/lib/wrapper/RungeKuttaWrapper.cc", "gtracr/lib/src/MagneticField.cc"],
         # depends=["gtracr/lib/src/MagneticField.cc"],
         library_dirs=["gtracr/lib"],
         language='c++',
