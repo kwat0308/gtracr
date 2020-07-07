@@ -8,13 +8,8 @@ import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-# from gtracr.utils import EARTH_RADIUS, g10, DEG_TO_RAD, get_sphcomp_momentum
 from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
-from gtracr.utils import CarCoord_to_SphCoord, CarVel_to_SphVel
-# from gtracr.runge_kutta import runge_kutta
-# from gtracr.runge_kutta import RungeKutta
 from RungeKutta import RungeKutta
-# import RungeKutta
 from gtracr.add_particle import particle_dict
 
 key_list = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
@@ -71,21 +66,10 @@ class Trajectory:
             self.particle.set_from_rigidity(rigidity)
             self.rigidity = rigidity
             self.energy = self.particle.get_energy_rigidity()
-            # self.particle.set_momentum_from_rigidity(rigidity)
         # elif rigidity is None and energy is None:
         else:
             raise Exception(
                 "Provide either energy or rigidity as input, not both!")
-
-        # print(self.rigidity)
-        # if rigidity is None and energy is None:
-        #     raise Exception("Provide either energy or rigidity as input!")
-
-        # self.energy = self.particle.get_energy_from_rigidity(rigidity) if energy is None else energy
-        # self.rigidity = self.particle.get_rigidity_from_energy(energy) if rigidity is None else rigidity
-
-        # self.particle.set_velocity()  # set velocity here
-        # print(self.particle.momentum, self.particle.velocity)
 
         self.particleEscaped = False  # check if trajectory is allowed or not
 
@@ -95,8 +79,6 @@ class Trajectory:
         # self.TJP_array = np.zeros(maxBuffer)
         self.time_array = [None] * maxBuffer
         self.TJP_array = [None] * maxBuffer  # list to append TJP objects
-        # self.time_array = []
-        # self.TJP_array = []
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
@@ -119,15 +101,11 @@ class Trajectory:
         theta = np.arccos(z / r)
         phi = np.arctan2(y, x)
 
-        # print(x, y, z)
-        # print(r, theta, phi)
-
         # transformation for velocity
         originVel = np.array([0., 0., 0.])
         LTPVel = self.getLTPCoord(mag=self.particle.velocity)
         (vx, vy, vz) = self.LTP_to_ECEF(originVel, LTPVel)
 
-        # (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
         vr = vx * np.sin(theta) * np.cos(phi) + vy * np.sin(theta) * np.sin(
             phi) + vz * np.cos(theta)
         vtheta = (vx * np.cos(theta) * np.cos(phi) +
@@ -137,7 +115,6 @@ class Trajectory:
         # create new trajectory point and set the new coordinate and velocity
         init_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
         init_TJP.setSphericalCoord(r, theta, phi)
-        # init_TJP.setCarVelocity(vr, vtheta, vphi)
 
         # print(init_TJP)
 
@@ -157,15 +134,6 @@ class Trajectory:
             self.time_array = self.time_array[:maxStep]
             self.TJP_array = self.TJP_array[:maxStep]
 
-        # print(self.time_array, self.TJP_array)
-
-        # self.time_array = [None] * maxStep
-        # self.TJP_array = [None] * maxStep
-
-        # initialize array
-        # time_array = np.zeros(maxStep)
-        # TJP_array = np.zeros(maxStep)
-
         # get the initial trajectory points
         (origin_TJP, init_TJP) = self.getInitTJP()
 
@@ -182,18 +150,9 @@ class Trajectory:
         RKI = RungeKutta(self.particle.charge, self.particle.mass,
                          stepSize)
         i = 2
-        curr_TJP = init_TJP
         t = stepSize
-        (r, theta, phi, vr, vtheta, vphi) = curr_TJP.spherical()
-        # valtup required for integration process due to conversions between theta values and latitude
-        # valtup = self.valtup(t, curr_TJP)
-
-        # valtup = (t, r, theta, phi, vr, vtheta, vphi)
-        # ivals = (t, init_TJP.spherical())
-        # ivals = init_TJP.spherical().insert(0, t)
+        (r, theta, phi, vr, vtheta, vphi) = init_TJP.spherical()
         while i < maxStep:
-            # print(t, curr_TJP)
-            # (t, curr_TJP, valtup) = self.evalTrajectory(t, curr_TJP, stepSize, valtup)
             [t, r, theta, phi, vr, vtheta,
              vphi] = RKI.evaluate([t, r, theta, phi, vr, vtheta, vphi])
 
@@ -201,98 +160,35 @@ class Trajectory:
             # print(phi)
             # print(theta)
 
-            # (t, r, theta, phi, vr, vtheta, vphi) = RungeKutta.evaluate(self.particle.mass, self.particle.charge, stepSize, t, r, theta, phi, vr, vtheta, vphi)
-
             new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
             new_TJP.vr = vr
             new_TJP.vtheta = vtheta
             new_TJP.vphi = vphi
             new_TJP.setSphericalCoord(r, theta, phi)
-            # curr_TJP.vr = vr
-            # curr_TJP.vtheta = vtheta
-            # curr_TJP.vphi = vphi
-            # curr_TJP.setSphericalCoord(r, theta, phi)
-            # valtup = (t, r, theta, phi, vr, vtheta,
-            # vphi)
-            curr_TJP = new_TJP
+            
 
             self.time_array[i] = t
             self.TJP_array[i] = new_TJP
 
             # conditions
-            if curr_TJP.altitude > self.escapeAltitude:
+            if new_TJP.altitude > self.escapeAltitude:
                 self.particleEscaped = True
                 self.time_array = self.time_array[:i]
                 self.TJP_array = self.TJP_array[:i]
                 break
 
-            if curr_TJP.altitude < 0.:
+            if new_TJP.altitude < 0.:
                 self.time_array = self.time_array[:i]
                 self.TJP_array = self.TJP_array[:i]
                 break
 
-            # if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
-            #     print("{0} iterations completed".format(i-2))
-
-            # ivals = init_TJP.spherical().insert(0, t)
-            # valtup = self.valtup(t, curr_TJP)
+            if (i-2) % (maxStep // 10) == 0 and (i-2) != 0:
+                print("{0} iterations completed".format(i-2))
 
             # some looping checker
             i += 1
 
-        # trim zero values at the end
-        # self.trim_arrays()
-        # np.trim_zeros(self.time_array, trim="b")
-        # np.trim_zeros(self.TJP_array, trim="b")
-
-        # print(self.time_array, self.TJP_array)
-        # print(self.time_array)
-
         print("All done!\n")
-
-    # evaluate the trajectory at some time, position, and velocity using TrajectoryPoints
-    # # returns a new time and new TrajPoint
-    # def evalTrajectory(self, t0, TJP, stepSize, valtup):
-
-    #     # (r0, theta0, phi0) = TJP.getSphericalCoord()
-
-    #     # print(theta0)
-
-    #     # valtup = (t0, r0, theta0, phi0, TJP.vr, TJP.vtheta, TJP.vphi)
-
-    #     # print(valtup)
-
-    #     (t, r, theta, phi, vr, vtheta,
-    #      vphi) = runge_kutta(self.particle.mass, self.particle.charge, stepSize, *valtup)
-
-    #     # print(t, r, theta, phi, vr, vtheta, vphi, '\n')
-    #     # print(phi)
-    #     # print(theta)
-
-    #     # new_TJP = TrajectoryPoint(vr=vr, vtheta=vtheta, vphi=vphi)
-    #     TJP.vr = vr
-    #     TJP.vtheta = vtheta
-    #     TJP.vphi = vphi
-    #     TJP.setSphericalCoord(r, theta, phi)
-    #     valtup = (t, r, theta, phi, vr, vtheta,
-    #      vphi)
-
-    #     # print(TJP, '\n')
-
-    #     return np.array([t, TJP, valtup])
-
-    # trim the unnecessary values at the end of the array
-    # def trim_arrays(self):
-    #     # np.trim_zeros(self.time_array, trim="b")
-    #     # np.trim_zeros(self.TJP_array, trim="b")
-    #     for i, val in enumerate(self.time_array):
-    #         if val == None:
-    #             self.time_array = self.time_array[:i]
-    #             break
-    #     for i, val in enumerate(self.TJP_array):
-    #         if val == None:
-    #             self.TJP_array = self.TJP_array[:i]
-    #             break
 
     # get the cartesian coordinates from the array of trajectory points for plotting purposes
     def getPlottingVariables(self):
