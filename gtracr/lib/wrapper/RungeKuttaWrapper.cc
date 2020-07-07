@@ -11,6 +11,7 @@ PYBIND11_MODULE(RungeKutta, M)
   // matrix class
   M.doc() = "4th-order Runge Kutta Integrator";
   py::class_<RungeKutta>(M, "RungeKutta")
+      .def(py::init<>())
       .def(py::init<const int, const double &>())
       .def(py::init<const int, const double &, const double &>())
       .def_property("stepSize", &RungeKutta::stepSize, &RungeKutta::set_stepSize)

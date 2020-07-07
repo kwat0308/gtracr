@@ -21,7 +21,7 @@ def add_to_dict(Loc):
 # some basic locations of interest
 kamioka = Location("Kamioka", 36.434800, 137.276599, 0.)
 icecube = Location("IceCube",-89.99, 0., 0.)
-uofa = Location(b"UofA", 53.523230, -113.526319, 0.)
+uofa = Location("UofA", 53.523230, -113.526319, 0.)
 
 # print(kamioka.name())
 

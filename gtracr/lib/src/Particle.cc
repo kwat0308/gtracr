@@ -152,9 +152,10 @@ void Particle::set_from_velocity(const double &vel)
 
 // other member functions
 // obtain energy from rigidity
-const double &Particle::get_energy_rigidity()
+double Particle::get_energy_rigidity()
 {
-    return sqrt(momentum() * momentum() + mass() * mass()) * rigidity() * abs(charge());
+    double enrgy = sqrt( R * abs(ch) *  R * abs(ch) + m * m);
+    return enrgy;
 }
 
 // print contents

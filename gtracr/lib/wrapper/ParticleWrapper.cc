@@ -8,8 +8,8 @@ PYBIND11_MODULE(Particle, M)
     M.doc() = "Particle Library with kinematic and charge properties.";
     py::class_<Particle>(M, "Particle")
         .def(py::init<>())
-        .def(py::init<const std::string&, const int, const double &, const int, const std::string&>())
-        .def(py::init<const std::string&, const int, const double &, const int, const std::string&, const double &>())
+        .def(py::init<const std::string &, const int, const double &, const int, const std::string &>())
+        .def(py::init<const std::string &, const int, const double &, const int, const std::string &, const double &, const double &>())
         .def("name", &Particle::name)
         .def("mass", &Particle::mass)
         .def("charge", &Particle::charge)
@@ -23,5 +23,4 @@ PYBIND11_MODULE(Particle, M)
         .def("set_from_rigidity", &Particle::set_from_rigidity)
         .def("set_from_velocity", &Particle::set_from_velocity)
         .def("get_energy_rigidity", &Particle::get_energy_rigidity);
-
 }

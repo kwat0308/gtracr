@@ -58,16 +58,19 @@ class Trajectory:
         # also set momentum in each case
 
         if rigidity is None:
-            self.particle.get_rigidity_from_energy(energy)
-            self.particle.set_momentum_from_energy(energy)
+            # self.particle.get_rigidity_from_energy(energy)
+            # self.particle.set_momentum_from_energy(energy)
+            self.particle.set_from_energy(energy)
             self.rigidity = self.particle.rigidity
             self.energy = energy
             # self.particle.set_momentum_from_energy(energy)
         elif energy is None:
-            self.particle.set_momentum_from_rigidity(rigidity)
+            # self.particle.set_momentum_from_rigidity(rigidity)
+            # self.rigidity = rigidity
+            # self.particle.rigidity = rigidity
+            self.particle.set_from_rigidity(rigidity)
             self.rigidity = rigidity
-            self.particle.rigidity = rigidity
-            self.energy = self.particle.get_energy_from_rigidity(rigidity)
+            self.energy = self.particle.get_energy_rigidity()
             # self.particle.set_momentum_from_rigidity(rigidity)
         # elif rigidity is None and energy is None:
         else:
@@ -81,7 +84,7 @@ class Trajectory:
         # self.energy = self.particle.get_energy_from_rigidity(rigidity) if energy is None else energy
         # self.rigidity = self.particle.get_rigidity_from_energy(energy) if rigidity is None else rigidity
 
-        self.particle.set_velocity()  # set velocity here
+        # self.particle.set_velocity()  # set velocity here
         # print(self.particle.momentum, self.particle.velocity)
 
         self.particleEscaped = False  # check if trajectory is allowed or not
@@ -121,7 +124,7 @@ class Trajectory:
 
         # transformation for velocity
         originVel = np.array([0., 0., 0.])
-        LTPVel = self.getLTPCoord(mag=self.particle.velocity)
+        LTPVel = self.getLTPCoord(mag=self.particle.velocity())
         (vx, vy, vz) = self.LTP_to_ECEF(originVel, LTPVel)
 
         # (vr, vtheta, vphi) = CarVel_to_SphVel(vx, vy, vz, r, theta, phi)
@@ -176,7 +179,8 @@ class Trajectory:
 
         # start iteration process
         # RKI = RKIntegrator(self.particle.mass, self.particle.charge)
-        RKI = RungeKutta(self.particle.charge, self.particle.mass, stepSize)
+        RKI = RungeKutta(self.particle.charge(), self.particle.mass(),
+                         stepSize)
         i = 2
         curr_TJP = init_TJP
         t = stepSize
@@ -291,7 +295,7 @@ class Trajectory:
     #             break
 
     # get the cartesian coordinates from the array of trajectory points for plotting purposes
-    def getPlotter(self):
+    def getPlottingVariables(self):
 
         n = len(self.TJP_array)
         data_dict = {

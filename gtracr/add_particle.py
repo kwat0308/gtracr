@@ -26,5 +26,5 @@ pm = Particle("anti-proton", -2122, 0.937272, -1, "p-")
 for part in [ep, em, pp, pm]:
     add_to_dict(part)
 
-print(Particle())
-print(particle_dict)
+# print(Particle())
+# print(particle_dict)
