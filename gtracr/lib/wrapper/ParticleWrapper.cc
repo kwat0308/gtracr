@@ -22,5 +22,15 @@ PYBIND11_MODULE(Particle, M)
         .def("set_from_momentum", &Particle::set_from_momentum)
         .def("set_from_rigidity", &Particle::set_from_rigidity)
         .def("set_from_velocity", &Particle::set_from_velocity)
-        .def("get_energy_rigidity", &Particle::get_energy_rigidity);
+        .def("get_energy_rigidity", &Particle::get_energy_rigidity)
+        .def("print", &Particle::print);
+        // .def("__repr__",
+        // [](const Particle &part) {
+        //     return "<Particle.Particle object of " + part.label() + " with momentum " + part.momentum() ">";
+        // })
+        // .def("__str__",
+        // [](const Particle &part) {
+        //     return part.name() + "(" + part.label() + "): PDGID: " + part.pdgid() + " Charge [e]: " + part.charge() + " Mass [GeV/c^2]: " + part.mass()
+        //             + " Momentum [GeV/c]: " + part.momentum() + " Velocity [c]: " + part.velocity() + " Rigidity [GV]: " + part.rigidity() + "\n";
+        // });   
 }

@@ -4,20 +4,22 @@
 
 class MagneticField {
     private:
-        double* gcoeffs;
-        double* hcoeffs;
+        // double* gcoeffs;
+        // double* hcoeffs;
+        double g10;
 
     public:
         // Constructor
         MagneticField();
         // Destructor
-        ~MagneticField() {delete[] gcoeffs; delete[] hcoeffs;}
+        // ~MagneticField() {delete[] gcoeffs; delete[] hcoeffs;}
         // MagneticField();
-        const double Br(const double&, const double&, const double&);
-
-        const double Btheta(const double&, const double&, const double&);
-
-        const double Bphi(const double&, const double&, const double&);
+        // the radial component of the Earth's magnetic field
+        const double Br(const double &r, const double &theta, const double &phi);
+        // the polar component of the Earth's magnetic field
+        const double Btheta(const double &r, const double &theta, const double &phi);
+        // the azimuthal-component of the Earth's magnetic field
+        const double Bphi(const double &r, const double &theta, const double &phi);
 };
 
 #endif // __MAGNETICFIELD_H_

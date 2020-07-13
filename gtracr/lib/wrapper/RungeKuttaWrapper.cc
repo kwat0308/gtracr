@@ -14,6 +14,6 @@ PYBIND11_MODULE(RungeKutta, M)
       .def(py::init<>())
       .def(py::init<const int, const double &>())
       .def(py::init<const int, const double &, const double &>())
-      .def_property("stepSize", &RungeKutta::stepSize, &RungeKutta::set_stepSize)
+      .def_property("step_size", &RungeKutta::stepsize, &RungeKutta::set_stepsize)
       .def("evaluate", &RungeKutta::evaluate);
 }

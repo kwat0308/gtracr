@@ -123,9 +123,9 @@ void Particle::set_from_energy(const double &energy)
     R = p / abs(ch);
 }
 
-void Particle::set_from_momentum(const double &mmtum)
+void Particle::set_from_momentum(const double &_p)
 {
-    p = mmtum;
+    p = _p;
     v = ((p * constants::sc) /
          sqrt(
              p * p +
@@ -133,20 +133,20 @@ void Particle::set_from_momentum(const double &mmtum)
     R = p / abs(ch);
 }
 
-void Particle::set_from_rigidity(const double &rgdty)
+void Particle::set_from_rigidity(const double &_R)
 {
-    p = rgdty * abs(ch);
+    p = _R * abs(ch);
     v = ((p * constants::sc) /
          sqrt(
              p * p +
              (m * constants::sc) * (m * constants::sc)));
-    R = rgdty;
+    R = _R;
 }
 
-void Particle::set_from_velocity(const double &vel)
+void Particle::set_from_velocity(const double &_v)
 {
-    p = gamma(vel) * m * vel;
-    v = vel;
+    p = gamma(_v) * m * _v;
+    v = _v;
     R = p / abs(ch);
 }
 

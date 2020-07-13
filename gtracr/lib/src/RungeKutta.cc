@@ -3,9 +3,10 @@
 // #include <pybind11/pybind11.h>
 // #include <pybind11/numpy.h>
 // #include <pybind11/stl.h>
-#include <vector>
+// #include <vector>
+#include <array>
 #include <math.h>
-// #include <iostream>
+#include <iostream>
 #include "constants.h"
 #include "MagneticField.h"
 #include "RungeKutta.h"
@@ -13,70 +14,75 @@
 // Constructor
 // default
 RungeKutta::RungeKutta()
-    : bfield{new MagneticField()}, coeff{1.}, h{0.01}
+    : bfield_{MagneticField()}, charge_{1}, mass_{0.938}, h{0.01}
 {
 }
 
 // Requires the charge and mass of the particle
 RungeKutta::RungeKutta(const int charge, const double &mass)
-    : bfield{new MagneticField()}, coeff{charge / mass}, h{0.01}
+    : bfield_{MagneticField()}, charge_{charge}, mass_{mass}, h{0.01}
 {
 }
 
 // Constructor
 // Requires the charge and mass of the particle and stepsize
-RungeKutta::RungeKutta(const int charge, const double &mass, const double &stepSize)
-    : bfield{new MagneticField()}, coeff{charge / mass}, h{stepSize}
+RungeKutta::RungeKutta(const int charge, const double &mass, const double &step_size)
+    : bfield_{MagneticField()}, charge_{charge}, mass_{mass}, h{step_size}
 {
 }
 
 // copy constructor
 RungeKutta::RungeKutta(const RungeKutta &rk)
-    : coeff{rk.coeff}, h{rk.h}
+    : charge_{rk.charge_}, mass_{rk.mass_}, h{rk.h}
 {
-    delete bfield;
-    bfield = rk.bfield;
+    bfield_ = rk.bfield_;
 }
 
 // copy assignment operator
 RungeKutta &RungeKutta::operator=(const RungeKutta &rk)
 {
-    delete bfield;
-    bfield = rk.bfield;
-    coeff = rk.coeff;
+    bfield_ = rk.bfield_;
+    charge_ = rk.charge_;
+    mass_ = rk.mass_;
     h = rk.h;
     return *this;
 }
 
 // ODEs, inputs are given as numpy arrays of the form (time, r, theta, phi, vr, vtheta, vphi)
-
 // dvrdt
-double RungeKutta::dvrdt(double r, double theta, double phi, double vr, double vtheta, double vphi)
-{
-    double dvrdt = ((coeff / gamma(vr, vtheta, vphi, r, theta)) * (vtheta * bfield->Bphi(r, theta, phi) -
-                                                                   bfield->Btheta(r, theta, phi) * vphi)) +
-                   (r * vtheta * vtheta) + (r * vphi * vphi * sin(theta) * sin(theta));
-    return dvrdt;
+double RungeKutta::dvr_dt(double r, double theta, double phi, double vr, double vtheta, double vphi)
+{   
+    double charge_per_mass = ((-charge_ )/ (mass_*  gamma(vr, vtheta, vphi, r, theta)));
+    double lorentz_term = charge_per_mass * 
+                        (vtheta * bfield_.Bphi(r, theta, phi) - bfield_.Btheta(r, theta, phi) * vphi);
+    double accel_term = (r * vtheta * vtheta) + (r * vphi * vphi * sin(theta) * sin(theta));
+    // double accel_term = (vtheta*vtheta / r) + (vphi*vphi / r);
+    double dvr_dt =  lorentz_term + accel_term;
+    return dvr_dt;
 }
 
 //dvthetadt
-double RungeKutta::dvthetadt(double r, double theta, double phi, double vr, double vtheta, double vphi)
+double RungeKutta::dvtheta_dt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {
-    double dvthetadt = (((coeff / gamma(vr, vtheta, vphi, r, theta)) * (vphi * bfield->Br(r, theta, phi) -
-                                                                        bfield->Bphi(r, theta, phi) * vr)) /
-                        r) +
-                       (vphi * vphi * sin(theta) * cos(theta)) - (2. * vr * vtheta / r);
-    return dvthetadt;
+    double charge_per_mass = ((-charge_ )/ (mass_*  gamma(vr, vtheta, vphi, r, theta)));
+    double lorentz_term = charge_per_mass * 
+                            (vphi * bfield_.Br(r, theta, phi) - bfield_.Bphi(r, theta, phi) * vr);
+    double accel_term = (vphi * vphi * sin(theta) * cos(theta)) - (2. * vr * vtheta / r);
+    // double accel_term = ((vphi*vphi) / (r*tan(theta))) - (vr*vtheta / r);
+    double dvtheta_dt =  lorentz_term / r + accel_term;
+    return dvtheta_dt;
 }
 
 //dvphidt
-double RungeKutta::dvphidt(double r, double theta, double phi, double vr, double vtheta, double vphi)
+double RungeKutta::dvphi_dt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {
-    double dvphidt = (((coeff / gamma(vr, vtheta, vphi, r, theta)) * (vr * bfield->Btheta(r, theta, phi) -
-                                                                      bfield->Br(r, theta, phi) * vtheta)) /
-                      (r * sin(theta))) -
-                     ((2. * vphi * vr) / r) + ((2. * vphi * vtheta) / tan(theta));
-    return dvphidt;
+    double charge_per_mass = ((-charge_ )/ (mass_*  gamma(vr, vtheta, vphi, r, theta)));
+    double lorentz_term = charge_per_mass * 
+                            (vr * bfield_.Btheta(r, theta, phi) - bfield_.Br(r, theta, phi) * vtheta);
+    double accel_term = ((2. * vphi * vr) / r) + ((2. * vphi * vtheta) / tan(theta));
+    // double accel_term = (vr*vphi / r) + ((vtheta*vphi) / (r*tan(theta)));
+    double dvphi_dt = ( lorentz_term / (r * sin(theta))) - accel_term;
+    return dvphi_dt;
 }
 
 // magnitude of velocity from spherical coordinates
@@ -96,71 +102,77 @@ double RungeKutta::gamma(double vr, double vtheta, double vphi, double r, double
 
 // evaluate one step of the RK integration
 // The for loop of the evaluation should be brought into C++ in the near future
-std::vector<double> RungeKutta::evaluate(std::vector<double> vec)
+// Runge Kutta evaluation is done inversely (reverse charge) since we want to do backtracking
+std::array<double, 7>& RungeKutta::evaluate(std::array<double, 7>& vec)
 {
 
     double t = vec[0];
     double r = vec[1];
-    double th = vec[2];
-    double ph = vec[3];
+    double theta = vec[2];
+    double phi = vec[3];
     double vr = vec[4];
-    double vth = vec[5];
-    double vph = vec[6];
+    double vtheta = vec[5];
+    double vphi = vec[6];
 
-    // std::cout << t << ' ' << r << ' ' << th << ' ' << ph << ' ' << vr << ' ' << vth << ' ' << vph << ' ' << std::endl;
+    // std::cout << t << ' ' << r << ' ' << th << ' ' << ph << ' ' << vr << ' ' << vtheta << ' ' << vph << ' ' << std::endl;
 
     // delete[] ptr;
 
-    double k1 = h * vr;
-    double l1 = h * (vth / r);
-    double m1 = h * (vph / (r * sin(th)));
-    double a1 = h * dvrdt(r, th, ph, vr, vth, vph);
-    double b1 = h * dvthetadt(r, th, ph, vr, vth, vph);
-    double c1 = h * dvphidt(r, th, ph, vr, vth, vph);
+    double k1 = vr;
+    double l1 = (vtheta / r);
+    double m1 = (vphi / (r * sin(theta)));
+    double a1 = dvr_dt(r, theta, phi, vr, vtheta, vphi);
+    double b1 = dvtheta_dt(r, theta, phi, vr, vtheta, vphi);
+    double c1 = dvphi_dt(r, theta, phi, vr, vtheta, vphi);
 
-    // std::cout << k1 << ' ' << l1 << ' ' << m1 << ' ' << a1 << ' ' << b1 << ' ' << c1 << std::endl;
+    std::cout << k1 << ' ' << l1 << ' ' << m1 << ' ' << a1 << ' ' << b1 << ' ' << c1 << std::endl;
 
-    double k2 = h * (vr + 0.5 * a1);
-    double l2 = h * ((vth + 0.5 * b1) / (r + 0.5 * k1));
-    double m2 = h * ((vph + 0.5 * c1) / ((r + 0.5 * k1) * (sin(th + 0.5 * l1))));
-    double a2 = h * dvrdt(r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
-                          vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1);
-    double b2 = h * dvthetadt(r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
-                              vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1);
-    double c2 = h * dvphidt(r + 0.5 * k1, th + 0.5 * l1, ph + 0.5 * m1,
-                            vr + 0.5 * a1, vth + 0.5 * b1, vph + 0.5 * c1);
+    double k2 = (vr + h * 0.5 * a1);
+    double l2 = ((vtheta + h * 0.5 * b1) / (r + h * 0.5 * k1));
+    double m2 = ((vphi + h * 0.5 * c1) / ((r + h * 0.5 * k1) * (sin(theta + h * 0.5 * l1))));
+    double a2 = dvr_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
+                          vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
+    double b2 = dvtheta_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
+                              vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
+    double c2 = dvphi_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
+                            vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
 
-    // std::cout << k2 << ' ' << l2 << ' ' << m2 << ' ' << a2 << ' ' << b2 << ' ' << c2 << std::endl;
+    std::cout << k2 << ' ' << l2 << ' ' << m2 << ' ' << a2 << ' ' << b2 << ' ' << c2 << std::endl;
 
-    double k3 = h * (vr + 0.5 * a2);
-    double l3 = h * ((vth + 0.5 * b2) / (r + 0.5 * k2));
-    double m3 = h * ((vph + 0.5 * c2) / ((r + 0.5 * k2) * (sin(th + 0.5 * l2))));
-    double a3 = h * dvrdt(r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
-                          vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2);
-    double b3 = h * dvthetadt(r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
-                              vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2);
-    double c3 = h * dvphidt(r + 0.5 * k2, th + 0.5 * l2, ph + 0.5 * m2,
-                            vr + 0.5 * a2, vth + 0.5 * b2, vph + 0.5 * c2);
+    double k3 = (vr + h * 0.5 * a2);
+    double l3 = ((vtheta + h * 0.5 * b2) / (r + h * 0.5 * k2));
+    double m3 = ((vphi + h * 0.5 * c2) / ((r + h * 0.5 * k2) * (sin(theta + h * 0.5 * l2))));
+    double a3 = dvr_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
+                          vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
+    double b3 = dvtheta_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
+                              vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
+    double c3 = dvphi_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
+                            vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
 
-    // std::cout << k3 << ' ' << l3 << ' ' << m3 << ' ' << a3 << ' ' << b3 << ' ' << c3 << std::endl;
+    std::cout << k3 << ' ' << l3 << ' ' << m3 << ' ' << a3 << ' ' << b3 << ' ' << c3 << std::endl;
 
-    double k4 = h * (vr + a3);
-    double l4 = h * ((vth + b3) / (r + k3));
-    double m4 = h * ((vph + c3) / ((r + k3) * (sin(th + l3))));
-    double a4 = h * dvrdt(r + k3, th + l3, ph + m3, vr + a3, vth + b3,
-                          vph + c3);
-    double b4 = h * dvthetadt(r + k3, th + l3, ph + m3, vr + a3, vth + b3,
-                              vph + c3);
-    double c4 = h * dvphidt(r + k3, th + l3, ph + m3, vr + a3, vth + b3,
-                            vph + c3);
+    double k4 = (vr + h * a3);
+    double l4 = ((vtheta + h * b3) / (r + h * k3));
+    double m4 = ((vphi + h * c3) / ((r + h * k3) * (sin(theta + h * l3))));
+    double a4 = dvr_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
+                          vphi + h * c3);
+    double b4 = dvtheta_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
+                              vphi + h * c3);
+    double c4 = dvphi_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
+                            vphi + h * c3);
 
-    vec[1] = r + (1. / 6.) * k1 + (1. / 3.) * k2 + (1. / 3.) * k3 + (1. / 6.) * k4;
-    vec[2] = th + (1. / 6.) * l1 + (1. / 3.) * l2 + (1. / 3.) * l3 + (1. / 6.) * l4;
-    vec[3] = ph + (1. / 6.) * m1 + (1. / 3.) * m2 + (1. / 3.) * m3 + (1. / 6.) * m4;
-    vec[4] = vr + (1. / 6.) * a1 + (1. / 3.) * a2 + (1. / 3.) * a3 + (1. / 6.) * a4;
-    vec[5] = vth + (1. / 6.) * b1 + (1. / 3.) * b2 + (1. / 3.) * b3 + (1. / 6.) * b4;
-    vec[6] = vph + (1. / 6.) * c1 + (1. / 3.) * c2 + (1. / 3.) * c3 + (1. / 6.) * c4;
+    vec[1] = r + (h / 6.) * (k1 + 2. * k2 + 2. * k3 + k4);
+    vec[2] = theta + (h / 6.) * (l1 + 2. * l2 + 2. * l3 + l4);
+    vec[3] = phi + (h / 6.) * (m1 + 2. * m2 + 2. * m3 + m4);
+    vec[4] = vr + (h / 6.) * (a1 + 2. * a2 + 2. * a3 + a4);
+    vec[5] = vtheta + (h / 6.) * (b1 + 2. * b2 + 2. * b3 + b4);
+    vec[6] = vphi + (h / 6.) * (c1 + 2. * c2 + 2. * c3 + c4);
     vec[0] = t + h;
+
+    for (double val:vec) {
+        std::cout << val << ' ';
+    }
+    std::cout << std::endl;
 
     return vec;
 }
@@ -281,7 +293,7 @@ std::vector<double> RungeKutta::evaluate(std::vector<double> vec)
 // // dvrdt
 // const double &RungeKutta::dvrdt(const pybind11::array_t<double> &values, const double &gamma)
 // {
-//     return (coeff / gamma) * (values[5] * bfield.Bphi(values[1], values[2], values[3]) -
+//     return (charge_per_mass / gamma) * (values[5] * bfield.Bphi(values[1], values[2], values[3]) -
 //                               bfield.Btheta(values[1], values[2], values[3]) * values[6]) +
 //            (values[5] * values[5]) / values[1] + (values[6] * values[6]) / values[1];
 // }
@@ -289,7 +301,7 @@ std::vector<double> RungeKutta::evaluate(std::vector<double> vec)
 // //dvthetadt
 // const double &RungeKutta::dvthetadt(const pybind11::array_t<double> &values, const double &gamma)
 // {
-//     return (coeff / gamma) * (values[6] * bfield.Br(values[1], values[2], values[3]) -
+//     return (charge_per_mass / gamma) * (values[6] * bfield.Br(values[1], values[2], values[3]) -
 //                               bfield.Bphi(values[1], values[2], values[3]) * values[4]) -
 //            (values[4] * values[5]) / values[1] + (values[6] * values[6]) / (values[1] * tan(values[2]));
 // }
@@ -297,7 +309,7 @@ std::vector<double> RungeKutta::evaluate(std::vector<double> vec)
 // //dvphidt
 // const double &RungeKutta::dvphidt(const pybind11::array_t<double> &values, const double &gamma)
 // {
-//     return (coeff / gamma) * (values[4] * bfield.Btheta(values[1], values[2], values[3]) -
+//     return (charge_per_mass / gamma) * (values[4] * bfield.Btheta(values[1], values[2], values[3]) -
 //                               bfield.Br(values[1], values[2], values[3]) * values[5]) -
 //            (values[4] * values[6]) / values[1] - (values[5] * values[6]) / (values[1] * tan(values[2]));
 // }
