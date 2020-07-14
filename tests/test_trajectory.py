@@ -12,14 +12,14 @@ from gtracr.constants import EARTH_RADIUS
 
 if __name__ == "__main__":
     traj1 = Trajectory("p+",
-                       90.,
-                       90.,
-                       90.,
-                       90.,
-                       90.,
-                       rigidity=30.,
+                       0.,
+                       0.,
+                       0.,
+                       0.,
+                       0.,
+                       rigidity=10.,
                        escape_altitude=10 * EARTH_RADIUS)
-    traj1.get_trajectory(max_step=10000, step_size=1e-5)
+    traj1.get_trajectory(max_step=10000, step_size=1e-7)
 
     result = traj1.get_plotting_variables()
 
