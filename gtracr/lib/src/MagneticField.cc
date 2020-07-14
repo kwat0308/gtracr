@@ -8,7 +8,7 @@ MagneticField::MagneticField()
     // : gcoeffs{new double[13 * 13]}, hcoeffs{new double[13 * 13]} 
 {
     // gcoeffs[0] = -29404.8 * (1e-9);
-    g10 = -29404.8 * (1e-9);
+    g10 = -2.94048 * (1e-5);
 }
 // components of magnetic fields in spherical coordinates
 // r-component

@@ -90,8 +90,8 @@ class TrajectoryPoint:
         return np.array([vx, vy, vz])
 
     def __str__(self):
-        return "Coordinate (r, theta, phi): ({:.12f}, {:.12f}, {:.12f}), \
-            \nVelocity (vr, vtheta, vphi): ({:.12f}, {:.12f}, {:.12f})\n".format(
+        return "Coordinate (r, theta, phi): ({:.5e}, {:.5e}, {:.5e}), \
+            \nVelocity (vr, vtheta, vphi): ({:.5e}, {:.5e}, {:.5e})\n".format(
             *tuple(vars(self).values()))
 
     # both position and velocity in Cartesian coordinates

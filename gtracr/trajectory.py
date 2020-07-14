@@ -8,7 +8,7 @@ import numpy as np
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
+from gtracr.constants import *
 from gtracr.trajectory_point import TrajectoryPoint
 from RungeKutta import RungeKutta
 from gtracr.add_particle import particle_dict
@@ -52,7 +52,7 @@ class Trajectory:
 
         # define rigidity and energy only if they are provided, evaluate for the other member
         # also set momentum in each case
-        self.particle.print()
+        # self.particle.print()
 
         if rigidity is None:
             # self.particle.get_rigidity_from_energy(energy)
@@ -74,7 +74,7 @@ class Trajectory:
                 "Provide either energy or rigidity as input, not both!")
 
         # print(self.particle.momentum, self.particle.velocity, self.partic)
-        self.particle.print()
+        # self.particle.print()
         self.particle_escaped = False  # check if trajectory is allowed or not
 
         # initialize required arrays here
@@ -96,7 +96,7 @@ class Trajectory:
 
         # transformation process for coordinate
         detector_coord = detector_tp.cartesian_coord()
-        particle_coord = self.get_particle_coord(mag=self.altitude)
+        particle_coord = self.get_particle_coord(mag=self.altitude * (1e3))
         print(detector_coord, particle_coord)
         # print(self.tf_matrix())
         (part_x, part_y, part_z) = self.transform(detector_coord,
@@ -106,6 +106,7 @@ class Trajectory:
 
         # transformation for velocity
         detector_vel = np.zeros(3)
+        self.particle.velocity = self.particle.velocity * KG_M_S_PER_GEVC  # convert from natural units to SI units
         particle_vel = self.get_particle_coord(mag=self.particle.velocity)
         print(detector_vel, particle_vel)
         (part_vx, part_vy, part_vz) = self.transform(detector_vel,
@@ -124,7 +125,7 @@ class Trajectory:
         return (detector_tp, particle_tp)
 
     # evaluates the trajectory using Runge-Kutta methods
-    def get_trajectory(self, max_step=10000, step_size=0.01):
+    def get_trajectory(self, max_step=10000, step_size=1e-10):
 
         # check if max_step > max_buffer, if so then update this
         # there is a better way to do this, im sure
@@ -150,8 +151,16 @@ class Trajectory:
 
         # start iteration process
         # rk_integrator = rk_integratorntegrator(self.particle.mass, self.particle.charge)
+        # convert charge, mass from e, GeV/c^2 to SI units (Coulombs, kg)
+        # print(self.particle.charge)
+        # print(self.particle.charge * ELEMENTARY_CHARGE)
+        # # self.particle.charge = self.particle.charge * ELEMENTARY_CHARGE
+        # print(self.particle.charge, self.particle.mass)
+        # self.particle.mass *= KG_TO_GEVC2
         rk_integrator = RungeKutta(self.particle.charge, self.particle.mass,
                                    step_size)
+
+        print(rk_integrator.charge, rk_integrator.mass)
         i = 2
         part_t = step_size
         # (part_r, part_theta, part_phi, part_vr, part_vtheta,

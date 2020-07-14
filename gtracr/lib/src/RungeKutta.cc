@@ -52,11 +52,12 @@ RungeKutta &RungeKutta::operator=(const RungeKutta &rk)
 // dvrdt
 double RungeKutta::dvr_dt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {   
-    double charge_per_mass = ((-charge_ )/ (mass_*  gamma(vr, vtheta, vphi, r, theta)));
+    double charge_per_mass = ((-charge_ * constants::ELEMENTARY_CHARGE) / 
+                                    (mass_* constants::KG_PER_GEVC2 * gamma(vr, vtheta, vphi, r, theta)));
     double lorentz_term = charge_per_mass * 
-                        (vtheta * bfield_.Bphi(r, theta, phi) - bfield_.Btheta(r, theta, phi) * vphi);
-    double accel_term = (r * vtheta * vtheta) + (r * vphi * vphi * sin(theta) * sin(theta));
-    // double accel_term = (vtheta*vtheta / r) + (vphi*vphi / r);
+                            (vtheta * bfield_.Bphi(r, theta, phi) - bfield_.Btheta(r, theta, phi) * vphi);
+    // double accel_term = (r * vtheta * vtheta) + (r * vphi * vphi * sin(theta) * sin(theta));
+    double accel_term = (vtheta*vtheta / r) + (vphi*vphi / r);
     double dvr_dt =  lorentz_term + accel_term;
     return dvr_dt;
 }
@@ -64,24 +65,26 @@ double RungeKutta::dvr_dt(double r, double theta, double phi, double vr, double 
 //dvthetadt
 double RungeKutta::dvtheta_dt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {
-    double charge_per_mass = ((-charge_ )/ (mass_*  gamma(vr, vtheta, vphi, r, theta)));
+    double charge_per_mass = ((-charge_ * constants::ELEMENTARY_CHARGE) / 
+                                    (mass_* constants::KG_PER_GEVC2 * gamma(vr, vtheta, vphi, r, theta)));
     double lorentz_term = charge_per_mass * 
                             (vphi * bfield_.Br(r, theta, phi) - bfield_.Bphi(r, theta, phi) * vr);
-    double accel_term = (vphi * vphi * sin(theta) * cos(theta)) - (2. * vr * vtheta / r);
-    // double accel_term = ((vphi*vphi) / (r*tan(theta))) - (vr*vtheta / r);
-    double dvtheta_dt =  lorentz_term / r + accel_term;
+    // double accel_term = (vphi * vphi * sin(theta) * cos(theta)) - (2. * vr * vtheta / r);
+    double accel_term = ((vphi*vphi) / (r*tan(theta))) - (vr*vtheta / r);
+    double dvtheta_dt =  lorentz_term + accel_term;
     return dvtheta_dt;
 }
 
 //dvphidt
 double RungeKutta::dvphi_dt(double r, double theta, double phi, double vr, double vtheta, double vphi)
 {
-    double charge_per_mass = ((-charge_ )/ (mass_*  gamma(vr, vtheta, vphi, r, theta)));
+    double charge_per_mass = ((-charge_ * constants::ELEMENTARY_CHARGE) / 
+                                    (mass_* constants::KG_PER_GEVC2 * gamma(vr, vtheta, vphi, r, theta)));
     double lorentz_term = charge_per_mass * 
                             (vr * bfield_.Btheta(r, theta, phi) - bfield_.Br(r, theta, phi) * vtheta);
-    double accel_term = ((2. * vphi * vr) / r) + ((2. * vphi * vtheta) / tan(theta));
-    // double accel_term = (vr*vphi / r) + ((vtheta*vphi) / (r*tan(theta)));
-    double dvphi_dt = ( lorentz_term / (r * sin(theta))) - accel_term;
+    // double accel_term = ((2. * vphi * vr) / r) + ((2. * vphi * vtheta) / tan(theta));
+    double accel_term = (vr*vphi / r) + ((vtheta*vphi) / (r*tan(theta)));
+    double dvphi_dt = lorentz_term - accel_term;
     return dvphi_dt;
 }
 
@@ -95,7 +98,7 @@ double RungeKutta::velocity(double vr, double vtheta, double vphi, double r, dou
 // lorentz factor
 double RungeKutta::gamma(double vr, double vtheta, double vphi, double r, double theta)
 {
-    double beta = velocity(vr, vtheta, vphi, r, theta) / constants::sc;
+    double beta = velocity(vr, vtheta, vphi, r, theta) / constants::SPEED_OF_LIGHT;
     double gamma = 1. / sqrt(1. - beta * beta);
     return gamma;
 }
@@ -114,65 +117,80 @@ std::array<double, 7>& RungeKutta::evaluate(std::array<double, 7>& vec)
     double vtheta = vec[5];
     double vphi = vec[6];
 
-    // std::cout << t << ' ' << r << ' ' << th << ' ' << ph << ' ' << vr << ' ' << vtheta << ' ' << vph << ' ' << std::endl;
+    // std::cout << t << ' ' << r << ' ' << theta << ' ' << phi << ' ' << vr << ' ' << vtheta << ' ' << vphi << ' ' << std::endl;
 
     // delete[] ptr;
 
-    double k1 = vr;
-    double l1 = (vtheta / r);
-    double m1 = (vphi / (r * sin(theta)));
-    double a1 = dvr_dt(r, theta, phi, vr, vtheta, vphi);
-    double b1 = dvtheta_dt(r, theta, phi, vr, vtheta, vphi);
-    double c1 = dvphi_dt(r, theta, phi, vr, vtheta, vphi);
+    // double k1 = vr;
+    // double l1 = (vtheta / r);
+    // double m1 = (vphi / (r * sin(theta)));
+    // double a1 = dvr_dt(r, theta, phi, vr, vtheta, vphi);
+    // double b1 = dvtheta_dt(r, theta, phi, vr, vtheta, vphi);
+    // double c1 = dvphi_dt(r, theta, phi, vr, vtheta, vphi);
 
-    std::cout << k1 << ' ' << l1 << ' ' << m1 << ' ' << a1 << ' ' << b1 << ' ' << c1 << std::endl;
+    // // std::cout << k1 << ' ' << l1 << ' ' << m1 << ' ' << a1 << ' ' << b1 << ' ' << c1 << std::endl;
 
-    double k2 = (vr + h * 0.5 * a1);
-    double l2 = ((vtheta + h * 0.5 * b1) / (r + h * 0.5 * k1));
-    double m2 = ((vphi + h * 0.5 * c1) / ((r + h * 0.5 * k1) * (sin(theta + h * 0.5 * l1))));
-    double a2 = dvr_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
-                          vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
-    double b2 = dvtheta_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
-                              vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
-    double c2 = dvphi_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
-                            vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
+    // double k2 = (vr + h * 0.5 * a1);
+    // double l2 = ((vtheta + h * 0.5 * b1) / (r + h * 0.5 * k1));
+    // double m2 = ((vphi + h * 0.5 * c1) / ((r + h * 0.5 * k1) * (sin(theta + h * 0.5 * l1))));
+    // double a2 = dvr_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
+    //                       vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
+    // double b2 = dvtheta_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
+    //                           vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
+    // double c2 = dvphi_dt(r + h * 0.5 * k1, theta + h * 0.5 * l1, phi + h * 0.5 * m1,
+    //                         vr + h * 0.5 * a1, vtheta + h * 0.5 * b1, vphi + h * 0.5 * c1);
 
-    std::cout << k2 << ' ' << l2 << ' ' << m2 << ' ' << a2 << ' ' << b2 << ' ' << c2 << std::endl;
+    // // std::cout << k2 << ' ' << l2 << ' ' << m2 << ' ' << a2 << ' ' << b2 << ' ' << c2 << std::endl;
 
-    double k3 = (vr + h * 0.5 * a2);
-    double l3 = ((vtheta + h * 0.5 * b2) / (r + h * 0.5 * k2));
-    double m3 = ((vphi + h * 0.5 * c2) / ((r + h * 0.5 * k2) * (sin(theta + h * 0.5 * l2))));
-    double a3 = dvr_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
-                          vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
-    double b3 = dvtheta_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
-                              vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
-    double c3 = dvphi_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
-                            vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
+    // double k3 = (vr + h * 0.5 * a2);
+    // double l3 = ((vtheta + h * 0.5 * b2) / (r + h * 0.5 * k2));
+    // double m3 = ((vphi + h * 0.5 * c2) / ((r + h * 0.5 * k2) * (sin(theta + h * 0.5 * l2))));
+    // double a3 = dvr_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
+    //                       vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
+    // double b3 = dvtheta_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
+    //                           vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
+    // double c3 = dvphi_dt(r + h * 0.5 * k2, theta + h * 0.5 * l2, phi + h * 0.5 * m2,
+    //                         vr + h * 0.5 * a2, vtheta + h * 0.5 * b2, vphi + h * 0.5 * c2);
 
-    std::cout << k3 << ' ' << l3 << ' ' << m3 << ' ' << a3 << ' ' << b3 << ' ' << c3 << std::endl;
+    // // std::cout << k3 << ' ' << l3 << ' ' << m3 << ' ' << a3 << ' ' << b3 << ' ' << c3 << std::endl;
 
-    double k4 = (vr + h * a3);
-    double l4 = ((vtheta + h * b3) / (r + h * k3));
-    double m4 = ((vphi + h * c3) / ((r + h * k3) * (sin(theta + h * l3))));
-    double a4 = dvr_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
-                          vphi + h * c3);
-    double b4 = dvtheta_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
-                              vphi + h * c3);
-    double c4 = dvphi_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
-                            vphi + h * c3);
+    // double k4 = (vr + h * a3);
+    // double l4 = ((vtheta + h * b3) / (r + h * k3));
+    // double m4 = ((vphi + h * c3) / ((r + h * k3) * (sin(theta + h * l3))));
+    // double a4 = dvr_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
+    //                       vphi + h * c3);
+    // double b4 = dvtheta_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
+    //                           vphi + h * c3);
+    // double c4 = dvphi_dt(r + h * k3, theta + h * l3, phi + h * m3, vr + h * a3, vtheta + h * b3,
+    //                         vphi + h * c3);
 
-    vec[1] = r + (h / 6.) * (k1 + 2. * k2 + 2. * k3 + k4);
-    vec[2] = theta + (h / 6.) * (l1 + 2. * l2 + 2. * l3 + l4);
-    vec[3] = phi + (h / 6.) * (m1 + 2. * m2 + 2. * m3 + m4);
-    vec[4] = vr + (h / 6.) * (a1 + 2. * a2 + 2. * a3 + a4);
-    vec[5] = vtheta + (h / 6.) * (b1 + 2. * b2 + 2. * b3 + b4);
-    vec[6] = vphi + (h / 6.) * (c1 + 2. * c2 + 2. * c3 + c4);
+    // // vec[1] = r + (h / 6.) * (k1 + 2. * k2 + 2. * k3 + k4);
+    // // vec[2] = theta + (h / 6.) * (l1 + 2. * l2 + 2. * l3 + l4);
+    // // vec[3] = phi + (h / 6.) * (m1 + 2. * m2 + 2. * m3 + m4);
+    // // vec[4] = vr + (h / 6.) * (a1 + 2. * a2 + 2. * a3 + a4);
+    // // vec[5] = vtheta + (h / 6.) * (b1 + 2. * b2 + 2. * b3 + b4);
+    // // vec[6] = vphi + (h / 6.) * (c1 + 2. * c2 + 2. * c3 + c4);
+    // vec[1] += (h / 6.) * (k1 + 2. * k2 + 2. * k3 + k4);
+    // vec[2] += (h / 6.) * (l1 + 2. * l2 + 2. * l3 + l4);
+    // vec[3] += (h / 6.) * (m1 + 2. * m2 + 2. * m3 + m4);
+    // vec[4] += (h / 6.) * (a1 + 2. * a2 + 2. * a3 + a4);
+    // vec[5] += (h / 6.) * (b1 + 2. * b2 + 2. * b3 + b4);
+    // vec[6] += (h / 6.) * (c1 + 2. * c2 + 2. * c3 + c4);
+    // vec[0] += h;
+
+    vec[1] = r + h * (vr);
+    vec[2] = theta + h * (vtheta / r);
+    vec[3] = phi + h * (vphi / (r*sin(theta)));
+    vec[4] = vr + h * dvr_dt(r, theta, phi, vr, vtheta, vphi);
+    vec[5] = vtheta + h * dvtheta_dt(r, theta, phi, vr, vtheta, vphi);
+    vec[6] = vphi + h * dvphi_dt(r, theta, phi, vr, vtheta, vphi);
     vec[0] = t + h;
 
-    for (double val:vec) {
-        std::cout << val << ' ';
-    }
-    std::cout << std::endl;
+
+    // for (double val:vec) {
+    //     std::cout << val << ' ';
+    // }
+    // std::cout << std::endl;
 
     return vec;
 }

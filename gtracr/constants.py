@@ -7,7 +7,7 @@ import numpy as np
 
 SPEED_OF_LIGHT = sc.c
 
-ELEMENTARY_CHARGE = sc.e
+ELEMENTARY_CHARGE = 1.602e-19
 
 EARTH_RADIUS = 6371.2 * (1e3)  # earth radius (meters)
 G10 = -29404.8 * (1e-9)  # B-field parameter from IGRF 2020 (in Teslas)

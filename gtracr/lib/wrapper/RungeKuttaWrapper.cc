@@ -14,6 +14,8 @@ PYBIND11_MODULE(RungeKutta, M)
       .def(py::init<>())
       .def(py::init<const int, const double &>())
       .def(py::init<const int, const double &, const double &>())
+      .def_property("charge", &RungeKutta::charge, &RungeKutta::set_charge)
+      .def_property("mass", &RungeKutta::mass, &RungeKutta::set_mass)
       .def_property("step_size", &RungeKutta::stepsize, &RungeKutta::set_stepsize)
       .def("evaluate", &RungeKutta::evaluate);
 }

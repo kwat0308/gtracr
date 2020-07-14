@@ -22,9 +22,17 @@ public:
     RungeKutta(const RungeKutta &rk);
     RungeKutta &operator=(const RungeKutta &rk);
     //return the step size of the Runge-Kutta integrator
-    const double &stepsize() { return h; }
+    const double &stepsize() { return h; } 
+    //return the charge of the particle associated with the Runge-Kutta integrator
+    const int charge() {return charge_; }
+    //return the mass of the particle associated with the Runge-Kutta integrator
+    const double &mass() { return mass_; }
     // set the step size of the integrator
     void set_stepsize(const double &_h) { h = _h; }
+    // set the charge of the particle associated with the integrator
+    void set_charge(const int _charge) {charge_ = _charge;}
+    // set the mass of the particle associated with the integrator
+    void set_mass(const double& _mass) {mass_ = _mass;}
     // acceleration in r component (time derivative of vr) from Lorentz force
     double dvr_dt(double r, double theta, double phi, double vr, double vtheta, double vphi);
     // acceleration in theta component (time derivative of vtheta) from Lorentz force

@@ -35,9 +35,9 @@ Particle::Particle()
     : nm{"Proton"}, pid{2212}, m{0.938272}, ch{1}, lbl{"p+"}
 {
     p = sqrt(m * m + 1.);
-    v = (p * constants::sc) /
+    v = (p * constants::SPEED_OF_LIGHT) /
         sqrt(
-            (p * p) + (m * constants::sc) * (m * constants::sc));
+            (p * p) + (m * constants::SPEED_OF_LIGHT) * (m * constants::SPEED_OF_LIGHT));
     R = p / abs(ch);
 }
 
@@ -47,9 +47,9 @@ Particle::Particle(const std::string &name, const int pdgid, const double &mass,
     : nm{name}, pid{pdgid}, m{mass}, ch{charge}, lbl{label}
 {
     p = sqrt(m * m + 1.);
-    v = (p * constants::sc) /
+    v = (p * constants::SPEED_OF_LIGHT) /
         sqrt(
-            (p * p) + (m * constants::sc) * (m * constants::sc));
+            (p * p) + (m * constants::SPEED_OF_LIGHT) * (m * constants::SPEED_OF_LIGHT));
     R = p / abs(ch);
 }
 
@@ -104,42 +104,42 @@ Particle &Particle::operator=(const Particle &part)
 // Lorentz factor
 const double &Particle::gamma()
 {
-    return 1. / sqrt(1. - (v / constants::sc) * (v / constants::sc));
+    return 1. / sqrt(1. - (v / constants::SPEED_OF_LIGHT) * (v / constants::SPEED_OF_LIGHT));
 }
 
 const double &Particle::gamma(const double &vel)
 {
-    return 1. / sqrt(1. - (vel / constants::sc) * (vel / constants::sc));
+    return 1. / sqrt(1. - (vel / constants::SPEED_OF_LIGHT) * (vel / constants::SPEED_OF_LIGHT));
 }
 
 // setters
 void Particle::set_from_energy(const double &energy)
 {
     p = sqrt(energy * energy - m * m);
-    v = ((p * constants::sc) /
+    v = ((p * constants::SPEED_OF_LIGHT) /
          sqrt(
              p * p +
-             (m * constants::sc) * (m * constants::sc)));
+             (m * constants::SPEED_OF_LIGHT) * (m * constants::SPEED_OF_LIGHT)));
     R = p / abs(ch);
 }
 
 void Particle::set_from_momentum(const double &_p)
 {
     p = _p;
-    v = ((p * constants::sc) /
+    v = ((p * constants::SPEED_OF_LIGHT) /
          sqrt(
              p * p +
-             (m * constants::sc) * (m * constants::sc)));
+             (m * constants::SPEED_OF_LIGHT) * (m * constants::SPEED_OF_LIGHT)));
     R = p / abs(ch);
 }
 
 void Particle::set_from_rigidity(const double &_R)
 {
     p = _R * abs(ch);
-    v = ((p * constants::sc) /
+    v = ((p * constants::SPEED_OF_LIGHT) /
          sqrt(
              p * p +
-             (m * constants::sc) * (m * constants::sc)));
+             (m * constants::SPEED_OF_LIGHT) * (m * constants::SPEED_OF_LIGHT)));
     R = _R;
 }
 
