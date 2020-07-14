@@ -2,3 +2,4 @@
 # plots/**
 .ipynb_checkpoints
 **.pyc
+.vscode/**
