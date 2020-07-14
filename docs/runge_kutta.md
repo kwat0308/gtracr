@@ -32,3 +32,15 @@ I realized that the equation for acceleration above ($\vec{a} = \dfrac{1}{m\gamm
 These equations were cross-checked with Baldini's equations, and the trajectories were consistent. As such, I will be using these equations above from now on.
 
 I have also attached an image of my work for the derivation of the above equation below.
+
+### Revisiting the Runge Kutta implementation once again
+
+We found out that the equations obtained by D.F. Smart were indeed correct, and were the same equations as which we derived. The only difference is that:
+
+- In _our equation_ we assumed that the theta and phi component of the velocity are in _radians / second_
+- In _their equation_ they assumed that those components are in _meters / second_ by letting:
+
+  - vtheta = r * vtheta
+  - vphi = r _sin(theta)_ vphi In this sense, **their version is more correct.** Why? Since each component of the velocity / momentum should have **some sort** of units.
+
+As of such, we now use Smart's version of the coupled ODEs, which provide more physically sound reasoning behind the equations.

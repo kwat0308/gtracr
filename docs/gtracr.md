@@ -127,9 +127,7 @@
 ## Major Tasks
 
 - [ ] Figure out things about the licensing with Baldini's scripts
-- [x] Obtain a heatmap of allowed and forbidden trajectories at a single location and altitude and at all zenith and azimuthal angles (i.e. determine the geomagnetic cutoff for each location on Earth)
-- [ ] Implement this for muons (not too sure, ask Anatoli about this when the time comes)
-- [ ] Do this with neutrinos too.
+- [ ] Obtain a heatmap of allowed and forbidden trajectories at a single location and altitude and at all zenith and azimuthal angles (i.e. determine the geomagnetic cutoff for each location on Earth)
 
 ## Minor Tasks
 
@@ -137,4 +135,29 @@
 - [ ] Clean up the code structure
 - [x] Get the zenith angle / azimuthal angle coordinate transformation working
 - [x] Figure out a system to detect allowed vs forbidden trajectories
-- [x] Get the geomagnetic cutoff code working
+- [ ] Get the geomagnetic cutoff code working
+
+### Fixing some conventional issues
+
+Naming conventions. These really need to be consistent. We should be following the PEP8 standard for Python, and the Google C++ standard for C++.
+
+For naming conventions, the following will be used:
+
+- Class names: CamelCase
+- global variables: ALL_CAPS
+- everything else (functions, variables, methods / member functions): snake_case
+
+Additionally, I decided to abide to the following conventions for variables concerning classes in C++:
+
+- members : variable_ (i.e. add underscore **after** the variable name)
+- parameters for constructors: variable (the actual variable name)
+- getters : variable() (i.e. the actual variable name)
+- parameters in setters: _variable (i.e. add underscore **before** variable name)
+
+### Restructuring the code
+
+Anatoli also gave me a pep talk about standards when creating a package. The key thing is this: **_Each class should have one single function_** i.e., they should not be juggling many tasks all at once.
+
+He gave me an analogy like a factory, where different sections work independently but have a secure communication line. The brain / control center communicates with certain sections when the brain wants certain things, and those sections in return communicate with lower sections that create the raw materials. But the lower sections **do not** communicate with the brain (generally).
+
+In a similar fashion, code structure should obey the same sort of style.
