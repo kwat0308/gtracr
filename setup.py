@@ -29,31 +29,38 @@ class get_pybind_include(object):
 ext_module = [
     Extension(
         'RungeKutta',
-        sources=["gtracr/lib/src/RungeKutta.cc", "gtracr/lib/wrapper/RungeKuttaWrapper.cc", "gtracr/lib/src/MagneticField.cc"],
+        sources=[
+            "gtracr/lib/src/RungeKutta.cc",
+            "gtracr/lib/wrapper/RungeKuttaWrapper.cc",
+            "gtracr/lib/src/MagneticField.cc"
+        ],
         # depends=["gtracr/lib/src/MagneticField.cc"],
         library_dirs=["gtracr/lib"],
         language='c++',
         include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
-        extra_compile_args=["-O3"]
-    ),
+        extra_compile_args=["-O3"]),
     Extension(
         'Location',
-        sources=["gtracr/lib/src/Location.cc", "gtracr/lib/wrapper/LocationWrapper.cc"],
+        sources=[
+            "gtracr/lib/src/Location.cc",
+            "gtracr/lib/wrapper/LocationWrapper.cc"
+        ],
         # depends=["gtracr/lib/src/MagneticField.cc"],
         library_dirs=["gtracr/lib"],
         language='c++',
         include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
-        extra_compile_args=["-O3"]
-    ),
+        extra_compile_args=["-O3"]),
     Extension(
         'Particle',
-        sources=["gtracr/lib/src/Particle.cc", "gtracr/lib/wrapper/ParticleWrapper.cc"],
+        sources=[
+            "gtracr/lib/src/Particle.cc",
+            "gtracr/lib/wrapper/ParticleWrapper.cc"
+        ],
         # depends=["gtracr/lib/src/MagneticField.cc"],
         library_dirs=["gtracr/lib"],
         language='c++',
         include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
-        extra_compile_args=["-O3"]
-    )
+        extra_compile_args=["-O3"])
 ]
 
 with open("README.md", "r") as f:
@@ -61,14 +68,14 @@ with open("README.md", "r") as f:
 
 setup(
     name='gtracr',
-    version='0.0.2',
+    version='0.1.0',
     description=
     'A GPU-based simulation that tracks cosmic rays from any location on Earth.',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kwat0308/gtracr",
     packages=find_packages(exclude='tests'),
-    ext_modules = ext_module,
+    ext_modules=ext_module,
     classifiers=[
         'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',

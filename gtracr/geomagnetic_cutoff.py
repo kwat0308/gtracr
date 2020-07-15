@@ -58,11 +58,13 @@ if __name__ == "__main__":
     # define a range of zenith and azimuthal angles
     # znum = 15
     # aznum = 30
-    num = 20
+    num = 50
     zenith_arr = np.linspace(0., 180., num, endpoint=False)
-    azimuth_arr = np.linspace(-180., 180., num, endpoint=False)
+    azimuth_arr = np.linspace(0., 360., num, endpoint=False)
 
-    zenith_matrix, azimuth_matrix = np.meshgrid(zenith_arr, azimuth_arr, indexing="ij")
+    zenith_matrix, azimuth_matrix = np.meshgrid(zenith_arr,
+                                                azimuth_arr,
+                                                indexing="ij")
 
     # create particle trajectory with desired particle and energy
     # rigidity_list = [0.5, 10, 20, 50, 100, 1000]
@@ -102,20 +104,22 @@ if __name__ == "__main__":
                         print("Zenith Angle: {0}, Azimuth Angle {1}\n".format(
                             zenith, azimuth))
                         traj = Trajectory(pname,
-                                          loc.latitude,
-                                          loc.longitude,
-                                          loc.altitude,
-                                          zenith,
-                                          azimuth,
+                                          latitude=loc.latitude,
+                                          longitude=loc.longitude,
+                                          detector_altitude=loc.altitude,
+                                          zenith_angle=zenith,
+                                          azimuth_angle=azimuth,
+                                          particle_altitude=500.,
                                           rigidity=rigidity)
-                        traj.get_trajectory(max_step=10000, step_size=0.01)
+                        traj.get_trajectory(max_step=10000)
                         cutoff_arrs[k][i][j] = traj.particle_escaped
                         print(traj.particle_escaped)
 
                 geomag_cutoffdict["Location"][locname][pname][
                     rigidity] = cutoff_arrs[k]
 
-            plot_heatmap(zenith_matrix, azimuth_matrix, cutoff_arrs, locname, rigidity_list, pname)
+            plot_heatmap(zenith_matrix, azimuth_matrix, cutoff_arrs, locname,
+                         rigidity_list, pname)
 
     fpath = os.path.join(os.getcwd(), "geomagnetic_cutoff.pkl")
     export_as_pkl(fpath, geomag_cutoffdict)

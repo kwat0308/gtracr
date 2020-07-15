@@ -181,7 +181,7 @@ We did this with 4 different particles at 4 different rigidities ($R = \dfrac{pc
 - Particles: positron, electron, proton, anti-proton
 - Rigidities: 5, 10, 30, 50 (in GV)
 
-### After showing results to Anatoli...
+### After showing results to Anatoli
 
 - They werent visually appealing (black and white is a no go)
 - We should reduce the number of plots required
@@ -189,3 +189,10 @@ We did this with 4 different particles at 4 different rigidities ($R = \dfrac{pc
 - Optimization of the code is necessary, reduce the time of the actual process.
 
   - our goal is ~4 milliseconds, but 4 seconds is good for now.
+  - This is now achieved, with ~30 seconds per iteration. Of course, this can be more optimized (look at the optimization markdown file for more details).
+
+### Creating contour plots
+
+The presentation of these rigidity cutoffs should be more elegant. An example would be from Honda's paper in 2002 (<https://arxiv.org/pdf/hep-ph/0203272.pdf>) where they use contour plots to indicate at which locations are the cutoffs for the rigidities (i.e. any rigidity **below** that is allowed).
+
+So we should create some sort of plot that is similar to this, by utilizing color or whatever. Not too sure how to do this, but we should think about this for now.

@@ -162,6 +162,8 @@ As of such, a thorough checking was performed by going back to the roots. I crea
 - [x] Is the distance in which the particle travels at appropriate (i.e. do they actually propagate out to ~10*RE)?
 - [x] Does the particle start / end trajectory **outside / on the surface of Earth**?
 
+First thing to note is that we want to back track the particle, so it is sufficient to use opposite charges of particles (that is, e -> -e) to allow inverse time propagation. This was done in Honda's paper in 2002 as well (<https://arxiv.org/pdf/hep-ph/0203272.pdf>).
+
 We also decided to use the momentum instead of velocity, which made some equations a lot simpler than they should be.
 
 Doing this took some time and care, where we first:
@@ -171,7 +173,7 @@ Doing this took some time and care, where we first:
 - [x] Then added the dipole approximation of the Earth B-field with spherical coordinates
 - [x] Discard Euler steps and use RK4 instead
 - [x] Add the conversion between longitude and latitude for initial parameters
-- [ ] Add the zenith and azimuthal angle, along with the CR altitude for initial parameters
+- [x] Add the zenith and azimuthal angle, along with the CR altitude for initial parameters
 
 This now works well, and should be integrated within our actual code.
 
@@ -179,11 +181,17 @@ This now works well, and should be integrated within our actual code.
 
 This new version that works properly should be integrated with the actual package. This involves:
 
-- Using momentum instead of velocities for the 6-vector
-- Removing unnecessary conversions between coordinates
-- Dividing tasks into smaller classes instead of making the brain do all the work
+- [x] Using momentum instead of velocities for the 6-vector
+- [ ] Removing unnecessary conversions between coordinates
+- [ ] Dividing tasks into smaller classes instead of making the brain do all the work
 - Starting with Python, and then work into C++
-- Remove any other locations in which optimization can be performed (ex. appending values to 6 arrays, each with the variables vs initializing and creating a TrajectoryPoint every single iteration)
-- Delegating work appropriately (i.e. Runge Kutta part should contain **all** of the things it would be involved in (i.e. the loop))
+- [ ] Remove any other locations in which optimization can be performed (ex. appending values to 6 arrays, each with the variables vs initializing and creating a TrajectoryPoint every single iteration)
+- [ ] Delegating work appropriately (i.e. Runge Kutta part should contain **all** of the things it would be involved in (i.e. the loop))
 
 More thought should be put into this before actually doing it, this might really take a while... (maybe like draw it out first?)
+
+**An update**
+
+By fixing some unit conversion errors, and by implementing momentum instead of velocity, our code now works with the original interface, as it outputs the same results with the tester constructed to test our implementation (in tests/test.py).
+
+Changing the code structure can be done later on when we integrate parallelization with our code.

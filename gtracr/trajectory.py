@@ -117,7 +117,7 @@ class Trajectory:
         return particle_tp
 
     # evaluates the trajectory using Runge-Kutta methods
-    def get_trajectory(self, max_step=10000, step_size=1e-10):
+    def get_trajectory(self, max_step=10000, step_size=1e-5):
 
         # check if max_step > max_buffer, if so then update this
         # there is a better way to do this, im sure

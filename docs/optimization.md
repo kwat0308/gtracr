@@ -38,7 +38,7 @@ Some fixes that I have implemented:
 
 To further optimize the code, I brought the RungeKutta part (and subsequently the MagneticField part) to C++. This will greatly increase performance as the time taken from function calls in runtime will be effectively removed as this will all be done in compile time in C++.
 
-- After initial progress, the trajectory obtaining process for the geomagnetic cutoff took ~30 seconds (50 seconds less than before)! 
+- After initial progress, the trajectory obtaining process for the geomagnetic cutoff took ~30 seconds (50 seconds less than before)!
 
   - This is still slow, however. The reason for this is caused by the fact that:
 
@@ -49,13 +49,16 @@ To further optimize the code, I brought the RungeKutta part (and subsequently th
 
     - Move the Trajectory class (and actually all classes) to C++. This will effectively make everything done in compile time, which will make everything a lot faster!
     - Append the variables themselves (i.e. do not create these TrajectoryPoint objects in each iteration). This will remove organization, which is greatly wanted, at the cost of performance...
+    - Somehow restructure the code so that the whole iteration loop is contained within the RungeKutta class
 
-      - personally prefer first method more, but a lot of work!
+      - An idea of this would be to use spherical coordinates instead of TrajectoryPoints so that it would not be necessary to access things from Python in C++
+
+        - Of course, we could make the C++ Runge Kutta class access things from Python, but this would not be necessary, as we would only want geodesic information at the start and end of the trajectory.
 
 ### Current progress
 
-- I was able to make this work within C++. I created a test function within c++ and ran a simple testor with this. The variables clearly change with each iteration. 
+- I was able to make this work within C++. I created a test function within c++ and ran a simple testor with this. The variables clearly change with each iteration.
 
   - ~~However, the values still do not update when brought into python. Further investigation is required.~~ This now works, it was an issue with the stepsize being a constant private member. This was changed and now the loop iterates as normal.
 
-- We now need
+- Now the porting of the RungeKutta portion of the code works well with our current code structure.
