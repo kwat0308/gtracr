@@ -11,72 +11,70 @@ from gtracr.trajectory import Trajectory
 from gtracr.constants import EARTH_RADIUS
 
 if __name__ == "__main__":
-    traj1 = Trajectory("p+",
-                       0.,
-                       0.,
-                       0.,
-                       0.,
-                       0.,
-                       rigidity=10.,
-                       escape_altitude=10 * EARTH_RADIUS)
-    traj1.get_trajectory(max_step=10000, step_size=1e-7)
+    traj1 = Trajectory(
+        "p+",
+        latitude=0.,
+        longitude=0.,
+        detector_altitude=0.,
+        zenith_angle=90.,
+        azimuth_angle=0.,
+        particle_altitude=6371.2,
+        rigidity=30.,
+    )
+    # for i in range(10):
+    traj1.get_trajectory(max_step=10000, step_size=1e-5)
 
     result = traj1.get_plotting_variables()
 
-    t = result["t"]
-    x = result["x"] / EARTH_RADIUS
-    y = result["y"] / EARTH_RADIUS
-    z = result["z"] / EARTH_RADIUS
+    t_arr = result["t"]
+    x_arr = result["x"] / EARTH_RADIUS
+    y_arr = result["y"] / EARTH_RADIUS
+    z_arr = result["z"] / EARTH_RADIUS
 
-    # traj2 = Trajectory("p+",
-    #                    0.,
-    #                    0.,
-    #                    20.,
-    #                    70.,
-    #                    90.,
-    #                    rigidity=30.,
-    #                    escape_altitude=565)
-    # traj2.get_trajectory(max_step=10000, step_size=1e-4)
-
-    # result2 = traj2.get_plotting_variables()
-
-    # x2 = result2["x"] / EARTH_RADIUS
-    # y2 = result2["y"] / EARTH_RADIUS
-    # z2 = result2["z"] / EARTH_RADIUS
-
-    # fig1, ax1 = plt.subplots()
-    # ax1.scatter(x, y, c=t)
-    # ax.set_zlabel(r"z [$R_E$]")
-    # ax1.scatter(x2, y2, c="r")
-    # plt.show()
-    fig2, ax2 = plt.subplots()
-    ax2.scatter(x, z, c=t)
-    # ax2.scatter(x2, z2, c="r")
-    ax2.set_xlim([-3, 3])
-    ax2.set_ylim([-3, 3])
-    # ax.set_zlim([-1, 1])
-    ax2.set_xlabel(r"x [$R_E$]")
-    ax2.set_ylabel(r"z [$R_E$]")
-    plt.show()
-    # fig3, ax3 = plt.subplots()
-    # ax3.scatter(y, z, c=t)
-    # ax3.scatter(y2, z2, c="r")
-    # plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    cm = ax.scatter(x, y, z, c=t, marker='o')
-    # ax.scatter(x2, y2, z2, c="r", marker='o')
-    cbar = fig.colorbar(cm, ax=ax)
+    fig_3d = plt.figure()
+    ax_3d = fig_3d.add_subplot(111, projection="3d")
+    cm_3d = ax_3d.scatter(x_arr, y_arr, z_arr, c=t_arr, marker='o')
+    # ax_3d.scatter(x2, y2, z2, c="r", marker='o')
+    cbar_3d = fig_3d.colorbar(cm_3d, ax=ax_3d)
     # plt.colorbar()
     # plt.savefig("test.png")
-    ax.set_xlim([-1, 1])
-    ax.set_ylim([-1, 1])
-    ax.set_zlim([-1, 1])
-    ax.set_xlabel(r"x [$R_E$]")
-    ax.set_ylabel(r"y [$R_E$]")
-    ax.set_zlabel(r"z [$R_E$]")
-    cbar.ax.set_ylabel("Time [s]")
+    ax_3d.set_xlim([-3, 3])
+    ax_3d.set_ylim([-3, 3])
+    ax_3d.set_zlim([-3, 3])
+    ax_3d.set_xlabel(r"x [$R_E$]")
+    ax_3d.set_ylabel(r"y [$R_E$]")
+    ax_3d.set_zlabel(r"z [$R_E$]")
+    cbar_3d.ax.set_ylabel("Time [s]")
+    plt.show()
+
+    fig_xy, ax_xy = plt.subplots()
+    cm_xy = ax_xy.scatter(x_arr, y_arr, c=t_arr)
+    cbar_xy = fig_xy.colorbar(cm_xy, ax=ax_xy)
+    ax_xy.set_xlim([-3, 3])
+    ax_xy.set_ylim([-3, 3])
+    ax_xy.set_xlabel(r"x [$R_E$]")
+    ax_xy.set_ylabel(r"y [$R_E$]")
+    cbar_xy.ax.set_ylabel("Time [s]")
+    plt.show()
+
+    fig_xz, ax_xz = plt.subplots()
+    cm_xz = ax_xz.scatter(x_arr, z_arr, c=t_arr)
+    cbar_xz = fig_xz.colorbar(cm_xz, ax=ax_xz)
+    ax_xz.set_xlim([-3, 3])
+    ax_xz.set_ylim([-3, 3])
+    ax_xz.set_xlabel(r"x [$R_E$]")
+    ax_xz.set_ylabel(r"z [$R_E$]")
+    cbar_xz.ax.set_ylabel("Time [s]")
+    plt.show()
+
+    fig_yz, ax_yz = plt.subplots()
+    cm_yz = ax_yz.scatter(y_arr, x_arr, c=t_arr)
+    cbar_yz = fig_yz.colorbar(cm_yz, ax=ax_yz)
+    ax_yz.set_xlim([-3, 3])
+    ax_yz.set_ylim([-3, 3])
+    ax_yz.set_xlabel(r"y [$R_E$]")
+    ax_yz.set_ylabel(r"z [$R_E$]")
+    cbar_yz.ax.set_ylabel("Time [s]")
     plt.show()
 '''
 if __name__ == "__main__":

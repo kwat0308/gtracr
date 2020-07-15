@@ -21,8 +21,8 @@ def add_to_dict(part):
 # create particles
 ep = Particle("positron", -11, 0.5109 * (1e-3), 1, "e+")
 em = Particle("electron", 11, 0.5109 * (1e-3), -1, "e-")
-pp = Particle("proton", 2122, 0.937272, 1, "p+")
-pm = Particle("anti-proton", -2122, 0.937272, -1, "p-")
+pp = Particle("proton", 2212, 0.937272, 1, "p+")
+pm = Particle("anti-proton", -2212, 0.937272, -1, "p-")
 
 for part in [ep, em, pp, pm]:
     add_to_dict(part)

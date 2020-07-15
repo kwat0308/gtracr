@@ -6,7 +6,7 @@ class MagneticField {
     private:
         // double* gcoeffs;
         // double* hcoeffs;
-        double g10;
+        double g10;  // mean value of the magnetic field at the magnetic equator
 
     public:
         // Constructor
