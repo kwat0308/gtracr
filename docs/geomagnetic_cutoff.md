@@ -146,7 +146,7 @@ Hopefully this allows a perfect conversion...
 
     - least configuration necessary
 
-- [ ] The code works, however there are still some issues as the heatmaps all result in True (i.e. no forbidden trajectories at all). This can be caused by a few things:
+- [x] The code works, however there are still some issues as the heatmaps all result in True (i.e. no forbidden trajectories at all). This can be caused by a few things:
 
   - Incorrect conversions between coordinates, although I feel as though this is already resolved pretty well.
 

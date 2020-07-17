@@ -114,7 +114,7 @@
 ## Major Tasks
 
 - [ ] Figure out things about the licensing with Baldini's scripts
-- [ ] Obtain a heatmap of allowed and forbidden trajectories at a single location and altitude and at all zenith and azimuthal angles (i.e. determine the geomagnetic cutoff for each location on Earth)
+- [x] Obtain a heatmap of allowed and forbidden trajectories at a single location and altitude and at all zenith and azimuthal angles (i.e. determine the geomagnetic cutoff for each location on Earth)
 
 ## Minor Tasks
 
@@ -122,7 +122,7 @@
 - [ ] Clean up the code structure
 - [x] Get the zenith angle / azimuthal angle coordinate transformation working
 - [x] Figure out a system to detect allowed vs forbidden trajectories
-- [ ] Get the geomagnetic cutoff code working
+- [x] Get the geomagnetic cutoff code working
 
 ### Fixing some conventional issues
 

@@ -39,11 +39,11 @@ class Trajectory:
                  detector_altitude,
                  zenith_angle,
                  azimuth_angle,
-                 particle_altitude,
+                 particle_altitude=100.,
                  energy=None,
                  rigidity=None,
                  escape_altitude=10. * EARTH_RADIUS,
-                 max_buffer=10000):
+                 max_buffer=100000):
         self.particle = particle_dict[plabel]
         self.latitude = latitude
         self.longitude = longitude
@@ -56,7 +56,6 @@ class Trajectory:
         # define rigidity and energy only if they are provided, evaluate for the other member
         # also set momentum in each case
         # self.particle.print()
-
         if rigidity is None:
             self.particle.set_from_energy(energy)
             self.rigidity = self.particle.rigidity
@@ -71,7 +70,7 @@ class Trajectory:
                 "Provide either energy or rigidity as input, not both!")
 
         # self.particle.print()
-        self.particle_escaped = False  # check if trajectory is allowed or not
+        self.particle_escaped = 0  # check if trajectory is allowed or not
 
         # initialize required arrays here
         self.max_buffer = max_buffer
@@ -80,66 +79,30 @@ class Trajectory:
         self.time_array = [None] * max_buffer
         self.tp_array = [None] * max_buffer  # list to append TJP objects
 
-    # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
-    # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
-    def detector_to_geocentric(self, detector_tp):
-
-        # transformation process for coordinate
-        detector_coord = detector_tp.cartesian_coord()
-        particle_coord = self.get_particle_coord(
-            altitude=self.particle_altitude, magnitude=1e-10)
-        print(detector_coord, particle_coord)
-        # print(self.tf_matrix())
-        (part_x, part_y, part_z) = self.transform(detector_coord,
-                                                  particle_coord)
-
-        # print(part_x, part_y, part_z)
-
-        # transformation for velocity
-        detector_momentum = np.zeros(3)
-        particle_momentum = self.particle.momentum * KG_M_S_PER_GEVC  # convert from natural units to SI units
-        particle_momentum = self.get_particle_coord(
-            altitude=0., magnitude=particle_momentum)
-        print(detector_momentum, particle_momentum)
-        (part_px, part_py, part_pz) = self.transform(detector_momentum,
-                                                     particle_momentum)
-
-        # print(part_px, part_py, part_pz)
-
-        # create new trajectory point and set the new coordinate and velocity
-        particle_tp = TrajectoryPoint()
-        particle_tp.set_cartesian_coord(part_x, part_y, part_z)
-        particle_tp.set_cartesian_momentum(part_px, part_py, part_pz)
-        # particle_tp.set_spherical_coord(part_r, part_theta, part_phi)
-
-        # print(particle_tp)
-
-        return particle_tp
-
     # evaluates the trajectory using Runge-Kutta methods
     def get_trajectory(self, max_step=10000, step_size=1e-5):
 
-        # check if max_step > max_buffer, if so then update this
-        # there is a better way to do this, im sure
-        if max_step > self.max_buffer:
-            self.time_array.extend([None] * ((max_step) - self.max_buffer))
-            self.tp_array.extend([None] * ((max_step) - self.max_buffer))
-        elif max_step < self.max_buffer:
+        # # check if max_step > max_buffer, if so then update this
+        # # there is a better way to do this, im sure
+        # if max_step > self.max_buffer:
+        #     self.time_array.extend([None] * ((max_step) - self.max_buffer))
+        #     self.tp_array.extend([None] * ((max_step) - self.max_buffer))
+        if max_step < self.max_buffer:
             self.time_array = self.time_array[:max_step]
             self.tp_array = self.tp_array[:max_step]
 
-        # get the initial trajectory points
+        # get the 6-vector for the detector location
         detector_tp = TrajectoryPoint()
         detector_tp.set_geodesic_coord(self.latitude, self.longitude,
                                        self.detector_altitude)
 
         # print(detector_tp)
-
+        # get the 6-vector for the particle, initially defined in
+        # detector frame, and transform it to geocentric
+        # coordinates
         particle_tp = self.detector_to_geocentric(detector_tp)
 
         # append both time array and TJP
-        # self.time_array[0:2] = [0., step_size]
-        # self.tp_array[0:2] = [detector_tp, particle_tp]
         self.time_array[0] = 0.
         self.tp_array[0] = particle_tp
 
@@ -154,7 +117,7 @@ class Trajectory:
         (part_r, part_theta, part_phi, part_pr, part_ptheta,
          part_pphi) = tuple(vars(particle_tp).values())
 
-        print(part_r, part_theta, part_phi, part_pr, part_ptheta, part_pphi)
+        # print(part_r, part_theta, part_phi, part_pr, part_ptheta, part_pphi)
         while i < max_step:
             [
                 part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
@@ -163,6 +126,9 @@ class Trajectory:
                 part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
                 part_pphi
             ])
+
+            # print("Momentum magnitude: {:.7e}".format(
+            #     np.sqrt(part_pr**2. + part_ptheta**2. + part_pphi**2.)))
 
             # print(part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
             #       part_pphi, '\n')
@@ -181,7 +147,7 @@ class Trajectory:
 
             if next_tp.r > EARTH_RADIUS + self.escape_altitude:
                 print("Allowed Trajectory!")
-                self.particle_escaped = True
+                self.particle_escaped = 1
                 self.time_array = self.time_array[:i]
                 self.tp_array = self.tp_array[:i]
                 break
@@ -193,8 +159,8 @@ class Trajectory:
                 break
 
             # some looping checker
-            if (i - 2) % (max_step // 10) == 0 and (i - 2) != 0:
-                print("{0} iterations completed".format(i - 2))
+            # if (i - 2) % (max_step // 10) == 0 and (i - 2) != 0:
+            #     print("{0} iterations completed".format(i - 2))
 
             i += 1
 
@@ -227,6 +193,62 @@ class Trajectory:
 
         return data_dict
 
+    # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
+    # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
+    def detector_to_geocentric(self, detector_tp):
+
+        # transformation process for coordinate
+        detector_coord = detector_tp.cartesian_coord()
+
+        # change particle initial location if zenith angle is > 90
+        # so that we only consider upward moving particles
+        if self.zenith_angle > 90.:
+            # here we count both altitude and magnitude as a whole
+            # for ease of computation
+            # particle_altitude = 0.
+            # particle_magnitude = -(2. * EARTH_RADIUS + self.particle_altitude
+            #                        ) * np.cos(self.zenith_angle * DEG_TO_RAD)
+            # particle_magnitude = (2. * EARTH_RADIUS + self.particle_altitude)
+
+            particle_coord = self.get_particle_coord(
+                altitude=0.,
+                magnitude=-(2. * EARTH_RADIUS + self.particle_altitude) *
+                np.cos(self.zenith_angle * DEG_TO_RAD))
+
+        elif self.zenith_angle <= 90.:
+            particle_coord = self.get_particle_coord(
+                altitude=self.particle_altitude, magnitude=1e-10)
+
+        # print(detector_coord, particle_coord)
+        # print(self.tf_matrix())
+        (part_x, part_y, part_z) = self.transform(detector_coord,
+                                                  particle_coord)
+
+        # print(part_x, part_y, part_z)
+
+        # transformation for momentum
+        # need to convert from natural units to SI units
+        detector_momentum = np.zeros(3)
+        # particle_momentum = self.particle.momentum * KG_M_S_PER_GEVC
+        particle_momentum = self.get_particle_coord(
+            altitude=0., magnitude=self.particle.momentum * KG_M_S_PER_GEVC)
+        # print(detector_momentum, particle_momentum)
+        (part_px, part_py, part_pz) = self.transform(detector_momentum,
+                                                     particle_momentum)
+
+        # print(part_px, part_py, part_pz)
+
+        # create new trajectory point and set the new coordinate and momentum
+        # convert from natural units to SI units
+        particle_tp = TrajectoryPoint()
+        particle_tp.set_cartesian_coord(part_x, part_y, part_z)
+        particle_tp.set_cartesian_momentum(part_px, part_py, part_pz)
+        # particle_tp.set_spherical_coord(part_r, part_theta, part_phi)
+
+        # print(particle_tp)
+
+        return particle_tp
+
     # convert between detector coordinates to geocentric coordinates
     def transform(self, detector_coord, particle_coord):
         return detector_coord + np.dot(self.transform_matrix(), particle_coord)
@@ -235,13 +257,18 @@ class Trajectory:
     def get_particle_coord(self, altitude, magnitude):
         xi = self.zenith_angle * DEG_TO_RAD
         alpha = self.azimuth_angle * DEG_TO_RAD
+        # alpha = (self.azimuth_angle + 90.) * DEG_TO_RAD
 
         # xt and yt are flipped from usual conversions from spherical coordinates
         # to allow azimuth = 0 to point to the geographic north pole
         # (if we use normal spherical coordinate conversion, azimuth = 0
         #  means pointing west in detector coordinates)
 
-        xt = magnitude * np.sin(xi) * np.sin(alpha)
+        # xt = magnitude * np.sin(xi) * np.sin(alpha)
+        # yt = magnitude * np.sin(xi) * np.cos(alpha)
+        # zt = magnitude * np.cos(xi) + altitude
+
+        xt = -magnitude * np.sin(xi) * np.sin(alpha)
         yt = magnitude * np.sin(xi) * np.cos(alpha)
         zt = magnitude * np.cos(xi) + altitude
 

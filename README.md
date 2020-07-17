@@ -53,7 +53,7 @@ A single trajectory can be simulated by performing the following steps:
 
     - The latitude and longitudes are defined in a geographic sense, which indicates that a latitude of 90 degrees would correlate to the North Pole.
 
-  - The arrival direction and altitude of the cosmic ray, i.e. the zenith angle, azimuthal angle, and altitude of the cosmic ray
+  - The arrival direction of the cosmic ray, i.e. the zenith and azimuthal angle
 
     - All such values are defined within the detector's reference frame, that is, such angles and altitude defined from the location of the detector.
 
@@ -61,14 +61,14 @@ A single trajectory can be simulated by performing the following steps:
 
     - The azimuthal angle is defined where 0 degrees points to the North Pole. Valid angles are in the interval of [0, 360].
 
-    - The altitude, defined in km, is the altitude in which the cosmic ray collides with the atmosphere and creates particle showers.
-
   - The energy (center-of-mass energy) or the rigidity of the cosmic ray, defined in GeV (for energy) or GV (for rigidity).
 
     - Only one or the other may be used as valid inputs, otherwise an error will be thrown.
     - The rigidity is defined as such: pc / Ze, where p is the momentum of the particle, Z is the charge of the particles (defined in e), and c is the speed of light in vacuum.
 
   - Optional parameters:
+
+    - The altitude, defined in km, is the altitude in which the cosmic ray collides with the atmosphere and creates particle showers. Default 100km (Honda et. al, 2015)
 
     - escape_altitude: the altitude in which we declare that the cosmic ray trajectory is allowed. Default to 10 times the Earth's radius. Also defined in terms of kilometers.
 
