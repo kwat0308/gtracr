@@ -9,7 +9,7 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 # from gtracr.lib.particle import Particle
-from Particle import Particle
+from _particle import Particle
 
 particle_dict = {}
 
@@ -26,6 +26,3 @@ pm = Particle("anti-proton", -2212, 0.937272, -1, "p-")
 
 for part in [ep, em, pp, pm]:
     add_to_dict(part)
-
-# print(Particle())
-# print(particle_dict)

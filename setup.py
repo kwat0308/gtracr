@@ -28,10 +28,10 @@ class get_pybind_include(object):
 
 ext_module = [
     Extension(
-        'RungeKutta',
+        '_trajectorytracer',
         sources=[
-            "gtracr/lib/src/RungeKutta.cc",
-            "gtracr/lib/wrapper/RungeKuttaWrapper.cc",
+            "gtracr/lib/src/TrajectoryTracer.cc",
+            "gtracr/lib/wrapper/TrajectoryTracerWrapper.cc",
             "gtracr/lib/src/MagneticField.cc"
         ],
         # depends=["gtracr/lib/src/MagneticField.cc"],
@@ -40,7 +40,7 @@ ext_module = [
         include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
         extra_compile_args=["-O3"]),
     Extension(
-        'Location',
+        '_location',
         sources=[
             "gtracr/lib/src/Location.cc",
             "gtracr/lib/wrapper/LocationWrapper.cc"
@@ -51,7 +51,7 @@ ext_module = [
         include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
         extra_compile_args=["-O3"]),
     Extension(
-        'Particle',
+        '_particle',
         sources=[
             "gtracr/lib/src/Particle.cc",
             "gtracr/lib/wrapper/ParticleWrapper.cc"

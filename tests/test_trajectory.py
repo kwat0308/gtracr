@@ -17,14 +17,14 @@ if __name__ == "__main__":
         longitude=0.,
         detector_altitude=0.,
         zenith_angle=90.,
-        azimuth_angle=0.,
+        azimuth_angle=-90.,
         particle_altitude=6371.2,
         rigidity=30.,
     )
     # for i in range(10):
-    traj1.get_trajectory(max_step=10000, step_size=1e-5)
+    result = traj1.get_trajectory(max_step=10000, step_size=1e-5)
 
-    result = traj1.get_plotting_variables()
+    # result = traj1.get_plotting_variables()
 
     t_arr = result["t"]
     x_arr = result["x"] / EARTH_RADIUS

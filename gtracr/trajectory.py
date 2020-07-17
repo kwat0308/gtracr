@@ -4,16 +4,13 @@ Keeps track of particle trajectory with considerations to cutoffs and E-W effect
 
 import os, sys
 import numpy as np
-
+from _trajectorytracer import TrajectoryTracer
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 from gtracr.constants import *
-from gtracr.trajectory_point import TrajectoryPoint
-from RungeKutta import RungeKutta
+from gtracr.trajectorypoint import TrajectoryPoint
 from gtracr.add_particle import particle_dict
-
-KEY_LIST = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
 
 
 class Trajectory:
@@ -26,11 +23,10 @@ class Trajectory:
     - detector_altitude: the height of the detector from sea level (0=sea level) in km
     - zenith_angle: the angle of the cosmic ray trajectory from the local zenith, with 0 being at the local zenith
     - azimuth_angle: the angle of the cosmic ray trajectory with 0 being in the direction of the geographic North in the local tangent plane
-    - particle_altitude: the altitude in which the cosmic ray hits Earth's atmosphere and creates showers
+    - particle_altitude: the altitude in which the cosmic ray hits Earth's atmosphere and creates showers (default 100km)
     - energy: the cosmic ray energy
     - rigidity: the cosmic ray rigidity 
     - escape_altitude: the altitude in which the particle has "escaped" Earth (default 10 * RE)
-    - max_buffer: maximum length of array 
     '''
     def __init__(self,
                  plabel,
@@ -42,8 +38,7 @@ class Trajectory:
                  particle_altitude=100.,
                  energy=None,
                  rigidity=None,
-                 escape_altitude=10. * EARTH_RADIUS,
-                 max_buffer=100000):
+                 escape_altitude=10. * EARTH_RADIUS):
         self.particle = particle_dict[plabel]
         self.latitude = latitude
         self.longitude = longitude
@@ -72,24 +67,8 @@ class Trajectory:
         # self.particle.print()
         self.particle_escaped = 0  # check if trajectory is allowed or not
 
-        # initialize required arrays here
-        self.max_buffer = max_buffer
-        # self.time_array = np.zeros(max_buffer)
-        # self.tp_array = np.zeros(max_buffer)
-        self.time_array = [None] * max_buffer
-        self.tp_array = [None] * max_buffer  # list to append TJP objects
-
     # evaluates the trajectory using Runge-Kutta methods
     def get_trajectory(self, max_step=10000, step_size=1e-5):
-
-        # # check if max_step > max_buffer, if so then update this
-        # # there is a better way to do this, im sure
-        # if max_step > self.max_buffer:
-        #     self.time_array.extend([None] * ((max_step) - self.max_buffer))
-        #     self.tp_array.extend([None] * ((max_step) - self.max_buffer))
-        if max_step < self.max_buffer:
-            self.time_array = self.time_array[:max_step]
-            self.tp_array = self.tp_array[:max_step]
 
         # get the 6-vector for the detector location
         detector_tp = TrajectoryPoint()
@@ -102,96 +81,50 @@ class Trajectory:
         # coordinates
         particle_tp = self.detector_to_geocentric(detector_tp)
 
-        # append both time array and TJP
-        self.time_array[0] = 0.
-        self.tp_array[0] = particle_tp
-
         # start iteration process
-        # runge kutta integrator
-        rk_integrator = RungeKutta(self.particle.charge, self.particle.mass,
-                                   step_size)
 
-        # print(rk_integrator.charge, rk_integrator.mass)
-        i = 1
-        part_t = step_size
+        # initialize the trajectory tracer
+        traj_tracer = TrajectoryTracer(self.particle.charge,
+                                       self.particle.mass,
+                                       self.escape_altitude, step_size,
+                                       max_step)
+
+        # get the initial values
+        part_t = 0.
         (part_r, part_theta, part_phi, part_pr, part_ptheta,
          part_pphi) = tuple(vars(particle_tp).values())
 
-        # print(part_r, part_theta, part_phi, part_pr, part_ptheta, part_pphi)
-        while i < max_step:
-            [
-                part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
-                part_pphi
-            ] = rk_integrator.evaluate([
-                part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
-                part_pphi
-            ])
+        initial_values = [
+            part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
+            part_pphi
+        ]
 
-            # print("Momentum magnitude: {:.7e}".format(
-            #     np.sqrt(part_pr**2. + part_ptheta**2. + part_pphi**2.)))
+        # evaluate the trajectory tracer
+        # get data dictionary of the trajectory
+        trajectory_datadict = traj_tracer.evaluate(initial_values)
 
-            # print(part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
-            #       part_pphi, '\n')
+        # get the final point of the trajectory
+        # and make it into a trajectory point
+        # not sure if we would use this, but we might...
+        particle_final_sixvector = tuple(
+            trajectory_datadict.pop("final_values"))
 
-            next_tp = TrajectoryPoint(r=part_r,
-                                      theta=part_theta,
-                                      phi=part_phi,
-                                      pr=part_pr,
-                                      ptheta=part_ptheta,
-                                      pphi=part_pphi)
+        particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
 
-            self.time_array[i] = part_t
-            self.tp_array[i] = next_tp
+        # convert all data to numpy arrays for computations etc
+        # this should be done within C++ in future versions
+        for key, arr in list(trajectory_datadict.items()):
+            trajectory_datadict[key] = np.array(arr)
 
-            # conditions
+        # lastly get the boolean of if the particle has escaped or not
+        # in binary format
+        # this helps with the geomagnetic cutoff procedure
+        # alternatively this can be inside the geomagnetic things
+        self.particle_escaped = int(traj_tracer.particle_escaped)
 
-            if next_tp.r > EARTH_RADIUS + self.escape_altitude:
-                print("Allowed Trajectory!")
-                self.particle_escaped = 1
-                self.time_array = self.time_array[:i]
-                self.tp_array = self.tp_array[:i]
-                break
+        # print("All done!\n")
 
-            if next_tp.r < EARTH_RADIUS:
-                print("Forbidden Trajectory!")
-                self.time_array = self.time_array[:i]
-                self.tp_array = self.tp_array[:i]
-                break
-
-            # some looping checker
-            # if (i - 2) % (max_step // 10) == 0 and (i - 2) != 0:
-            #     print("{0} iterations completed".format(i - 2))
-
-            i += 1
-
-        print("All done!\n")
-
-    # get the cartesian coordinates from the array of trajectory points for plotting purposes
-    def get_plotting_variables(self):
-
-        n = len(self.tp_array)
-        data_dict = {
-            "t": self.time_array,
-            "x": np.zeros(n),
-            "y": np.zeros(n),
-            "z": np.zeros(n),
-            "px": np.zeros(n),
-            "py": np.zeros(n),
-            "pz": np.zeros(n)
-        }
-
-        for i, tp in enumerate(self.tp_array):
-            # print(tp)
-            (x, y, z, px, py, pz) = tp.cartesian()
-
-            data_dict["x"][i] = x
-            data_dict["y"][i] = y
-            data_dict["z"][i] = z
-            data_dict["px"][i] = px
-            data_dict["py"][i] = py
-            data_dict["pz"][i] = pz
-
-        return data_dict
+        return trajectory_datadict
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)

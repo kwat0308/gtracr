@@ -45,14 +45,6 @@ public:
     const double &longitude() const { return lng; }
     // get the altitude of the location
     const double &altitude() const { return alt; }
-    // modify the location name
-    void set_name(const std::string &_ln) { ln = _ln; }
-    // modify the latitude of the location
-    void set_latitude(const double &_lat) { lat = _lat; }
-    // modify the longitude of the location
-    void set_longitude(const double &_lng) { lng = _lng; }
-    // modify the altitude of the location
-    void set_altitude(const double &_alt) { alt = _alt; }
     // print the name and the geodesic coordinates of the location
     void print();
 };

@@ -49,16 +49,6 @@ public:
     const double &rigidity() const { return R; }
 
     // setters
-    // modify the particle name
-    void set_name(const std::string &_nm) { nm = _nm; }
-    // modify the particle mass
-    void set_mass(const double &_m) { m = _m; }
-    // modify the particle charge
-    void set_charge(const double &_ch) { ch = _ch; }
-    // modify the pdg id of the particle
-    void set_pdgid(const int _pid) { pid = _pid; }
-    // modify the label assocated with the particle
-    void set_label(const std::string &_lbl) { lbl = _lbl; }
     // modify the momentum given another value of the momentum
     void set_momentum(const double &_p) { p = _p; }
     // modify the velocity given another value of velocity
