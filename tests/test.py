@@ -274,6 +274,12 @@ def perform_runge_kutta(mass, charge, t0, initial_sixvec, dt, max_iter):
         ptheta += ptheta_k
         pphi += pphi_k
         t += dt
+        
+        p = np.sqrt(pr**2. + (ptheta/r)**2. + (pphi/(r*np.sin(theta)))**2.)
+        print(pr)
+        print(ptheta)
+        print(pphi)
+#         print(p)
 
         # now check conditions for breaking the loop
         # if particle has effectively escaped
@@ -378,13 +384,13 @@ if __name__ == "__main__":
 
     # define the zenith, azimuthal angle, and altitude in which particle comes from
     # defined within the local tangent plane of the detector
-    particle_zenith = 0.
-    particle_azimuth = 0.
-    particle_altitude = 1.  # in km
+    particle_zenith = 90.
+    particle_azimuth = 90.
+    particle_altitude = 2000.  # in km
 
     # define the energy / rigidity of the particle
     # energy = 10.
-    rigidity = 10.
+    rigidity = 1.
 
     # define the momentum (in magnitude, in SI units)
     momentum = rigidity * np.abs(1) * KGMS_PER_GEVC

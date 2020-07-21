@@ -256,13 +256,13 @@ std::map<std::string, std::vector<double> > TrajectoryTracer::evaluate(std::arra
         // an allowed trajectory
         if (radius > constants::RE + escape_radius_) {
             particle_escaped_ = true;
-            std::cout << "Allowed Trajectory!" << std::endl;
+            // std::cout << "Allowed Trajectory!" << std::endl;
             break;
         }
         
         // a forbidden trajectory
         if (radius < constants::RE) {
-            std::cout << "Forbidden Trajectory!" << std::endl;
+            // std::cout << "Forbidden Trajectory!" << std::endl;
             break;
         }
         

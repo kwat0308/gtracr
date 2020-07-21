@@ -17,8 +17,8 @@ if __name__ == "__main__":
         longitude=0.,
         detector_altitude=0.,
         zenith_angle=90.,
-        azimuth_angle=-90.,
-        particle_altitude=6371.2,
+        azimuth_angle=90.,
+        particle_altitude=100.,
         rigidity=30.,
     )
     # for i in range(10):
