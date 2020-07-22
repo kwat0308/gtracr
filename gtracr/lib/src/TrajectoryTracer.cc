@@ -13,13 +13,13 @@
 // Constructor
 // default
 TrajectoryTracer::TrajectoryTracer()
-    : bfield_{MagneticField()}, charge_{1}, mass_{0.938}, escape_radius_{10.*constants::RE}, stepsize_{1e-5}, max_iter_{100000}
+    : bfield_{MagneticField()}, charge_{1}, mass_{0.938}, escape_radius_{10.*constants::RE}, stepsize_{1e-5}, max_iter_{10000}
 {
     particle_escaped_ = false;
 }
 
 // Requires the charge and mass of the particle
-TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass, const double& escape_radius=10.*constants::RE, const double &stepsize=1e-5, const int max_iter=100000)
+TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass, const double& escape_radius=10.*constants::RE, const double &stepsize=1e-5, const int max_iter=10000)
     : bfield_{MagneticField()}, charge_{charge}, mass_{mass}, escape_radius_{escape_radius}, stepsize_{stepsize}, max_iter_{max_iter}
 {
     particle_escaped_ = false;
