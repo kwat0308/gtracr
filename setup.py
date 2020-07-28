@@ -28,39 +28,23 @@ class get_pybind_include(object):
 
 ext_module = [
     Extension(
-        '_trajectorytracer',
+        '_gtracr',
         sources=[
             "gtracr/lib/src/TrajectoryTracer.cc",
             "gtracr/lib/wrapper/TrajectoryTracerWrapper.cc",
-            "gtracr/lib/src/MagneticField.cc"
-        ],
-        # depends=["gtracr/lib/src/MagneticField.cc"],
-        library_dirs=["gtracr/lib"],
-        language='c++',
-        include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
-        extra_compile_args=["-O3"]),
-    Extension(
-        '_location',
-        sources=[
             "gtracr/lib/src/Location.cc",
-            "gtracr/lib/wrapper/LocationWrapper.cc"
-        ],
-        # depends=["gtracr/lib/src/MagneticField.cc"],
-        library_dirs=["gtracr/lib"],
-        language='c++',
-        include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
-        extra_compile_args=["-O3"]),
-    Extension(
-        '_particle',
-        sources=[
+            "gtracr/lib/wrapper/LocationWrapper.cc",
             "gtracr/lib/src/Particle.cc",
-            "gtracr/lib/wrapper/ParticleWrapper.cc"
+            "gtracr/lib/wrapper/ParticleWrapper.cc",
+            # "gtracr/lib/src/MagneticField.cc"
         ],
-        # depends=["gtracr/lib/src/MagneticField.cc"],
-        library_dirs=["gtracr/lib"],
+        #   library_dirs=["gtracr/lib"],
         language='c++',
         include_dirs=[get_pybind_include(), 'gtracr/lib/include'],
-        extra_compile_args=["-O3"])
+        extra_compile_args=[
+            "-fsave-optimization-record=yaml", "-fdiagnostics-show-hotness",
+            "-Rpass=.*", "-Weverything"
+        ]),
 ]
 
 with open("README.md", "r") as f:
