@@ -25,5 +25,6 @@ PYBIND11_MODULE(_trajectorytracer, M)
       .def_property_readonly("step_size", &TrajectoryTracer::stepsize)
       .def_property_readonly("max_iter", &TrajectoryTracer::max_iter)
       .def_property_readonly("particle_escaped", &TrajectoryTracer::particle_escaped)
-      .def("evaluate", &TrajectoryTracer::evaluate);
+      .def("evaluate", &TrajectoryTracer::evaluate)
+      .def("evaluate_and_get_trajectories", &TrajectoryTracer::evaluate_and_get_trajectories);
 }

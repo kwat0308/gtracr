@@ -22,7 +22,9 @@ if __name__ == "__main__":
         rigidity=30.,
     )
     # for i in range(10):
-    result = traj1.get_trajectory(max_step=10000, step_size=1e-5)
+    result = traj1.get_trajectory(max_step=10000,
+                                  step_size=1e-5,
+                                  get_data=True)
 
     # result = traj1.get_plotting_variables()
 

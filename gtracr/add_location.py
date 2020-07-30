@@ -11,7 +11,8 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 # from gtracr.lib.location import Location
-from _location import Location
+# from _location import Location
+from _gtracr import Location
 
 location_dict = {}
 
