@@ -4,7 +4,8 @@ Keeps track of particle trajectory with considerations to cutoffs and E-W effect
 
 import os, sys
 import numpy as np
-from _trajectorytracer import TrajectoryTracer
+# from _trajectorytracer import TrajectoryTracer
+from _gtracr import TrajectoryTracer
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 

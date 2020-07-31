@@ -9,7 +9,8 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 # from gtracr.lib.particle import Particle
-from _particle import Particle
+# from _particle import Particle
+from _gtracr import Particle
 
 particle_dict = {}
 

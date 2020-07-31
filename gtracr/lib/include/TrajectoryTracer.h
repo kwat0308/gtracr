@@ -18,6 +18,16 @@ class TrajectoryTracer {
   int max_iter_;          // maximum step size
   // binary value to store if particle has escaped or not
   bool particle_escaped_;
+  // data structure that contains the 7-vector of trajectory
+  struct {
+    double t;
+    double r;
+    double theta;
+    double phi;
+    double pr;
+    double ptheta;
+    double pphi;
+  } traj_vector_;
 
  public:
   // default constructor
@@ -74,7 +84,8 @@ class TrajectoryTracer {
   // takes the 7-vector consisting of the following format:
   // [t, r, theta, phi, pr, ptheta, pphi]
   // and returns the modified 7-vector in that same format
-  std::array<double, 7> &rk_step(std::array<double, 7> &vec);
+  //   std::array<double, 7> &rk_step(std::array<double, 7> &vec);
+  void perform_rkstep();
 
   // perform the runge kutta integration
   // input: initial values [t0, r0, theta0, phi0, pr0, ptheta0,
