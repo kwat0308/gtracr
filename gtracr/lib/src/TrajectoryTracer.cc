@@ -67,17 +67,20 @@ TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
 inline double TrajectoryTracer::dr_dt(double pr) { return pr; }
 
 // dtheta dt
-inline double TrajectoryTracer::dtheta_dt(double r, double ptheta) {
+inline double TrajectoryTracer::dtheta_dt(double r, double ptheta)
+{
   return ptheta / r;
 }
 // dphidt
-inline double TrajectoryTracer::dphi_dt(double r, double theta, double pphi) {
+inline double TrajectoryTracer::dphi_dt(double r, double theta, double pphi)
+{
   return pphi / (r * sin(theta));
 }
 // dvrdt
 inline double TrajectoryTracer::dpr_dt(double r, double theta, double phi,
-                                       double pr, double ptheta, double pphi) {
-  double lorentz_term = (charge_ * constants::ELEMENTARY_CHARGE) *
+                                       double pr, double ptheta, double pphi)
+{
+  double lorentz_term = (-1. * charge_ * constants::ELEMENTARY_CHARGE) *
                         (ptheta * bfield_.Bphi(r, theta, phi) -
                          bfield_.Btheta(r, theta, phi) * pphi);
   // double auxiliary_terms = (r * ptheta * ptheta) + (r * pphi * pphi *
@@ -90,10 +93,11 @@ inline double TrajectoryTracer::dpr_dt(double r, double theta, double phi,
 // dpthetadt
 inline double TrajectoryTracer::dptheta_dt(double r, double theta, double phi,
                                            double pr, double ptheta,
-                                           double pphi) {
+                                           double pphi)
+{
   double lorentz_term =
       (charge_ * constants::ELEMENTARY_CHARGE) *
-      (pphi * bfield_.Br(r, theta, phi) - bfield_.Bphi(r, theta, phi) * pr);
+      (bfield_.Bphi(r, theta, phi) * pr - pphi * bfield_.Br(r, theta, phi));
   // double auxiliary_terms = (pphi * pphi * sin(theta) * cos(theta)) - (2. * pr
   // * ptheta / r);
   double auxiliary_terms =
@@ -105,9 +109,10 @@ inline double TrajectoryTracer::dptheta_dt(double r, double theta, double phi,
 // dpphidt
 inline double TrajectoryTracer::dpphi_dt(double r, double theta, double phi,
                                          double pr, double ptheta,
-                                         double pphi) {
+                                         double pphi)
+{
   double lorentz_term =
-      (charge_ * constants::ELEMENTARY_CHARGE) *
+      (-1. * charge_ * constants::ELEMENTARY_CHARGE) *
       (pr * bfield_.Btheta(r, theta, phi) - bfield_.Br(r, theta, phi) * ptheta);
   // double auxiliary_terms = ((2. * pphi * pr) / r) + ((2. * pphi * ptheta) /
   // tan(theta));
@@ -118,16 +123,18 @@ inline double TrajectoryTracer::dpphi_dt(double r, double theta, double phi,
 }
 
 // lorentz factor
-inline double TrajectoryTracer::gamma(double pr, double ptheta, double pphi) {
+inline double TrajectoryTracer::gamma(double pr, double ptheta, double pphi)
+{
   double momentum = sqrt((pr * pr) + (ptheta * ptheta) +
-                         (pphi * pphi));  // momentum magnitude
+                         (pphi * pphi)); // momentum magnitude
   double momentum_ratio =
-      momentum / (mass_ * constants::SPEED_OF_LIGHT);  // p / mc
+      momentum / (mass_ * constants::SPEED_OF_LIGHT); // p / mc
   double gamma = sqrt(1. + (momentum_ratio * momentum_ratio));
   return gamma;
 }
 
-void TrajectoryTracer::perform_rkstep() {
+void TrajectoryTracer::perform_rkstep()
+{
   double t = traj_vector_.t;
   double r = traj_vector_.r;
   double theta = traj_vector_.theta;
@@ -139,10 +146,9 @@ void TrajectoryTracer::perform_rkstep() {
   // evaluate relativistic mass here
   double rel_mass = mass_ * gamma(pr, ptheta, pphi) * constants::KG_PER_GEVC2;
 
-  // std::cout << gamma(pr, ptheta, pphi) << std::endl;
+  std::cout << gamma(pr, ptheta, pphi) << std::endl;
 
-  // std::cout << t << ' ' << r << ' ' << theta << ' ' << phi << ' ' << vr << '
-  // ' << vtheta << ' ' << vphi << ' ' << std::endl;
+  // std::cout << t << ' ' << r << ' ' << theta << ' ' << phi << ' ' << pr << ' ' << ptheta << ' ' << pphi << ' ' << std::endl;
 
   double r_k1 = stepsize_ * dr_dt(pr);
   double theta_k1 = stepsize_ * dtheta_dt(r, ptheta);
@@ -235,7 +241,8 @@ void TrajectoryTracer::perform_rkstep() {
 // variables are given in the order [t, r, theta, phi, pr, ptheta, pphi]
 // this can also be replaced with 7 doubles by moving the function rk_step
 // directly into the for loop
-void TrajectoryTracer::evaluate(std::array<double, 7> &initial_values) {
+void TrajectoryTracer::evaluate(std::array<double, 7> &initial_values)
+{
   // std::array<double, 7> traj_vector = initial_values;
   // assign initial values from array to trajectory vector structure
   traj_vector_.t = initial_values[0];
@@ -247,7 +254,8 @@ void TrajectoryTracer::evaluate(std::array<double, 7> &initial_values) {
   traj_vector_.pphi = initial_values[6];
 
   // start the integration process
-  for (int i = 0; i < max_iter_; ++i) {
+  for (int i = 0; i < max_iter_; ++i)
+  {
     // append to arrays first
     // to do this we need to convert spherical to cartesian
 
@@ -273,14 +281,16 @@ void TrajectoryTracer::evaluate(std::array<double, 7> &initial_values) {
     // const double &radius = traj_vector[1];
 
     // an allowed trajectory
-    if (traj_vector_.r > constants::RE + escape_radius_) {
+    if (traj_vector_.r > constants::RE + escape_radius_)
+    {
       particle_escaped_ = true;
       // std::cout << "Allowed Trajectory!" << std::endl;
       break;
     }
 
     // a forbidden trajectory
-    if (traj_vector_.r < constants::RE) {
+    if (traj_vector_.r < constants::RE)
+    {
       // std::cout << "Forbidden Trajectory!" << std::endl;
       break;
     }
@@ -292,16 +302,17 @@ void TrajectoryTracer::evaluate(std::array<double, 7> &initial_values) {
 // processs in the form [t0, r0, theta0, phi0, pr0, ptheta0, pphi0]
 std::map<std::string, std::vector<double>>
 TrajectoryTracer::evaluate_and_get_trajectories(
-    std::array<double, 7> &initial_values) {
+    std::array<double, 7> &initial_values)
+{
   // arrays to store trajectory coordinates and momentum
   // this should change to pointers for a faster performance in the future
-  std::vector<double> time_arr;
-  std::vector<double> x_arr;
-  std::vector<double> y_arr;
-  std::vector<double> z_arr;
-  std::vector<double> px_arr;
-  std::vector<double> py_arr;
-  std::vector<double> pz_arr;
+  // std::vector<double> time_arr;
+  // std::vector<double> x_arr;
+  // std::vector<double> y_arr;
+  // std::vector<double> z_arr;
+  // std::vector<double> px_arr;
+  // std::vector<double> py_arr;
+  // std::vector<double> pz_arr;
 
   // a container that holds the variables throughout each step
   // variables are given in the order [t, r, theta, phi, pr, ptheta, pphi]
@@ -315,8 +326,20 @@ TrajectoryTracer::evaluate_and_get_trajectories(
   traj_vector_.pr = initial_values[4];
   traj_vector_.ptheta = initial_values[5];
   traj_vector_.pphi = initial_values[6];
+
+  // set up the vectors for the values on trajectory
+  // in spherical coordinates
+  std::vector<double> time_arr;
+  std::vector<double> r_arr;
+  std::vector<double> theta_arr;
+  std::vector<double> phi_arr;
+  std::vector<double> pr_arr;
+  std::vector<double> ptheta_arr;
+  std::vector<double> pphi_arr;
+
   // start the integration process
-  for (int i = 0; i < max_iter_; ++i) {
+  for (int i = 0; i < max_iter_; ++i)
+  {
     // append to arrays first
     // to do this we need to convert spherical to cartesian
 
@@ -325,34 +348,42 @@ TrajectoryTracer::evaluate_and_get_trajectories(
     double t = traj_vector_.t;
     double r = traj_vector_.r;
     double theta = traj_vector_.theta;
-    double phi = traj_vector_.pr;
+    double phi = traj_vector_.phi;
     double pr = traj_vector_.pr;
     double ptheta = traj_vector_.ptheta;
     double pphi = traj_vector_.pphi;
 
     // convert the coordinates
-    double x = r * sin(theta) * cos(phi);
-    double y = r * sin(theta) * sin(phi);
-    double z = r * cos(theta);
+    // double x = r * sin(theta) * cos(phi);
+    // double y = r * sin(theta) * sin(phi);
+    // double z = r * cos(theta);
 
-    // convert the momentum
-    double px = pr * sin(theta) * cos(phi) +
-                r * ptheta * cos(theta) * cos(phi) -
-                r * pphi * sin(theta) * sin(phi);
-    double py = pr * sin(theta) * sin(phi) +
-                r * ptheta * cos(theta) * sin(phi) +
-                r * pphi * sin(theta) * cos(phi);
-    double pz = pr * cos(theta) - r * ptheta * sin(theta);
+    // // convert the momentum
+    // double px = pr * sin(theta) * cos(phi) +
+    //             r * ptheta * cos(theta) * cos(phi) -
+    //             r * pphi * sin(theta) * sin(phi);
+    // double py = pr * sin(theta) * sin(phi) +
+    //             r * ptheta * cos(theta) * sin(phi) +
+    //             r * pphi * sin(theta) * cos(phi);
+    // double pz = pr * cos(theta) - r * ptheta * sin(theta);
 
-    // finally append the values
+    // // finally append the values
+
+    // time_arr.push_back(t);
+    // x_arr.push_back(x);
+    // y_arr.push_back(y);
+    // z_arr.push_back(z);
+    // px_arr.push_back(px);
+    // py_arr.push_back(py);
+    // pz_arr.push_back(pz);
 
     time_arr.push_back(t);
-    x_arr.push_back(x);
-    y_arr.push_back(y);
-    z_arr.push_back(z);
-    px_arr.push_back(px);
-    py_arr.push_back(py);
-    pz_arr.push_back(pz);
+    r_arr.push_back(r);
+    theta_arr.push_back(theta);
+    phi_arr.push_back(phi);
+    pr_arr.push_back(pr);
+    ptheta_arr.push_back(ptheta);
+    pphi_arr.push_back(pphi);
 
     // evaluate a runge kutta step
     // return the next iteration of values
@@ -367,14 +398,16 @@ TrajectoryTracer::evaluate_and_get_trajectories(
     // const double &radius = traj_vector[1];
 
     // an allowed trajectory
-    if (traj_vector_.r > constants::RE + escape_radius_) {
+    if (traj_vector_.r > constants::RE + escape_radius_)
+    {
       particle_escaped_ = true;
       // std::cout << "Allowed Trajectory!" << std::endl;
       break;
     }
 
     // a forbidden trajectory
-    if (traj_vector_.r < constants::RE) {
+    if (traj_vector_.r < constants::RE)
+    {
       // std::cout << "Forbidden Trajectory!" << std::endl;
       break;
     }
@@ -386,16 +419,22 @@ TrajectoryTracer::evaluate_and_get_trajectories(
   // trajectory vector
   // std::vector<double> final_values(traj_vector.begin() + 1,
   // traj_vector.end());
-  std::vector<double> final_values{traj_vector_.r,      traj_vector_.theta,
-                                   traj_vector_.phi,    traj_vector_.pr,
+  std::vector<double> final_values{traj_vector_.r, traj_vector_.theta,
+                                   traj_vector_.phi, traj_vector_.pr,
                                    traj_vector_.ptheta, traj_vector_.pphi};
 
   // create a map and return the map
+  //   std::map<std::string, std::vector<double>> value_map = {
+  //       {"t", time_arr}, {"x", x_arr},
+  //       {"y", y_arr},    {"z", z_arr},
+  //       {"px", px_arr},  {"py", py_arr},
+  //       {"pz", pz_arr},  {"final_values", final_values}};
+
+  //   return value_map;
+  // }
+
   std::map<std::string, std::vector<double>> value_map = {
-      {"t", time_arr}, {"x", x_arr},
-      {"y", y_arr},    {"z", z_arr},
-      {"px", px_arr},  {"py", py_arr},
-      {"pz", pz_arr},  {"final_values", final_values}};
+      {"t", time_arr}, {"r", r_arr}, {"theta", theta_arr}, {"phi", phi_arr}, {"pr", pr_arr}, {"ptheta", ptheta_arr}, {"pphi", pphi_arr}, {"final_values", final_values}};
 
   return value_map;
 }

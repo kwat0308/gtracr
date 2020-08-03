@@ -15,7 +15,7 @@ class MagneticField {
 
  public:
   // Constructor
-  MagneticField() : g10{-2.94048 * (1e-5)} {}
+  MagneticField() : g10{-29404.8 * (1e-9)} {}
   // Destructor
   // ~MagneticField() {delete[] gcoeffs; delete[] hcoeffs;}
   // MagneticField();

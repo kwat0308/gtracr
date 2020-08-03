@@ -43,7 +43,7 @@ The coordinate components are evaluated as such:
 I realized that the equation for acceleration above $\left(\vec{a} = \dfrac{1}{m\gamma}\left(\vec{F} - \dfrac{(\vec{v}\cdot\vec{F})\vec{v}}{c^2}\right)\right)$ has a dot product with the same variable $\vec{v}$. This means that the second term within the brackets vanishes, leaving us with: $\vec{a} = \dfrac{\vec{F}}{m\gamma} = \dfrac{q}{m\gamma}\left(\vec{v}\times\vec{B}\right)$. Using the expression for acceleration in spherical coordinates, we obtain a much simpler set of ODEs:
 
 - $\dfrac{dv_r}{dt} = \dfrac{q}{m\gamma}(v_\theta B_\phi - B_\theta v_\phi) + rv_\theta^2 + rv_\phi^2\sin^2\theta$
-- $\dfrac{dv_\theta}{dt} = \dfrac{q}{m\gamma r}(v_rB_\phi - v_\phi B_r) - \dfrac{2v_r v_\theta}{r}+ v_\phi^2\sin\theta\cos\theta$
+- $\dfrac{dv_\theta}{dt} = \dfrac{q}{m\gamma r}(v_rB_\phi - v_\phi B_r) - \dfrac{2v_r v_\theta}{r}+ r v_\phi^2\sin\theta\cos\theta$
 - $\dfrac{dv_\phi}{dt} = \dfrac{q}{m\gamma r\sin\theta}(v_rB_\theta - v_\theta B_r) - \dfrac{2v_r v_\phi}{r} - \dfrac{2v_\theta v_\phi}{\tan\theta}$
 
 - These set of ODEs are derived from the relativistic acceleration formula in terms of the relativistic force:
@@ -69,11 +69,17 @@ We found out that the equations obtained by D.F. Smart were indeed correct, and 
 
 As of such, we now use Smart's version of the coupled ODEs, which provide more physically sound reasoning behind the equations.
 
+EDIT: We found a discrepancy between Smart's equations and our equations. On some of the quadratic terms in Smart's equations, the factor of 2 was missing. We checked several times and we are positive that he missed this in his paper. As of such, we will account for this factor 2 in the equations below.
+
+EDIT 2: After some thorough checking (3 days :cry:), we realized that the equations that Smart had was indeed right, and I was wrong :sweat:. The loss of the factor of 2 is due to the fact that, when we absorb the extra components to velocity (for example, vtheta = r theta dot), the acceleration (that is, the time derivative of **vtheta**) will change as well, as we would need to perform product rule to **both r and theta dot!!!** This is now fixed, and the final version (essentially identical to Smart's version but instead we have momentum) is updated below.
+
+- Actually, Smart has e / m*gamma*c instead fof e / m*gamma (which we have). This is probably since he defined units of velocity in terms of c (like 0.9c = 0.9*(3e8) m/s). This is the only difference (apart from velocity vs momentum).
+
 ### Using momentum instead of velocity
 
 To allow natural units to be played around safely within the code, we will be using momentum instead of velocity. This will allow the equations to make more sense in a conventional view. This requires a few conversions between momentum and velocity via the relation $p = \gamma m v$.
 
-As such, the final equations are as followed:
+As such, the final equations are as followed (edited to account for factor 2):
 
 - $\dfrac{\mathrm{d} p_{r}}{\mathrm{d} t}=\dfrac{1}{m\gamma}\left(e\left(p_{\theta} B_{\phi}-p_{\phi} B_{\theta}\right)+\dfrac{p_{\theta}^{2}}{r}+\dfrac{p_{\phi}^{2}}{r}\right)$
 - $\dfrac{\mathrm{d} p_{\theta}}{\mathrm{d} t}=\dfrac{1}{m\gamma}\left(e\left(p_{\phi} B_{r}-p_{r} B_{\phi}\right)-\dfrac{p_{r} p_{\theta}}{r}+\dfrac{p_{\phi}^{2}}{r \tan \theta}\right)$
@@ -81,3 +87,7 @@ As such, the final equations are as followed:
 - $\dfrac{dr}{dt} = \dfrac{1}{m\gamma}\left(p_r\right)$
 - $\dfrac{d\theta}{dt}=\dfrac{1}{m\gamma}\left(\dfrac{p_\theta}{r}\right)$
 - $\dfrac{d\phi}{dt} = \dfrac{1}{m\gamma}\left(\dfrac{p_\phi}{r\sin\theta}\right)$
+
+### Make sure to invert charge!!
+
+The above equations are not modified for the charge inversion required to back propagate the particles. **_The charge inversion must be added to the equations above!!_**

@@ -35,8 +35,8 @@ Particle::Particle()
     : nm{"Proton"}, pid{2212}, m{0.938272}, ch{1}, lbl{"p+"}
 {
     p = sqrt(m * m + 1.);
-    R = (p ) / abs(ch);
-    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m*constants::SPEED_OF_LIGHT*m*constants::SPEED_OF_LIGHT) + p*p) * constants::SPEED_OF_LIGHT;
+    R = (p) / abs(ch);
+    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m * constants::SPEED_OF_LIGHT * m * constants::SPEED_OF_LIGHT) + p * p) * constants::SPEED_OF_LIGHT;
 }
 
 // Construct with given initial configurations
@@ -45,8 +45,8 @@ Particle::Particle(const std::string &name, const int pdgid, const double &mass,
     : nm{name}, pid{pdgid}, m{mass}, ch{charge}, lbl{label}
 {
     p = sqrt(m * m + 1.);
-    R = (p ) / abs(ch);
-    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m*constants::SPEED_OF_LIGHT*m*constants::SPEED_OF_LIGHT) + p*p) * constants::SPEED_OF_LIGHT;
+    R = (p) / abs(ch);
+    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m * constants::SPEED_OF_LIGHT * m * constants::SPEED_OF_LIGHT) + p * p) * constants::SPEED_OF_LIGHT;
 }
 
 // Constructor with some provided energy
@@ -111,37 +111,37 @@ const double &Particle::gamma(const double &vel)
 // setters
 void Particle::set_from_energy(const double &energy)
 {
-    p = sqrt(energy * energy - m * m) ;
-    R = (p ) / abs(ch);
-    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m*constants::SPEED_OF_LIGHT*m*constants::SPEED_OF_LIGHT) + p*p) * constants::SPEED_OF_LIGHT;
+    p = sqrt(energy * energy - m * m);
+    R = (p) / abs(ch);
+    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m * constants::SPEED_OF_LIGHT * m * constants::SPEED_OF_LIGHT) + p * p) * constants::SPEED_OF_LIGHT;
 }
 
 void Particle::set_from_momentum(const double &_p)
 {
-    p = _p ;
-    R = (p ) / abs(ch);
-    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m*constants::SPEED_OF_LIGHT*m*constants::SPEED_OF_LIGHT) + p*p) * constants::SPEED_OF_LIGHT;
+    p = _p;
+    R = (p) / abs(ch);
+    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m * constants::SPEED_OF_LIGHT * m * constants::SPEED_OF_LIGHT) + p * p) * constants::SPEED_OF_LIGHT;
 }
 
 void Particle::set_from_rigidity(const double &_R)
 {
     p = (_R * abs(ch));
     R = _R;
-    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m*constants::SPEED_OF_LIGHT*m*constants::SPEED_OF_LIGHT) + p*p) * constants::SPEED_OF_LIGHT;
+    v = (p * constants::SPEED_OF_LIGHT) / sqrt((m * constants::SPEED_OF_LIGHT * m * constants::SPEED_OF_LIGHT) + p * p) * constants::SPEED_OF_LIGHT;
 }
 
 void Particle::set_from_velocity(const double &_v)
 {
-    p = gamma(_v) * m * _v ;
+    p = gamma(_v) * m * _v;
     v = _v;
-    R = (p ) / abs(ch);
+    R = (p) / abs(ch);
 }
 
 // other member functions
 // obtain energy from rigidity
 double Particle::get_energy_rigidity()
 {
-    double enrgy = sqrt( R * abs(ch) *  R * abs(ch) + m * m);
+    double enrgy = sqrt(R * abs(ch) * R * abs(ch) + m * m) + m;
     return enrgy;
 }
 
@@ -153,6 +153,6 @@ void Particle::print()
               << "Mass [GeV/c^2]: " << m << ", "
               << "Charge [e]: " << ch << std::endl;
     std::cout << "Current Momentum [GeV/c]: " << p << ", "
-            //   << "Current Velocity: " << v << ", "
+              //   << "Current Velocity: " << v << ", "
               << "Current Rigidity [GV]: " << R << std::endl;
 }
