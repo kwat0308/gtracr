@@ -4,7 +4,7 @@ import numpy as np
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
+from gtracr.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG
 
 # KEY_LIST = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
 
@@ -12,13 +12,16 @@ from gtracr.constants import EARTH_RADIUS, DEG_TO_RAD, RAD_TO_DEG
 class TrajectoryPoint:
     '''
     Class that records a single point in the particle trajectory
-    Members:
-    - r: the radial component [m]
-    - theta: the polar component, with 0 defined at the North Pole
-    - phi: the azimuthal component, with 0 defined at the Prime Meridian (domain: [-pi, pi])
-    - pr: the radial momentum
-    - ptheta: the momentum in the polar direction
-    - pphi: the momentum in the azimuthal direction
+
+    Members
+    -------
+    
+    - r: the radial component [m] (default: EARTH_RADIUS)
+    - theta: the polar component, with 0 defined at the North Pole (default: 0.)
+    - phi: the azimuthal component, with 0 defined at the Prime Meridian (domain: [-pi, pi]) (default:0.)
+    - pr: the radial momentum  (default: 0 )
+    - ptheta: the momentum in the polar direction (default: 0 )
+    - pphi: the momentum in the azimuthal direction (default: 0 )
     '''
     def __init__(self,
                  r=EARTH_RADIUS,
@@ -36,9 +39,9 @@ class TrajectoryPoint:
 
     # get geodesic coordinate equivalents of spherical ones
     def geodesic_coordinate(self):
-        latitude = 90. - (self.theta * RAD_TO_DEG)
+        latitude = 90. - (self.theta * RAD_PER_DEG)
         # longitude = (phi * RAD_TO_DEG) - 180.
-        longitude = self.phi * RAD_TO_DEG
+        longitude = self.phi * RAD_PER_DEG
         altitude = self.r - EARTH_RADIUS
         return np.array([latitude, longitude, altitude])
 
@@ -47,8 +50,8 @@ class TrajectoryPoint:
         self.r = EARTH_RADIUS + altitude
         self.theta = (
             90. - latitude
-        ) * DEG_TO_RAD  # theta defined in [0, pi], theta = 90 at equator
-        self.phi = longitude * DEG_TO_RAD  # phi defined in [-pi, pi], phi = 0 at prime meridian
+        ) * DEG_PER_RAD  # theta defined in [0, pi], theta = 90 at equator
+        self.phi = longitude * DEG_PER_RAD  # phi defined in [-pi, pi], phi = 0 at prime meridian
 
     # get cartesian coordinate equivalents of spherical ones
     def cartesian_coord(self):
