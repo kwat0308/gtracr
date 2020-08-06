@@ -77,18 +77,35 @@ class TrajectoryPoint:
 
     # return cartesian momenta from spherical ones
     def cartesian_momentum(self):
-        px = self.pr * np.sin(self.theta) * np.cos(
-            self.phi) + self.r * self.ptheta * np.cos(self.theta) * np.cos(
-                self.phi) - self.r * self.pphi * np.sin(self.theta) * np.sin(
-                    self.phi)
-        py = self.pr * np.sin(self.theta) * np.sin(
-            self.phi) + self.r * self.ptheta * np.cos(self.theta) * np.sin(
-                self.phi) + self.r * self.pphi * np.sin(self.theta) * np.cos(
-                    self.phi)
-        pz = self.pr * np.cos(self.theta) - self.r * self.ptheta * np.sin(
-            self.theta)
+        # px = self.pr * np.sin(self.theta) * np.cos(
+        #     self.phi) + self.r * self.ptheta * np.cos(self.theta) * np.cos(
+        #         self.phi) - self.r * self.pphi * np.sin(self.theta) * np.sin(
+        #             self.phi)
+        # py = self.pr * np.sin(self.theta) * np.sin(
+        #     self.phi) + self.r * self.ptheta * np.cos(self.theta) * np.sin(
+        #         self.phi) + self.r * self.pphi * np.sin(self.theta) * np.cos(
+        #             self.phi)
+        # pz = self.pr * np.cos(self.theta) - self.r * self.ptheta * np.sin(
+        #     self.theta)
 
-        return np.array([px, py, pz])
+        tfmat_sph2car = np.array([[
+            [
+                np.sin(self.theta) * np.cos(self.phi),
+                self.r * np.cos(self.theta) * np.cos(self.phi),
+                -self.r * np.sin(self.theta) * np.sin(self.phi)
+            ],
+            [
+                np.sin(self.theta) * np.sin(self.phi),
+                self.r * np.cos(self.theta) * np.sin(self.phi),
+                self.r * np.sin(self.theta) * np.cos(self.phi),
+            ],
+            [np.cos(self.theta), -self.r * np.sin(self.theta), 0.],
+        ]])
+
+        cart_momentum_arr = np.dot(tfmat_sph2car,
+                                   np.array([self.pr, self.ptheta, self.pphi]))
+
+        return cart_momentum_arr
 
     def __str__(self):
         return "Coordinate (r, theta, phi): ({:.5e}, {:.5e}, {:.5e}), \

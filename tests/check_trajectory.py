@@ -29,9 +29,17 @@ if __name__ == "__main__":
     # result = traj1.get_plotting_variables()
 
     t_arr = result["t"]
-    x_arr = result["x"] / EARTH_RADIUS
-    y_arr = result["y"] / EARTH_RADIUS
-    z_arr = result["z"] / EARTH_RADIUS
+    # x_arr = result["x"] / EARTH_RADIUS
+    # y_arr = result["y"] / EARTH_RADIUS
+    # z_arr = result["z"] / EARTH_RADIUS
+
+    r_arr = result["r"] / EARTH_RADIUS
+    theta_arr = result["theta"]
+    phi_arr = result["phi"]
+
+    x_arr = r_arr * np.sin(theta_arr) * np.cos(phi_arr)
+    y_arr = r_arr * np.sin(theta_arr) * np.sin(phi_arr)
+    z_arr = r_arr * np.cos(theta_arr)
 
     fig_3d = plt.figure()
     ax_3d = fig_3d.add_subplot(111, projection="3d")

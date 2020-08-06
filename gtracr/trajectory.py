@@ -82,6 +82,8 @@ class Trajectory:
         # coordinates
         particle_tp = self.detector_to_geocentric(detector_tp)
 
+        # print(particle_tp)
+
         # start iteration process
 
         # initialize the trajectory tracer
@@ -100,6 +102,8 @@ class Trajectory:
             part_pphi
         ]
 
+        # print(initial_values)
+
         if get_data:
             # evaluate the trajectory tracer
             # get data dictionary of the trajectory
@@ -115,6 +119,8 @@ class Trajectory:
                 trajectory_datadict.pop("final_values"))
 
             particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
+
+            # print(particle_finaltp)
 
             # convert all data to numpy arrays for computations etc
             # this should be done within C++ in future versions
@@ -219,8 +225,13 @@ class Trajectory:
         # yt = magnitude * np.sin(xi) * np.cos(alpha)
         # zt = magnitude * np.cos(xi) + altitude
 
-        xt = -magnitude * np.sin(xi) * np.sin(alpha)
-        yt = magnitude * np.sin(xi) * np.cos(alpha)
+        # the below coordinate convention for detector coordinates are used
+        # to follow the convention used in Honda's 2002 paper, in which
+        # an azimuth angle of 0 correlates to direction of the
+        # geographic South Pole, and + azimuth will indicate particles
+        # coming from the west
+        xt = magnitude * np.sin(xi) * np.sin(alpha)
+        yt = -magnitude * np.sin(xi) * np.cos(alpha)
         zt = magnitude * np.cos(xi) + altitude
 
         return np.array([xt, yt, zt])
