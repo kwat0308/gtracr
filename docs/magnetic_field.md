@@ -59,7 +59,12 @@
     - $h_n^m(t) = h_n^m(T_0) + h_n^{m'}(T_0)(t-T0)$
     - $T_0$ is the epoch preceding $t$, which is an exact multiple of 5 years.
     - The first time derivatives can be obtained by the secular variation coeffients (for 2015-2020 models only).
-    - As we are only dealing with second-like time intervals, we can approximate this time variation of the coefficients as constant, which are provided as the IGRF coefficients.
+    - ~~As we are only dealing with second-like time intervals, we can approximate this time variation of the coefficients as constant, which are provided as the IGRF coefficients.~~
+    - EDIT: We do want to use the time variation of the coefficients, as this will be useful in the future
+
+      - for example, we will be able to see the time variation in the neutrino flux at a single location since 1900 or the variation of the rigidity cutoff in the next 5 years or so
+
+    - evaluating this will be performed by the midpoint method so that we have g'(T0) approximately as g(T0+5) - g(T0-5) / (2*5).
 
   - The function $P_n^m(x)$ are the associated Legendre polynomials, but are Schmidt quasi-normalized (source (IGRF 12th generation paper): <https://earth-planets-space.springeropen.com/articles/10.1186/s40623-015-0228-9>)
 
