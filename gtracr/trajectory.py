@@ -91,7 +91,7 @@ class Trajectory:
     def get_trajectory(self,
                        dt=1e-5,
                        max_time=10,
-                       max_steps=None,
+                       max_step=None,
                        get_data=False):
         '''
         Evaluate the trajectory of the particle within Earth's magnetic field
@@ -106,9 +106,9 @@ class Trajectory:
             the time step between each iteration of the integration (default: 1e-5)
         max_time : float
             the maximum duration in which the integration would occur in seconds (default: 10)
-        max_steps : int, optional
-            maximum number of steps to integrate for (default None). If `max_steps` is not `None`, 
-            then `max_steps` will override the evaluation of maximum number of steps based on `max_time`.
+        max_step : int, optional
+            maximum number of steps to integrate for (default None). If `max_step` is not `None`, 
+            then `max_step` will override the evaluation of maximum number of steps based on `max_time`.
         get_data : bool, optional
             decides whether we want to extract the information (time and six vector)
             for the whole trajectory for e.g. debugging purposes (default: False)
@@ -131,7 +131,7 @@ class Trajectory:
         traj_tracer = TrajectoryTracer(self.particle.charge,
                                        self.particle.mass,
                                        self.escape_altitude, dt, max_time,
-                                       max_steps, self.bfield_type)
+                                       max_step, self.bfield_type)
 
         # set initial values
         particle_t0 = 0.

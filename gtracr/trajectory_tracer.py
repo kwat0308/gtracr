@@ -10,12 +10,15 @@ with the aid of numpy arrays
 '''
 import os, sys
 import numpy as np
+from datetime import datetime as dt
 
-# sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(CURRENT_DIR)
 
 from gtracr.trajectorypoint import TrajectoryPoint
 from gtracr.constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
-from gtracr.magnetic_field import MagneticField
+from gtracr.magnetic_field import MagneticField, IGRF13
+from scipy import interpolate
 
 
 class TrajectoryTracer:
@@ -31,7 +34,7 @@ class TrajectoryTracer:
     - stepsize: the stepsize of the integrator (default:1e-5)
     - max_time: the maximum time for the trajectory tracing procedure (default=10s)
     - bfield_type: the type of magnetic field to use for trajectory tracing, either "dipole" or "igrf" (default="dipole")
-    - max_steps: the maximum number of steps, evaluated from max_time and stepsize
+    - max_step: the maximum number of steps, evaluated from max_time and stepsize
     - particle_escaped: boolean to check if particle has escaped or not
     - bfield: the magnetic field model that will be used
     '''
@@ -41,35 +44,43 @@ class TrajectoryTracer:
                  escape_radius=10. * EARTH_RADIUS,
                  stepsize=1e-5,
                  max_time=10,
-                 max_steps=None,
+                 max_step=None,
                  bfield_type="dipole"):
         self.charge = charge * ELEMENTARY_CHARGE  # convert to coulombs
         self.mass = mass * KG_PER_GEVC2  # convert to kg
         self.escape_radius = escape_radius
         self.stepsize = stepsize
         self.max_time = max_time  # default 10s
-        self.max_steps = int(max_time / stepsize) \
-            if max_steps is None else max_steps  # N = (tf - t0) / h
+        self.max_step = int(max_time / stepsize) \
+            if max_step is None else max_step  # N = (tf - t0) / h
         self.particle_escaped = False  # check if particle escaped or not
 
         # initialize magnetic field
         if bfield_type.find("dipole") != -1:
             self.bfield = MagneticField()
         elif bfield_type.find("igrf") != -1:
-            pass
+            curr_year = dt.now().year
+            nmax = 13
+            self.bfield = IGRF13(curr_year, nmax=nmax)
         else:
             raise Exception("Only modes 'dipole' and 'igrf' are allowed!")
 
-    '''
-    The system of ordinary differential equations that describe the motion of charged
-    particles in Earth's magnetic field via the Lorentz force in spherical coordinates.
-    This version differs from the C++ code in that we perform this in a vectorized fashion.
-    Inputs:
-    - t : the time
-    - vec: the six-vector (r, theta, phi, pr, ptheta, pphi) at time t
-    '''
-
     def ode_lrz(self, t, vec):
+        '''
+        The system of ordinary differential equations that describe the motion of charged
+        particles in Earth's magnetic field via the Lorentz force in spherical coordinates.
+        This version differs from the C++ code in that we perform this in a vectorized fashion.
+        
+        Parameters
+        -----------
+
+        - t : the time
+        - vec: the six-vector (r, theta, phi, pr, ptheta, pphi) at time t
+
+        Returns
+        --------
+        - ode_lrz : the ordinary differential equation for the six vector based on the Lorentz force equation
+        '''
         # unpack vector for readability
         (r, theta, phi, pr, ptheta, pphi) = vec
 
@@ -82,9 +93,10 @@ class TrajectoryTracer:
         #
 
         # evaluate B-field
-        bf_r = self.bfield.Br(r, theta, phi)
-        bf_theta = self.bfield.Btheta(r, theta, phi)
-        bf_phi = self.bfield.Bphi(r, theta, phi)
+        # bf_r = self.bfield.Br(r, theta, phi)
+        # bf_theta = self.bfield.Btheta(r, theta, phi)
+        # bf_phi = self.bfield.Bphi(r, theta, phi)
+        bf_r, bf_theta, bf_phi = self.bfield.values(r, theta, phi)
 
         # define the momentum odes first
         # invert charge for back tracking
@@ -138,10 +150,10 @@ class TrajectoryTracer:
         # create empty arrays
         # if get_data is false it wont be appended so its fine to do this
         # without conditional case
-        t_arr = np.zeros(self.max_steps)
-        vec_arr = np.zeros((self.max_steps, 6))
+        t_arr = np.zeros(self.max_step)
+        vec_arr = np.zeros((self.max_step, 6))
         # start the loop
-        for i in range(self.max_steps):
+        for i in range(self.max_step):
 
             # print(vec)
 
