@@ -11,12 +11,22 @@ import pickle
 from scipy.interpolate import griddata
 # import matplotlib.tri as tri
 
-sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), "gtracr"))
+# sys.path.append(os.getcwd())
+# sys.path.append(os.path.join(os.getcwd(), "gtracr"))
+# add filepath of gtracr to sys.path
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+PARENT_DIR = os.path.dirname(CURRENT_DIR)
+sys.path.append(PARENT_DIR)
 
 from gtracr.trajectory import Trajectory
 from gtracr.add_location import location_dict
 from gtracr.add_particle import particle_dict
+
+# path for plots
+PLOT_DIR = os.path.join(PARENT_DIR, "..", "gtracr_plots")
+# create directory if gtracr_plots dir does not exist
+if not os.path.isdir(PLOT_DIR):
+    os.mkdir(PLOT_DIR)
 
 
 def export_as_pkl(fpath, ds):
@@ -24,330 +34,300 @@ def export_as_pkl(fpath, ds):
         pickle.dump(ds, f, protocol=-1)
 
 
-def plot_heatmap(rigidity_cutoffdict, iter_num, locname, rigidity_list,
-                 particle):
-    # fig = plt.figure()
-    # ax = plt.subplot(111, projection="3d")
-    # ax = plt.subplot(111, projection="hammer")
-    fig, ax = plt.subplots(figsize=(12, 9))
+def plot_heatmap(data_arr,
+                 rigidity_list,
+                 locname,
+                 pname,
+                 ngrid_azimuth=70,
+                 ngrid_zenith=70,
+                 save_plot=False):
+    '''
+    Plot the heatmap of the geomagnetic rigidity cutoffs at the specified location and type of particle that the cosmic ray constitutes of. 
 
-    # the azimuth and zenith arrays, obtained from the rigidity cutoff dictionary keys
-    # that are in the form (azimuth, zenith) for each point
-    azimuth_arr, zenith_arr = zip(*list(rigidity_cutoffdict.keys()))
-    # reshape rigidity_cutoff arrays into a matrix-like structure
-    # also divide by total number of iterations (normalize)
-    rigidity_cutoffarr = np.array(list(rigidity_cutoffdict.values()))
+    Parameters
+    ----------
+    - data_arr (list of tuples):
+        An array that consists of the azimuthal and zenith components of the particle trajectory and its corresponding rigidity cutoff in the following order: (azimuth, zenith, rigidity cutoff)
+    
+    - rigidity_list (array of floats):
+        The list of rigidities in which each Monte Carlo iteration had evaluated the rigidity cutoff for. Required to determine colorbar limits and contour levels.
 
-    azimuth_grid = np.linspace(
-        np.min(azimuth_arr) - 0.5,
-        np.max(azimuth_arr) + 0.5, 500)
-    zenith_grid = np.linspace(
-        np.max(zenith_arr) + 0.5,
-        np.min(zenith_arr) - 0.5, 500)
+    - locname (str): 
+        The name of the detector location.
 
-    # triang = tri.Triangulation(azimuth_arr, zenith_arr)
-    # interpolator = tri.LinearTriInterpolator(triang, rigidity_cutoffarr)
-    # azimuth_matrix, zenith_matrix = np.meshgrid(azimuth_grid, zenith_grid)
-    # rigidity_cutoffgrid = interpolator(azimuth_matrix, zenith_matrix)
+    - pname (str):
+        The label of the particle that constitutes the cosmic ray. 
+
+    - ngrid_azimuth (int, default=70):
+        The number of grid points used for the interpolation process for the azimuthal component. The default is set to create a nice plot with linear interpolation.
+
+    - ngrid_zenith (int, default=70):
+        The number of grid points used for the interpolation process for the zenith component. The default is set to create a nice plot with linear interpolation.
+
+    - save_plot (bool):
+        Decides to choose to save the generated plot or not. If True, saves the plot in a separate parent directory named `gtracr_plots`. If False, only presents the plot in a GUI window. 
+
+    '''
+
+    # get azimuth, zenith, and rigidity cutoff arrays
+    azimuth_arr, zenith_arr, rigidity_cutoffarr = zip(*data_arr)
+
+    # interpolate the rigidity cutoffs in a 2-d sense using griddata
+    azimuth_grid = np.linspace(np.min(azimuth_arr), np.max(azimuth_arr),
+                               ngrid_azimuth)
+    zenith_grid = np.linspace(np.max(zenith_arr), np.min(zenith_arr),
+                              ngrid_zenith)
 
     rigidity_cutoffgrid = griddata(points=(azimuth_arr, zenith_arr),
                                    values=rigidity_cutoffarr,
                                    xi=(azimuth_grid[None, :],
                                        zenith_grid[:, None]),
-                                   method='nearest')
+                                   method='linear')
 
-    # cs = ax.scatter(azimuth_arr, zenith_arr, c=rigidity_cutoffarr, s=2.0)  #,
-    # vmin=np.min(rigidity_list) - 0.5,
-    # vmax=np.max(rigidity_list) + 0.5)
+    # plot the contour plot
+    # we use imshow to create a mock filled contour plot
+    # and plot contour lines over the imshow plot
+    fig, ax = plt.subplots(figsize=(12, 9), constrained_layout=True)
 
-    # im = ax.pcolormesh(azimuth,
-    #                    zenith,
-    #                    rigidity_cutoffarr,
-    #                    cmap="viridis",
-    #                    vmin=np.min(rigidity_list) - 0.5,
-    #                    vmax=np.max(rigidity_list) + 0.5)
+    image = ax.imshow(
+        rigidity_cutoffgrid,
+        extent=[-2.5, 362.5, -2.5, 182.5],
+        #     extent=[0., 360., 0., 180.],
+        #     extent=[-1, 361, -1, 181],
+        origin='upper',
+        cmap="RdBu_r",
+        interpolation="bilinear",
+        aspect="auto",
+        vmin=np.min(rigidity_list),
+        vmax=np.max(rigidity_list),
+        alpha=1.)
+    ax.axis('image')
 
-    cs = ax.contour(
+    ax.contour(
         azimuth_grid,
         zenith_grid,
         rigidity_cutoffgrid,
         #  levels=rigidity_list,
         colors="k",
+        #     cmap="viridis",
         linewidths=0.5,
-        levels=len(rigidity_list))
+        #     extent=[-5., 365., -5., 185.],
+        #      extent=[0., 360., 0., 180.],
+        #     corner_mask=False,
+        levels=len(rigidity_list),
+        alpha=1.)
+    # divider = make_axes_locatable(ax)
+    # cax = divider.append_axes("right", size="5%", pad=0.1)
 
-    cs = ax.contourf(
-        azimuth_grid,
-        zenith_grid,
-        rigidity_cutoffgrid,
-        #  levels=rigidity_list,
-        cmap="RdBu_r")
+    # shrink parameter should change accordingly to
+    # figsize (trial and error for now...)
+    cbar = fig.colorbar(image, ax=ax, shrink=0.6)
+    cbar.ax.set_ylabel("Rigidity [GV]")
 
-    # #
-    # ax.clabel(cs, inline=1, fontsize=10)
-    cbar = fig.colorbar(cs, ax=ax)
-    cbar.ax.set_ylabel("Rigidity [GV/c]")
-
-    # ax.set_xlim([0., 360.])
-    # ax.set_ylim([180., 0.])
+    # ylim from 180 to 0 to follow convention in Honda 2002 paper
+    ax.set_xlim([0., 360.])
+    ax.set_ylim([180., 0.])
 
     ax.set_xlabel("Azimuthal Angle [Degrees]")
     ax.set_ylabel("Zenith Angle [Degrees]")
     ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
-        locname, particle))
+        locname, pname))
 
-    fig.tight_layout()
+    # only save plot is save_plot is True
+    # otherwise show the plot in a GUI window
+    if save_plot:
+        plt.savefig(os.path.join(
+            PLOT_DIR, "{0}_{1}_cutoffplot.png".format(locname, pname)),
+                    dpi=800)
+    else:
+        plt.show()
 
-    # plt.show()
-    plt.savefig(os.path.join(
-        os.getcwd(), "..", "gtracr_plots",
-        "{0}_{1}_cutoffplot.png".format(locname, particle)),
-                dpi=800)
+
+def plot_scatter(data_arr, locname, pname, save_plot=False):
+    '''
+    Plot the scatter plot of the geomagnetic rigidity cutoffs at the specified location and type of particle that the cosmic ray constitutes of. 
+
+    Parameters
+    ----------
+    - data_arr (list of tuples):
+        An array that consists of the azimuthal and zenith components of the particle trajectory and its corresponding rigidity cutoff in the following order: (azimuth, zenith, rigidity cutoff)
+
+    - locname (str): 
+        The name of the detector location.
+
+    - pname (str):
+        The label of the particle that constitutes the cosmic ray. 
+
+    - save_plot (bool):
+        Decides to choose to save the generated plot or not. If True, saves the plot in a separate parent directory named `gtracr_plots`. If False, only presents the plot in a GUI window. 
+
+    '''
+
+    # get azimuth, zenith, and rigidity cutoff arrays
+    azimuth_arr, zenith_arr, rigidity_cutoffarr = zip(*data_arr)
+
+    fig, ax = plt.subplots()
+    sc = ax.scatter(azimuth_arr, zenith_arr, c=rigidity_cutoffarr, s=2.0)
+    ax.set_xlabel("Azimuthal Angle [Degrees]")
+    ax.set_ylabel("Zenith Angle [Degrees]")
+    ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
+        locname, pname))
+
+    cbar = fig.colorbar(sc, ax=ax)
+    cbar.ax.set_ylabel("Rigidity [GV/c]")
+
+    ax.set_xlim([0., 360.])
+    ax.set_ylim([180., 0.])
+
+    # only save plot is save_plot is True
+    # otherwise show the plot in a GUI window
+    if save_plot:
+        plt.savefig(os.path.join(
+            PLOT_DIR, "{0}_{1}_scatterplot.png".format(locname, pname)),
+                    dpi=800)
+    else:
+        plt.show()
+
+
+def evaluate_rcutoff(rigidity_list,
+                     detector_coord,
+                     particle_label="p+",
+                     iter_num=10000):
+    '''
+    Evaluate the rigidity cutoff value at some provided location
+    on Earth for a given cosmic ray particle.
+
+    Parameters
+    ----------
+    - rigidity_list (list / NumPy array):
+        The list of rigidities to evalue the minimum rigidity cutoff value for. 
+
+    - detector_coord (NumPy array, float, size=3):
+        The geodesic coordinates of the location of the detector. This must provide the latitude [decimal], longitude [decimal], and altitude [km] of the detector in the given order. 
+
+    - particle_label (str, default="p+") :
+        The label of the particle that is acting as the cosmic ray in the simulation. 
+        Current valid inputs are: "p+", "p-", "e+", "e-" 
+
+    - iter_num (int, default 10000):
+        The number of iterations to perform the Monte Carlo integration with. 
+
+    Returns
+    -------
+    - data_arr (list of tuple of size 3, size=iter_num):
+        An array that contains the tuple of the direction of the particle trajectory and its correlating rigidity cutoff value in the following format: (azimuth, zenith, rigidity_cutoff)
+
+    '''
+
+    # unpack the detector coordinates in latitude, longitude, altitude
+    (latitude, longitude, detector_altitude) = detector_coord
+
+    # array that contains the data as a tuple, that is,
+    # the azimuth, zenith, and cutoff rigidity
+    data_arr = []
+
+    # perform Monte Carlo integration to get cutoff rigidity
+    for i in range(iter_num):
+        # get a random zenith and azimuth angle
+        # zenith angles range from 0 to 180
+        # azimuth angles range from 0 to 360
+        [azimuth, zenith] = np.random.rand(2)
+        azimuth *= 360.
+        zenith *= 180.
+
+        # print("Zenith Angle: {0}, Azimuth Angle {1}\n".format(zenith, azimuth))
+
+        # iterate through each rigidity, and break the loop
+        # when particle is able to escape earth
+        for k, rigidity in enumerate(rigidity_list):
+            # print("Current rigidity: {:.4e}".format(rigidity))
+            traj = Trajectory(plabel=particle_label,
+                              latitude=latitude,
+                              longitude=longitude,
+                              detector_altitude=detector_altitude,
+                              zenith_angle=zenith,
+                              azimuth_angle=azimuth,
+                              particle_altitude=100.,
+                              rigidity=rigidity)
+            traj.get_trajectory(max_step=10000)
+            # break loop and append direction and current rigidity if particle has escaped
+            if traj.particle_escaped == True:
+                data_arr.append((azimuth, zenith, rigidity))
+                break
+
+        # progress checker
+        if i % (iter_num // 10) == 0:
+            print("{:d} iterations done.".format(i))
+
+    return data_arr
 
 
 if __name__ == "__main__":
 
-    # define a range of zenith and azimuthal angles
-    # we flip zenith since thats how Honda's paper plots it...
-    # znum = 15
-    # aznum = 30
-    # num = 20
-    # zenith_arr = np.linspace(180., 0., num, endpoint=False)
-    # azimuth_arr = np.linspace(0., 360., num, endpoint=False)
-
-    # # create the matrix for zenith and azimuth to aid with plotting
-    # zenith_matrix, azimuth_matrix = np.meshgrid(zenith_arr,
-    #                                             azimuth_arr,
-    #                                             indexing="ij")
-
     # create particle trajectory with desired particle and energy
-    rigidity_list = np.arange(5, 55, 10)
+    rigidity_list = np.arange(5, 55, 5)
     particle_list = [("p+", particle_dict["p+"])
                      ]  #, ("e-", particle_dict["e-"])]
     location_list = [("Kamioka", location_dict["Kamioka"])]
 
-    iter_num = 5000  # total number of points used for Monte Carlo process
-    # # variables used for determining index in which rigidity cutoffs should be located at
-    # zenith_stepsize = 180. / num  # stepsize for zenith angle
-    # azimuth_stepsize = 360. / num  # stepsize for azimuth angle
+    iter_num = 10000  # total number of points used for Monte Carlo process
 
-    # arrays to append zenith and azimuth angles
-    zenith_arr = []
-    azimuth_arr = []
+    # number of points for azimuth / zenith grid
+    ngrid_azimuth = 70
+    ngrid_zenith = 70
 
-    # dictionary to append rigidity cutoff values
-    # this is to allow pair of points that are generated randomly
-    # to be stored
-    rigidity_cutoffdict = {}
+    # debug mode (bool)
+    # should be done in a better fashion like argparse or smth
+    debug_mode = True
 
-    # geomag_cutoffdict = {
-    #     "Zenith": zenith_arr,
-    #     "Azimuth": azimuth_arr,
-    #     "Location": {}
-    # }
+    # boolean to save plot or not
+    save_plot = False if debug_mode else True
 
     # locations: kamioka, icecube
     # for locname, loc in list(location_dict.items()):
     for (locname, loc) in location_list:
+        # print(loc)
+        detector_coord = np.array([loc.latitude, loc.longitude, loc.altitude])
         # geomag_cutoffdict["Location"][locname] = {}
         # for pname, particle in list(particle_dict.items()):
         for (pname, particle) in particle_list:
             # geomag_cutoffdict["Location"][locname][pname] = {}
-            # for energy in energy_list:
-            # contain the rigidity cutoffs
-            # this will be a sparse matrix with a lot of zeros
-            rigidity_cutoffarr = np.zeros((iter_num, iter_num))
-            for i in range(iter_num):
-                # get a random zenith and azimuth angle
-                # zenith angles range from 0 to 180
-                # azimuth angles range from 0 to 360
-                [azimuth, zenith] = np.random.rand(2)
-                azimuth *= 360.
-                zenith *= 180.
+            # evaluate rigidity cutoffs at the location for
+            # the specified particle
+            data_arr = evaluate_rcutoff(rigidity_list,
+                                        detector_coord,
+                                        particle_label=pname,
+                                        iter_num=iter_num)
+            # geomag_cutoffdict["Location"][locname][pname][
+            # rigidity] = cutoff_arrs[k]
 
-                print("Zenith Angle: {0}, Azimuth Angle {1}\n".format(
-                    zenith, azimuth))
+            # create a debugger / checker as a scatter plot
+            # of the dataset
+            if debug_mode:
+                plot_scatter(data_arr, locname, pname, save_plot=save_plot)
 
-                binary_list = np.zeros(len(rigidity_list))
-                for k, rigidity in enumerate(rigidity_list):
-                    print("Current rigidity: {:.4e}".format(rigidity))
-                    traj = Trajectory(pname,
-                                      latitude=loc.latitude,
-                                      longitude=loc.longitude,
-                                      detector_altitude=loc.altitude,
-                                      zenith_angle=zenith,
-                                      azimuth_angle=azimuth,
-                                      particle_altitude=100.,
-                                      rigidity=rigidity)
-                    traj.get_trajectory(max_step=10000)
-                    # append the binary result, whether particle escaped or not (in 0 or 1)
-                    binary_list[k] = traj.particle_escaped
-                    # cutoff_arrs[k][i][j] = traj.particle_escaped
-                    # print(traj.particle_escaped)
-
-                    # figure out starting at which rigidity the particle trajectory is invalid
-                    # print(binary_list)
-                nonzero_indices = np.nonzero(binary_list)[0]
-                # print(nonzero_indices)
-                # cutoff_index = nonzero_indices[
-                #     len(nonzero_indices) -
-                #     1] if len(nonzero_indices) != 0 else 0
-                cutoff_index = nonzero_indices[0]
-                # print(cutoff_index)
-
-                cutoff_rigidity = rigidity_list[cutoff_index]
-
-                print("Cutoff rigidity: {:.5f}".format(cutoff_rigidity))
-
-                # append the values
-                # # indices are determined by index = value / stepsize
-                # # this should work since the maximum possible size of the
-                # # matrix is num x num, and (for example) the max number of zenith
-                # # angles that can be appended is
-                # zenith_index = zenith / zenith_stepsize
-                # azimuth_index = azimuth / azimuth_stepsize
-                # rigidity_cutoffarr[zenith_index][
-                #     azimuth_index] = cutoff_rigidity
-
-                # store the rgiditiy cutoff inside a dictionary
-                if (azimuth, zenith) in list(rigidity_cutoffdict.keys()):
-                    rigidity_cutoffdict[(azimuth, zenith)] += cutoff_rigidity
-                else:
-                    rigidity_cutoffdict[(azimuth, zenith)] = cutoff_rigidity
-
-                # geomag_cutoffdict["Location"][locname][pname][
-                # rigidity] = cutoff_arrs[k]
-
-            # print(rigidity_cutoffarr)
-
-            plot_heatmap(rigidity_cutoffdict, iter_num, locname, rigidity_list,
-                         pname)
+            plot_heatmap(data_arr,
+                         rigidity_list,
+                         locname=locname,
+                         pname=pname,
+                         ngrid_azimuth=ngrid_azimuth,
+                         ngrid_zenith=ngrid_zenith,
+                         save_plot=save_plot)
 
     # fpath = os.path.join(os.getcwd(), "geomagnetic_cutoff.pkl")
     # export_as_pkl(fpath, geomag_cutoffdict)
+'''
 
-# def plot_heatmap(zenith, azimuth, rigidity_cutoffs, locname, rigidity_list,
-#                  particle):
-#     # fig = plt.figure()
-#     # ax = plt.subplot(111, projection="hammer")
-#     fig, ax = plt.subplots(figsize=(12, 9))
+Below info will be used in a future release so its just 
+stored here for now.
 
-#     cs = ax.contour(
-#         azimuth,
-#         zenith,
-#         rigidity_cutoffs,
-#         #  levels=rigidity_list,
-#         cmap="viridis",
-#         vmin=np.min(rigidity_list) - 0.5,
-#         vmax=np.max(rigidity_list) + 0.5)
-#     # im = ax.pcolormesh(azimuth,
-#     #                    zenith,
-#     #                    rigidity_cutoffarr,
-#     #                    cmap="viridis",
-#     #                    vmin=np.min(rigidity_list) - 0.5,
-#     #                    vmax=np.max(rigidity_list) + 0.5)
-#     ax.clabel(cs, inline=1, fontsize=10)
-#     cbar = fig.colorbar(cs, ax=ax)
-#     cbar.ax.set_ylabel("Rigidity [GV]")
+    - min_rigidity (float, default 5):
+        The minimum rigidity in GV to evaluate the minimum rigidity cutoff value. 
+        Note: For energies ~ particle mass, the particle may be trapped within the Earth's magnetic field lines, and thus such low energies need not be considered. 
 
-#     # ax.set_xlim([0., 360.])
-#     # ax.set_ylim([180., 0.])
+    - max_rigidity (float, default 60):
+        The maximum rigidity in GV to evaluate the minimum rigidity cutoff value. The rigidity cutoff value diminishes quickly at high rigidities, so rigidity values > 100 GV are usually not necessary.
 
-#     ax.set_xlabel("Azimuthal Angle [Degrees]")
-#     ax.set_ylabel("Zenith Angle [Degrees]")
-#     ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
-#         locname, particle))
-
-#     fig.tight_layout()
-
-#     # plt.show()
-#     plt.savefig(os.path.join(
-#         os.getcwd(), "..", "gtracr_plots",
-#         "{0}_{1}_cutoffplot.png".format(locname, particle)),
-#                 dpi=800)
-
-# if __name__ == "__main__":
-
-#     # define a range of zenith and azimuthal angles
-#     # we flip zenith since thats how Honda's paper plots it...
-#     # znum = 15
-#     # aznum = 30
-#     num = 20
-#     zenith_arr = np.linspace(180., 0., num, endpoint=False)
-#     azimuth_arr = np.linspace(0., 360., num, endpoint=False)
-
-#     # create the matrix for zenith and azimuth to aid with plotting
-#     zenith_matrix, azimuth_matrix = np.meshgrid(zenith_arr,
-#                                                 azimuth_arr,
-#                                                 indexing="ij")
-
-#     # create particle trajectory with desired particle and energy
-#     rigidity_list = np.arange(5, 55, 5)
-#     particle_list = [("p+", particle_dict["p+"])
-#                      ]  #, ("e-", particle_dict["e-"])]
-#     location_list = [("Kamioka", location_dict["Kamioka"])]
-
-#     # geomag_cutoffdict = {
-#     #     "Zenith": zenith_arr,
-#     #     "Azimuth": azimuth_arr,
-#     #     "Location": {}
-#     # }
-
-#     # locations: kamioka, icecube
-#     # for locname, loc in list(location_dict.items()):
-#     for (locname, loc) in location_list:
-#         # geomag_cutoffdict["Location"][locname] = {}
-#         # for pname, particle in list(particle_dict.items()):
-#         for (pname, particle) in particle_list:
-#             # geomag_cutoffdict["Location"][locname][pname] = {}
-#             # for energy in energy_list:
-#             rigidity_cutoffarr = np.zeros((num, num))
-#             for i, zenith in enumerate(zenith_arr):
-#                 # cutoff_arr[i] = np.zeros(num)
-#                 for j, azimuth in enumerate(azimuth_arr):
-#                     print("Zenith Angle: {0}, Azimuth Angle {1}\n".format(
-#                         zenith, azimuth))
-#                     # create a new array to append binary values
-#                     binary_list = np.zeros(len(rigidity_list))
-#                     for k, rigidity in enumerate(rigidity_list):
-#                         print("Current rigidity: {:.4e}".format(rigidity))
-#                         traj = Trajectory(pname,
-#                                           latitude=loc.latitude,
-#                                           longitude=loc.longitude,
-#                                           detector_altitude=loc.altitude,
-#                                           zenith_angle=zenith,
-#                                           azimuth_angle=azimuth,
-#                                           particle_altitude=100.,
-#                                           rigidity=rigidity)
-#                         traj.get_trajectory(max_step=10000)
-#                         # append the binary result, whether particle escaped or not (in 0 or 1)
-#                         binary_list[k] = traj.particle_escaped
-#                         # cutoff_arrs[k][i][j] = traj.particle_escaped
-#                         # print(traj.particle_escaped)
-
-#                     # figure out starting at which rigidity the particle trajectory is invalid
-#                     # print(binary_list)
-#                     nonzero_indices = np.nonzero(binary_list)[0]
-#                     # print(nonzero_indices)
-#                     # cutoff_index = nonzero_indices[
-#                     #     len(nonzero_indices) -
-#                     #     1] if len(nonzero_indices) != 0 else 0
-#                     cutoff_index = nonzero_indices[0]
-#                     # print(cutoff_index)
-
-#                     cutoff_rigidity = rigidity_list[cutoff_index]
-
-#                     print("Cutoff rigidity: {:.5f}".format(cutoff_rigidity))
-
-#                     rigidity_cutoffarr[i][j] = cutoff_rigidity
-
-#                 # geomag_cutoffdict["Location"][locname][pname][
-#                 # rigidity] = cutoff_arrs[k]
-
-#             # print(rigidity_cutoffarr)
-
-#             plot_heatmap(zenith_matrix, azimuth_matrix, rigidity_cutoffarr,
-#                          locname, rigidity_list, pname)
-
-#     # fpath = os.path.join(os.getcwd(), "geomagnetic_cutoff.pkl")
-#     # export_as_pkl(fpath, geomag_cutoffdict)
+    - delta_rigidity (float, default 5):
+        The spacing 
+'''
