@@ -15,8 +15,8 @@ CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 sys.path.append(PARENT_DIR)
 
-from gtracr.constants import EARTH_RADIUS, G10
-import gtracr.igrf_utils as iuf
+from constants import EARTH_RADIUS, G10
+import igrf_utils as iuf
 
 
 class MagneticField:
@@ -110,7 +110,7 @@ class IGRF13(MagneticField):
         # super().__init__(self)
 
         self.curr_year = curr_year
-        fpath = os.path.join(PARENT_DIR, "data", "igrf13.shc")
+        fpath = os.path.join(PARENT_DIR, "data", "IGRF13.shc")
 
         # check if current year is a leap year or not
         if self.curr_year % 4 == 0:

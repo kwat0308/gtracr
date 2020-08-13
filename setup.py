@@ -32,9 +32,9 @@ ext_module = [
         sources=[
             "gtracr/lib/src/TrajectoryTracer.cc",
             # "gtracr/lib/wrapper/TrajectoryTracerWrapper.cc",
-            "gtracr/lib/src/Location.cc",
+            # "gtracr/lib/src/Location.cc",
             # "gtracr/lib/wrapper/LocationWrapper.cc",
-            "gtracr/lib/src/Particle.cc",
+            # "gtracr/lib/src/Particle.cc",
             # "gtracr/lib/wrapper/ParticleWrapper.cc",
             # "gtracr/lib/src/MagneticField.cc"
             "gtracr/lib/wrapper.cc"
