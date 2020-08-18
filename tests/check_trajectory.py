@@ -1,166 +1,257 @@
 import os, sys
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt, mpld3
+import matplotlib.patches as patches
+from mpl_toolkits import mplot3d
 
-sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), "gtracr"))
+# sys.path.append(os.getcwd())
+# sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 # sys.path.append(os.path.join(os.getcwd(), "..", "gtracr"))
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+PARENT_DIR = os.path.dirname(CURRENT_DIR)
+sys.path.append(PARENT_DIR)
+
+PLOT_DIR = os.path.join(PARENT_DIR, "..", "gtracr_plots")
 
 from gtracr.trajectory import Trajectory
 # from gtracr.utils import spherical_to_cartesian
-from gtracr.constants import EARTH_RADIUS
+from gtracr.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
+from gtracr.utils import dec_to_dms
 
 if __name__ == "__main__":
-    traj1 = Trajectory(
+    # set initialization parameters
+    # particle is assumed to be proton
+    q = 1
+    m = 0.938
+
+    # initial momentum
+    p0 = 30.
+    rigidity = p0 / np.abs(q)  # convert to rigidity
+
+    # location of detector
+    lat = 10.
+    lng = 40.
+    detector_alt = 0.
+
+    # 3-vector of particle
+    zenith = 90.
+    azimuth = 0.
+    particle_alt = 100.
+
+    # initialize trajectory
+    traj = Trajectory(
         "p+",
-        latitude=0.,
-        longitude=0.,
-        detector_altitude=0.,
-        zenith_angle=90.,
-        azimuth_angle=90.,
-        particle_altitude=100.,
-        rigidity=30.,
-    )
-    # for i in range(10):
-#     result = traj1.get_trajectory(max_step=10000,
-#                                   step_size=1e-5,
-#                                   get_data=True)
-    result = traj1.get_trajectory(
-        dt=1e-4,
-        max_time=1.,
-        get_data=True,
-        max_steps=100
+        latitude=lat,
+        longitude=lng,
+        detector_altitude=detector_alt,
+        zenith_angle=zenith,
+        azimuth_angle=azimuth,
+        particle_altitude=particle_alt,
+        rigidity=rigidity,
     )
 
-    # result = traj1.get_plotting_variables()
+    # set integration parameters
+    dt = 1e-4
+    max_time = 1.
+    max_step = 10000
 
+    # obtain the trajectory result
+    result = traj.get_trajectory(dt=dt,
+                                 max_time=max_time,
+                                 get_data=True,
+                                 max_step=max_step)
+
+    # obtain data from dictionary
     t_arr = result["t"]
-    # x_arr = result["x"] / EARTH_RADIUS
-    # y_arr = result["y"] / EARTH_RADIUS
-    # z_arr = result["z"] / EARTH_RADIUS
-
     r_arr = result["r"] / EARTH_RADIUS
     theta_arr = result["theta"]
     phi_arr = result["phi"]
 
+    # convert to cartesian
     x_arr = r_arr * np.sin(theta_arr) * np.cos(phi_arr)
     y_arr = r_arr * np.sin(theta_arr) * np.sin(phi_arr)
     z_arr = r_arr * np.cos(theta_arr)
 
-    fig_3d = plt.figure()
-    ax_3d = fig_3d.add_subplot(111, projection="3d")
-    cm_3d = ax_3d.scatter(x_arr, y_arr, z_arr, c=t_arr, marker='o')
-    # ax_3d.scatter(x2, y2, z2, c="r", marker='o')
-    cbar_3d = fig_3d.colorbar(cm_3d, ax=ax_3d)
-    # plt.colorbar()
-    # plt.savefig("test.png")
-    ax_3d.set_xlim([-3, 3])
-    ax_3d.set_ylim([-3, 3])
-    ax_3d.set_zlim([-3, 3])
-    ax_3d.set_xlabel(r"x [$R_E$]")
-    ax_3d.set_ylabel(r"y [$R_E$]")
-    ax_3d.set_zlabel(r"z [$R_E$]")
-    cbar_3d.ax.set_ylabel("Time [s]")
-    plt.show()
+    # check momentum magnitude vs steps since |p| should be
+    # constant throughout the trajectory
+    p_arr = np.sqrt(result["pr"]**2. + result["ptheta"]**2. +
+                    result["pphi"]**2.) / KG_M_S_PER_GEVC
+    p_ratio = p_arr / p0
 
-    fig_xy, ax_xy = plt.subplots()
+    # convert lat, long in decimal notation to dms
+    lat_dms, lng_dms = dec_to_dms(lat, lng)
+
+    # figures for the projections and momentum ratio vs steps
+    fig_proj, ax_proj = plt.subplots(
+        ncols=2,
+        nrows=2,
+        figsize=(16, 12),
+    )
+    #constrained_layout=True)
+
+    # relabel them for each projection type
+    ax_pmag = ax_proj[0, 0]
+    ax_xy = ax_proj[0, 1]
+    ax_xz = ax_proj[1, 0]
+    ax_yz = ax_proj[1, 1]
+
+    # momentum ratio vs steps
+    ax_pmag.plot(p_ratio, color="b")
+    ax_pmag.set_ylim([0.5, 1.5])
+    # ax_pmag.set_ylim([-3, 3])
+    ax_pmag.set_xlabel(r"Steps")
+    ax_pmag.set_ylabel(r"$p/p_0$")
+    ax_pmag.set_title(r"Momentum ratio $p/p_0$ per step")
+
+    # projection onto xy plane
     cm_xy = ax_xy.scatter(x_arr, y_arr, c=t_arr)
-    cbar_xy = fig_xy.colorbar(cm_xy, ax=ax_xy)
+    circ_xy = patches.Circle((0., 0.),
+                             1.,
+                             alpha=0.8,
+                             fc='None',
+                             linestyle='-',
+                             ec="k")
+    ax_xy.add_patch(circ_xy)
+    cbar_xy = fig_proj.colorbar(cm_xy, ax=ax_xy)
     ax_xy.set_xlim([-3, 3])
     ax_xy.set_ylim([-3, 3])
     ax_xy.set_xlabel(r"x [$R_E$]")
     ax_xy.set_ylabel(r"y [$R_E$]")
     cbar_xy.ax.set_ylabel("Time [s]")
-    plt.show()
+    ax_xy.set_title("Trajectory projected onto x-y plane")
 
-    fig_xz, ax_xz = plt.subplots()
+    # projection onto xz plane
     cm_xz = ax_xz.scatter(x_arr, z_arr, c=t_arr)
-    cbar_xz = fig_xz.colorbar(cm_xz, ax=ax_xz)
+    circ_xz = patches.Circle((0., 0.),
+                             1.,
+                             alpha=0.8,
+                             fc='None',
+                             linestyle='-',
+                             ec="k")
+    ax_xz.add_patch(circ_xz)
+    cbar_xz = fig_proj.colorbar(cm_xz, ax=ax_xz)
     ax_xz.set_xlim([-3, 3])
     ax_xz.set_ylim([-3, 3])
     ax_xz.set_xlabel(r"x [$R_E$]")
     ax_xz.set_ylabel(r"z [$R_E$]")
     cbar_xz.ax.set_ylabel("Time [s]")
-    plt.show()
+    ax_xz.set_title("Trajectory projected onto x-z plane")
 
-    fig_yz, ax_yz = plt.subplots()
+    # projection onto yz plane
     cm_yz = ax_yz.scatter(y_arr, x_arr, c=t_arr)
-    cbar_yz = fig_yz.colorbar(cm_yz, ax=ax_yz)
+    circ_yz = patches.Circle((0., 0.),
+                             1.,
+                             alpha=0.8,
+                             fc='None',
+                             linestyle='-',
+                             ec="k")
+    ax_yz.add_patch(circ_yz)
+    cbar_yz = fig_proj.colorbar(cm_yz, ax=ax_yz)
     ax_yz.set_xlim([-3, 3])
     ax_yz.set_ylim([-3, 3])
     ax_yz.set_xlabel(r"y [$R_E$]")
     ax_yz.set_ylabel(r"z [$R_E$]")
     cbar_yz.ax.set_ylabel("Time [s]")
-    plt.show()
-'''
-if __name__ == "__main__":
-    
-    # traj = ParticleTrajectory("e-", startAltitude=100, maxStep=1000)
-    # traj.getTrajectory(5)
-    # t = traj.results["t"]
-    # traj = ParticleTrajectory(
-    #     # "p+", 12, startLongitude=89., startLatitude=-63., startAltitude=0.
-    #       # "p+", 0.005, startLongitude=137.276599, startLatitude=36.434800, startAltitude=500)
-    #       "p+", 30, startAltitude=0., stopAltitude=500)
-    # # (startPoint, endPoint) = traj.getTrajectory(zenith=70, azimuth=90)
-    # print(startPoint, endPoint)
-    # t = traj.results["t"]
-    # (x, y, z) = spherical_to_cartesian(traj.results["r"] / EARTH_RADIUS,
-    #                                    traj.results["theta"],
-    #                                    traj.results["phi"])
-    traj1 = ParticleTrajectory("p+", 30, startAltitude=1, stopAltitude=500)
-    traj2 = ParticleTrajectory("p+", 30, startAltitude=1, stopAltitude=500)
-    data1 = traj1.getTrajectory(zenith=70., azimuth=-90)
-    data2 = traj2.getTrajectory(zenith=70., azimuth=90)
+    ax_yz.set_title("Trajectory projected onto y-z plane")
 
-    t1 = data1["t"]
-    t2 = data2["t"]
-    (x1, y1, z1) = spherical_to_cartesian(data1["r"] / EARTH_RADIUS,
-                                       data1["theta"],
-                                       data1["phi"])
+    fig_proj.suptitle(
+        "Particle Trajectory at {:s}, {:s} with Zenith Angle {:.1f}°, \
+           \n Azimuth Angle {:.1f}° and Rigidity R = {:.1f}GV".format(
+            lat_dms, lng_dms, zenith, azimuth, rigidity),
+        fontsize=16)
+    # plt.show()
+    # html doesnt work with latex labels and suptitle, so its deprecated for now
+    # mpld3.save_html(fig_proj,
+    #                 os.path.join(PLOT_DIR, "test_trajectory_proj.html"))
+    plt.savefig(os.path.join(PLOT_DIR, "test_trajectory_proj.png"))
 
-    (x2, y2, z2) = spherical_to_cartesian(data2["r"] / EARTH_RADIUS,
-                                       data2["theta"],
-                                       data2["phi"])
+    # plot the 3-d trajectory with wireframe sphere as the earth
 
-    fig, ax = plt.subplots()
-    ax.scatter(x1, y1, c="k")
-    ax.scatter(x2, y2, c="r")
-    # plt.colorbar()
-    plt.show()
+    # set the figure and axes
+    fig_3d = plt.figure(figsize=(12, 9))
+    ax_3d = fig_3d.add_subplot(111, projection="3d")
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    cm = ax.scatter(x1, y1, z1, c="k", marker='o')
-    cm = ax.scatter(x2, y2, z2, c="r", marker='o')
-    fig.colorbar(cm, ax=ax)
-    # plt.colorbar()
-    # plt.savefig("test.png")
-    plt.show()
+    # set the earth wireframe
+    u, v = np.mgrid[0:2 * np.pi:20j,
+                    0:np.pi:10j]  # x in a:b:xj is number of points in [a,b]
+    x_sphere = np.sin(u) * np.cos(v)
+    y_sphere = np.sin(u) * np.sin(v)
+    z_sphere = np.cos(u)
 
-    # fig2 = go.Figure(data=[go.Scatter3d(x=x,y=y,z=z,mode="markers",
-    #                 marker=dict(size=2.0, color=t, colorscale='Viridis'),
-    #                 line=dict(color='darkblue', width=2))])
+    # plot the sphere
+    ax_3d.plot_wireframe(x_sphere, y_sphere, z_sphere, color="b")
 
-    # fig2.show()
+    # plot the trajectory
+    cm_3d = ax_3d.scatter(x_arr, y_arr, z_arr, c=t_arr, marker='o', s=1.0)
 
+    # labels, colorbars, limits whatnot
+    cbar_3d = fig_3d.colorbar(cm_3d, ax=ax_3d)
+    ax_3d.set_xlim([-2.5, 2.5])
+    ax_3d.set_ylim([-2.5, 2.5])
+    ax_3d.set_zlim([-2.5, 2.5])
+    ax_3d.set_xlabel(r"x [$R_E$]")
+    ax_3d.set_ylabel(r"y [$R_E$]")
+    ax_3d.set_zlabel(r"z [$R_E$]")
+    cbar_3d.ax.set_ylabel("Time [s]")
+    ax_3d.set_title(
+        "Particle Trajectory at {:s}, {:s} with Zenith Angle {:.1f}°, \
+           \n Azimuth Angle {:.1f}° and Rigidity R = {:.1f}GV".format(
+            lat_dms, lng_dms, zenith, azimuth, rigidity))
 
-    ptraj = ParticleTrajectory("p-", 12, startLatitude=0., startLongitude=-60, startAltitude=20, stopAltitude=500)
-    results = ptraj.getTrajectory(zenith=0., azimuth=0.)
+    # mpld3.save_html(fig_3d, os.path.join(PLOT_DIR, "test_trajectory_3d.html"))
+    plt.savefig(os.path.join(PLOT_DIR, "test_trajectory_3d.png"), dpi=800)
+    '''
+    plotly implementation
+    # use plotly for the nice user interface
+    # import plotly.graph_objects as go
+    import plotly.express as px
 
-    t = results["t"]
-    (x,y,z) = spherical_to_cartesian(results["r"] / EARTH_RADIUS, results["theta"], results["phi"])
+    df = px.data.iris()
+    fig = px.scatter_3d(
+        df,
+        x=x_arr,
+        y=y_arr,
+        z=z_arr,
+        color=t_arr,
+        # size=2.0,
+        opacity=0.7,
+        labels={
+            'x': 'x [$R_E$]',
+            'y': 'y [$R_E$]',
+            'z': 'z [$R_E$]',
+            'color': 'Time [s]'
+        })
 
-    plt.scatter(x,y,c=t)
-    # plt.xlim([-1.5, 1.5])
-    # plt.ylim([-1.5, 1.5])
-    plt.show()
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection="3d")
-    # cm = ax.scatter(x, y, z, c=t, marker='o')
-    # # cm = ax.scatter(x2, y2, z2, c=t, marker='o')
-    # fig.colorbar(cm, ax=ax)
-    # # plt.colorbar()
-    # # plt.savefig("test.png")
-    # plt.show()    
-'''
+    fig.update_layout(
+        margin=dict(l=0, r=0, b=0, t=0),
+        title="Particle Trajectory at {:s}, {:s} with Zenith Angle {:.1f}°, \
+             \n Azimuth Angle {:.1f}° and Rigidity R = {:.1f}GV".format(
+            lat_dms, lng_dms, zenith, azimuth, rigidity),
+        scene=dict(xaxis=dict(
+            nticks=6,
+            range=[-10, 10],
+        ),
+                   yaxis=dict(
+                       nticks=6,
+                       range=[-10, 10],
+                   ),
+                   zaxis=dict(
+                       nticks=6,
+                       range=[-10, 10],
+                   )),
+        coloraxis_colorbar=dict(
+            title="Time [s]",
+            # thicknessmode="pixels",
+            # thickness=50,
+            # lenmode="pixels",
+            # len=400,
+            yanchor="top",
+            y=0.9,
+            xanchor="right",
+            x=0.85,
+            # ticks="outside",
+            # ticksuffix=" bills",
+            # dtick=5
+        ))
+    # fig.show()
+    '''

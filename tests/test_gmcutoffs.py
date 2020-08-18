@@ -24,7 +24,6 @@ def get_gmcutoffs(loc, rigidity_list, iter_num):
         [azimuth, zenith] = np.random.rand(2)
         azimuth *= 360.
         zenith *= 180.
-        #         print(rigidity_analytical)
 
         #         print("Zenith Angle: {0}, Azimuth Angle {1}\n".format(
         #             zenith, azimuth))
@@ -41,8 +40,6 @@ def get_gmcutoffs(loc, rigidity_list, iter_num):
             traj.get_trajectory(max_step=10000)
 
             if traj.particle_escaped == True:
-                #                 print(rigidity_analytical)
-                #                 rigidity_analytical = stormer(loc.latitude, azimuth, zenith)
                 result_arr1.append(
                     (azimuth, zenith, rigidity))  #, rigidity_analytical))
                 break

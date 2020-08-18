@@ -89,35 +89,24 @@ def plot_heatmap(data_arr,
     # and plot contour lines over the imshow plot
     fig, ax = plt.subplots(figsize=(12, 9), constrained_layout=True)
 
-    image = ax.imshow(
-        rigidity_cutoffgrid,
-        extent=[-2.5, 362.5, -2.5, 182.5],
-        #     extent=[0., 360., 0., 180.],
-        #     extent=[-1, 361, -1, 181],
-        origin='upper',
-        cmap="RdBu_r",
-        interpolation="bilinear",
-        aspect="auto",
-        vmin=np.min(rigidity_list),
-        vmax=np.max(rigidity_list),
-        alpha=1.)
+    image = ax.imshow(rigidity_cutoffgrid,
+                      extent=[-2.5, 362.5, -2.5, 182.5],
+                      origin='upper',
+                      cmap="RdBu_r",
+                      interpolation="bilinear",
+                      aspect="auto",
+                      vmin=np.min(rigidity_list),
+                      vmax=np.max(rigidity_list),
+                      alpha=1.)
     ax.axis('image')
 
-    ax.contour(
-        azimuth_grid,
-        zenith_grid,
-        rigidity_cutoffgrid,
-        #  levels=rigidity_list,
-        colors="k",
-        #     cmap="viridis",
-        linewidths=0.5,
-        #     extent=[-5., 365., -5., 185.],
-        #      extent=[0., 360., 0., 180.],
-        #     corner_mask=False,
-        levels=len(rigidity_list),
-        alpha=1.)
-    # divider = make_axes_locatable(ax)
-    # cax = divider.append_axes("right", size="5%", pad=0.1)
+    ax.contour(azimuth_grid,
+               zenith_grid,
+               rigidity_cutoffgrid,
+               colors="k",
+               linewidths=0.5,
+               levels=len(rigidity_list),
+               alpha=1.)
 
     # shrink parameter should change accordingly to
     # figsize (trial and error for now...)
