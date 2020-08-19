@@ -90,7 +90,8 @@ class Trajectory:
                        max_time=10,
                        max_step=None,
                        get_data=False,
-                       use_python=False):
+                       use_python=False,
+                       use_unvectorized=False):
         '''
         Evaluate the trajectory of the particle within Earth's magnetic field
         and determines whether particle has escaped or not.
@@ -113,6 +114,9 @@ class Trajectory:
         use_python : bool, optional
             decides whether to use the python implementation for the TrajectoryTracer class instead of
             that implemented in C++. This is mainly enabled for debugging purposes (default: False)
+        use_unvectorized : bool, optional
+            decides whether to evaluate the Runge Kutta integration in the C++ version in its 
+            unvectorized or vectorized form. This is mainly enabled for debugging purposes (default: False)
 
         Returns
         ---------
@@ -188,64 +192,67 @@ class Trajectory:
 
         # if the version is C++
         else:
+            # traj_tracer = TrajectoryTracer(self.particle.charge,
+            #                                self.particle.mass,
+            #                                self.escape_altitude, dt, max_time,
+            #                                max_step, self.bfield_type)
             traj_tracer = TrajectoryTracer(self.particle.charge,
                                            self.particle.mass,
-                                           self.escape_altitude, dt, max_time,
-                                           max_step, self.bfield_type)
+                                           self.escape_altitude, dt, max_step)
 
             # get the initial values
-        part_t = 0.
-        (part_r, part_theta, part_phi, part_pr, part_ptheta,
-         part_pphi) = tuple(vars(particle_tp).values())
+            part_t = 0.
+            (part_r, part_theta, part_phi, part_pr, part_ptheta,
+             part_pphi) = tuple(vars(self.particle_tp).values())
 
-        initial_values = [
-            part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
-            part_pphi
-        ]
+            initial_values = [
+                part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
+                part_pphi
+            ]
 
-        # print(initial_values)
+            # print(initial_values)
 
-        if get_data:
-            # evaluate the trajectory tracer
-            # get data dictionary of the trajectory
-            trajectory_datadict = traj_tracer.evaluate_and_get_trajectories(
-                initial_values)
+            if get_data:
+                # evaluate the trajectory tracer
+                # get data dictionary of the trajectory
+                trajectory_datadict = traj_tracer.evaluate_and_get_trajectories(
+                    initial_values)
 
-            # print(trajectory_datadict)
+                # print(trajectory_datadict)
 
-            # get the final point of the trajectory
-            # and make it into a trajectory point
-            # not sure if we would use this, but we might...
-            particle_final_sixvector = tuple(
-                trajectory_datadict.pop("final_values"))
+                # get the final point of the trajectory
+                # and make it into a trajectory point
+                # not sure if we would use this, but we might...
+                particle_final_sixvector = tuple(
+                    trajectory_datadict.pop("final_values"))
 
-            particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
+                particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
 
-            # print(particle_finaltp)
+                # print(particle_finaltp)
 
-            # convert all data to numpy arrays for computations etc
-            # this should be done within C++ in future versions
-            for key, arr in list(trajectory_datadict.items()):
-                trajectory_datadict[key] = np.array(arr)
+                # convert all data to numpy arrays for computations etc
+                # this should be done within C++ in future versions
+                for key, arr in list(trajectory_datadict.items()):
+                    trajectory_datadict[key] = np.array(arr)
 
-            # lastly get the boolean of if the particle has escaped or not
-            # in binary format
-            # this helps with the geomagnetic cutoff procedure
-            # alternatively this can be inside the geomagnetic things
-            self.particle_escaped = int(traj_tracer.particle_escaped)
+                # lastly get the boolean of if the particle has escaped or not
+                # in binary format
+                # this helps with the geomagnetic cutoff procedure
+                # alternatively this can be inside the geomagnetic things
+                self.particle_escaped = int(traj_tracer.particle_escaped)
 
-            return trajectory_datadict
+                return trajectory_datadict
 
-        else:
-            # simply evaluate without returning the dictionary
-            traj_tracer.evaluate(initial_values)
-            # lastly get the boolean of if the particle has escaped or not
-            # in binary format
-            # this helps with the geomagnetic cutoff procedure
-            # alternatively this can be inside the geomagnetic things
-            self.particle_escaped = int(traj_tracer.particle_escaped)
+            else:
+                # simply evaluate without returning the dictionary
+                traj_tracer.evaluate(initial_values)
+                # lastly get the boolean of if the particle has escaped or not
+                # in binary format
+                # this helps with the geomagnetic cutoff procedure
+                # alternatively this can be inside the geomagnetic things
+                self.particle_escaped = int(traj_tracer.particle_escaped)
 
-            return None
+                return None
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
