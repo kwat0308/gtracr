@@ -10,6 +10,7 @@ CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(CURRENT_DIR)
 
 # from trajectory_tracer import TrajectoryTracer
+from gtracr.trajectory_tracer import pTrajectoryTracer
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
@@ -91,19 +92,19 @@ class Trajectory:
         # coordinates
         self.particle_tp = self.detector_to_geocentric(detector_tp)
 
-    ''' below is the new pythonic version'''
-
     def get_trajectory(self,
                        dt=1e-5,
                        max_time=1,
                        max_step=None,
-                       get_data=False):
+                       get_data=False,
+                       use_python=False,
+                       use_unvectorized=False):
         '''
         Evaluate the trajectory of the particle within Earth's magnetic field
         and determines whether particle has escaped or not.
         Optionally also returns the information of the trajectory (the duration
         and the six-vector in spherical coordinates) if `get_data == True`.
-        
+
         Parameters
         ----------
 
@@ -112,20 +113,26 @@ class Trajectory:
         max_time : float
             the maximum duration in which the integration would occur in seconds (default: 10)
         max_step : int, optional
-            maximum number of steps to integrate for (default None). If `max_step` is not `None`, 
+            maximum number of steps to integrate for (default None). If `max_step` is not `None`,
             then `max_step` will override the evaluation of maximum number of steps based on `max_time`.
         get_data : bool, optional
             decides whether we want to extract the information (time and six vector)
             for the whole trajectory for e.g. debugging purposes (default: False)
+        use_python : bool, optional
+            decides whether to use the python implementation for the TrajectoryTracer class instead of
+            that implemented in C++. This is mainly enabled for debugging purposes (default: False)
+        use_unvectorized : bool, optional
+            decides whether to evaluate the Runge Kutta integration in the C++ version in its 
+            unvectorized or vectorized form. This is mainly enabled for debugging purposes (default: False)
 
         Returns
         ---------
 
         - trajdata_dict : dict
-            a dictionary that contains the information of the whole trajectory in 
+            a dictionary that contains the information of the whole trajectory in
             spherical coordinates.
             Keys are ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
-            - ONLY RETURNED WHEN `get_data` IS TRUE
+            - only returned when `get_data` is True
         '''
 
         # evaluate max_step only when max_time is given, else use the user-given
@@ -146,7 +153,11 @@ class Trajectory:
         particle_t0 = 0.
         particle_vec0 = self.particle_tp.asarray()
 
-        # print(particle_vec0)
+        # evaluate the trajectory
+        # arrays obtained wil be empty is get_data=False
+        t_arr, trajvec_arr, final_tp = traj_tracer.evaluate(particle_t0,
+                                                            particle_vec0,
+                                                            get_data=get_data)
 
         if get_data:
             # evaluate the trajectory tracer
