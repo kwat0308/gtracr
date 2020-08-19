@@ -1,10 +1,10 @@
 // header file for Magnetic Field
-#ifndef __MAGNETICFIELD_H_
-#define __MAGNETICFIELD_H_
+#ifndef __MAGNETICFIELD_HPP_
+#define __MAGNETICFIELD_HPP_
 
 #include <math.h>
 
-#include "constants.h"
+#include "constants.hpp"
 
 class MagneticField {
  private:
@@ -35,4 +35,4 @@ class MagneticField {
   }
 };
 
-#endif  // __MAGNETICFIELD_H_
+#endif  // __MAGNETICFIELD_HPP_

@@ -1,22 +1,21 @@
 // header file for Runge Kutta Integrator
-#ifndef __UTRAJECTORYTRACER_H_
-#define __UTRAJECTORYTRACER_H_
+#ifndef __UTRAJECTORYTRACER_HPP_
+#define __UTRAJECTORYTRACER_HPP_
 #include <array>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "MagneticField.h"
+#include "MagneticField.hpp"
 
-class uTrajectoryTracer
-{
-private:
-  MagneticField bfield_; // the magnetic field
-  double charge_;        // charge of the particle in coulumbs
-  double mass_;          // mass of the particle in kg
-  double escape_radius_; // radius in which we set for particle to escape
-  double stepsize_;      // step size
-  int max_iter_;         // maximum step size
+class uTrajectoryTracer {
+ private:
+  MagneticField bfield_;  // the magnetic field
+  double charge_;         // charge of the particle in coulumbs
+  double mass_;           // mass of the particle in kg
+  double escape_radius_;  // radius in which we set for particle to escape
+  double stepsize_;       // step size
+  int max_iter_;          // maximum step size
   // binary value to store if particle has escaped or not
   bool particle_escaped_;
 
@@ -29,7 +28,8 @@ private:
     double ptheta;
     double pphi;
   } traj_vector_;
-public:
+
+ public:
   // default constructor
   uTrajectoryTracer();
   // construct using charge and mass of particle
@@ -104,8 +104,8 @@ public:
         trajectory is not known at compile time.
 
   */
-  std::map<std::string, std::vector<double>>
-  evaluate_and_get_trajectory(double &t0, std::array<double, 6> &vec0);
+  std::map<std::string, std::vector<double>> evaluate_and_get_trajectory(
+      double &t0, std::array<double, 6> &vec0);
 
   // velocity in the radial component
   double dr_dt(double pr);
@@ -133,4 +133,4 @@ public:
   //   std::array<double, 7> &rk_step(std::array<double, 7> &vec);
   void perform_rkstep();
 };
-#endif //__UTRAJECTORYTRACER_H_
+#endif  //__UTRAJECTORYTRACER_HPP_
