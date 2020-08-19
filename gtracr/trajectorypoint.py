@@ -1,10 +1,10 @@
 import os, sys
 import numpy as np
 
-# sys.path.append(os.getcwd())
-# sys.path.append(os.path.join(os.getcwd(), "gtracr"))
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(CURRENT_DIR)
 
-from gtracr.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG
+from constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG
 
 # KEY_LIST = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
 
@@ -36,6 +36,12 @@ class TrajectoryPoint:
         self.pr = pr
         self.ptheta = ptheta
         self.pphi = pphi
+
+    # obtain attributes as an array
+    def asarray(self):
+        return np.array(list(vars(self).values()))
+        # return np.array(
+        #     [self.r, self.theta, self.phi, self.pr, self.ptheta, self.pphi])
 
     # get geodesic coordinate equivalents of spherical ones
     def geodesic_coordinate(self):

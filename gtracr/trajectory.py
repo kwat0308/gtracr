@@ -5,13 +5,18 @@ Keeps track of particle trajectory with considerations to cutoffs and E-W effect
 import os, sys
 import numpy as np
 from _gtracr import TrajectoryTracer
+
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(CURRENT_DIR)
+
+# from trajectory_tracer import TrajectoryTracer
 from gtracr.trajectory_tracer import pTrajectoryTracer
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
-from gtracr.constants import *
-from gtracr.trajectorypoint import TrajectoryPoint
-from gtracr.add_particle import particle_dict
+from constants import *
+from trajectorypoint import TrajectoryPoint
+from add_particle import particle_dict
 
 
 class Trajectory:
@@ -72,7 +77,9 @@ class Trajectory:
 
         # self.particle.print()
         self.particle_escaped = 0  # check if trajectory is allowed or not
-        self.bfield_type = bfield_type  # type of bfield to use
+        # type of bfield to use
+        # take only first character for compatibility with char in c++
+        self.bfield_type = bfield_type[0]
 
         # get the 6-vector for the detector location
         detector_tp = TrajectoryPoint()
@@ -87,7 +94,7 @@ class Trajectory:
 
     def get_trajectory(self,
                        dt=1e-5,
-                       max_time=10,
+                       max_time=1,
                        max_step=None,
                        get_data=False,
                        use_python=False,
@@ -128,131 +135,207 @@ class Trajectory:
             - only returned when `get_data` is True
         '''
 
+        # evaluate max_step only when max_time is given, else use the user-given
+        # max step
+        max_step = int(np.ceil(max_time /
+                               dt)) if max_step is None else max_step
+        # print(particle_tp)
+
         # start iteration process
 
-        # if we want to do this in Python
-        if use_python:
-            traj_tracer = pTrajectoryTracer(self.particle.charge,
-                                            self.particle.mass,
-                                            self.escape_altitude, dt, max_time,
-                                            max_step, self.bfield_type)
-            # set initial values
-            particle_t0 = 0.
-            particle_vec0 = np.array(list(vars(self.particle_tp).values()))
+        # initialize trajectory tracer
+        traj_tracer = TrajectoryTracer(self.particle.charge,
+                                       self.particle.mass,
+                                       self.escape_altitude, dt, max_step,
+                                       self.bfield_type)
 
-            # print(particle_vec0)
+        # set initial values
+        particle_t0 = 0.
+        particle_vec0 = self.particle_tp.asarray()
 
-            # evaluate the trajectory
-            # arrays obtained wil be empty is get_data=False
-            t_arr, trajvec_arr, final_tp = traj_tracer.evaluate(
-                particle_t0, particle_vec0, get_data=get_data)
+        # evaluate the trajectory
+        # arrays obtained wil be empty is get_data=False
+        t_arr, trajvec_arr, final_tp = traj_tracer.evaluate(particle_t0,
+                                                            particle_vec0,
+                                                            get_data=get_data)
 
-            # print(trajvec_arr)
+        if get_data:
+            # evaluate the trajectory tracer
+            # get data dictionary of the trajectory
+            trajectory_datadict = traj_tracer.evaluate_and_get_trajectory(
+                particle_t0, particle_vec0)
 
-            # we probably would do something with the final trajectory point
-            # as a check or other purposes here
+            # print(trajectory_datadict)
 
-            # return dictionary of data if get_data is True
-            if get_data:
+            # get the final point of the trajectory
+            # and make it into a trajectory point
+            # not sure if we would use this, but we might...
+            particle_final_sixvector = tuple(
+                trajectory_datadict.pop("final_vector"))
 
-                # trim zeros from the back
-                trimmed_trajvecarr = []
-                t_arr = np.trim_zeros(t_arr, trim="b")
+            particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
 
-                for i, arr in enumerate(trajvec_arr.T):
-                    arr = np.trim_zeros(arr, trim="b")
-                    trimmed_trajvecarr.append(arr)
+            # print(particle_finaltp)
 
-                r_arr, theta_arr, phi_arr, pr_arr, ptheta_arr, pphi_arr = trimmed_trajvecarr
+            # convert all data to numpy arrays for computations etc
+            # this should be done within C++ in future versions
+            for key, arr in list(trajectory_datadict.items()):
+                trajectory_datadict[key] = np.array(arr)
 
-                # np.trim_zeros(r_arr, trim="b")
-                # np.trim_zeros(theta_arr, trim="b")
-                # np.trim_zeros(phi_arr, trim="b")
-                # np.trim_zeros(pr_arr, trim="b")
-                # np.trim_zeros(ptheta_arr, trim="b")
-                # np.trim_zeros(pphi_arr, trim="b")
+            # lastly get the boolean of if the particle has escaped or not
+            # in binary format
+            # this helps with the geomagnetic cutoff procedure
+            # alternatively this can be inside the geomagnetic things
+            self.particle_escaped = int(traj_tracer.particle_escaped)
 
-                trajdata_dict = {
-                    "t": t_arr,
-                    "r": r_arr,
-                    "theta": theta_arr,
-                    "phi": phi_arr,
-                    "pr": pr_arr,
-                    "ptheta": ptheta_arr,
-                    "pphi": pphi_arr
-                }
+            return trajectory_datadict
 
-                # print(trajdata_dict["r"])
-
-                return trajdata_dict
-
-            # if get_data=False then dont return anything
-            else:
-                return None
-
-        # if the version is C++
         else:
-            # traj_tracer = TrajectoryTracer(self.particle.charge,
-            #                                self.particle.mass,
-            #                                self.escape_altitude, dt, max_time,
-            #                                max_step, self.bfield_type)
-            traj_tracer = TrajectoryTracer(self.particle.charge,
-                                           self.particle.mass,
-                                           self.escape_altitude, dt, max_step)
+            # simply evaluate without returning the dictionary
+            traj_tracer.evaluate(particle_t0, particle_vec0)
+            # lastly get the boolean of if the particle has escaped or not
+            # in binary format
+            # this helps with the geomagnetic cutoff procedure
+            # alternatively this can be inside the geomagnetic things
+            self.particle_escaped = int(traj_tracer.particle_escaped)
 
-            # get the initial values
-            part_t = 0.
-            (part_r, part_theta, part_phi, part_pr, part_ptheta,
-             part_pphi) = tuple(vars(self.particle_tp).values())
+            return None
 
-            initial_values = [
-                part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
-                part_pphi
-            ]
+    # print("All done!\n")
 
-            # print(initial_values)
+    # return trajectory_datadict
 
-            if get_data:
-                # evaluate the trajectory tracer
-                # get data dictionary of the trajectory
-                trajectory_datadict = traj_tracer.evaluate_and_get_trajectories(
-                    initial_values)
+    # # evaluate the trajectory
+    # # arrays obtained wil be empty is get_data=False
+    # t_arr, trajvec_arr, final_tp = traj_tracer.evaluate(particle_t0,
+    #                                                     particle_vec0,
+    #                                                     get_data=get_data)
 
-                # print(trajectory_datadict)
+    # # print(trajvec_arr)
 
-                # get the final point of the trajectory
-                # and make it into a trajectory point
-                # not sure if we would use this, but we might...
-                particle_final_sixvector = tuple(
-                    trajectory_datadict.pop("final_values"))
+    # # we probably would do something with the final trajectory point
+    # # as a check or other purposes here
 
-                particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
+    # # return dictionary of data if get_data is True
+    # if get_data:
 
-                # print(particle_finaltp)
+    #     # trim zeros from the back
+    #     trimmed_trajvecarr = []
+    #     t_arr = np.trim_zeros(t_arr, trim="b")
 
-                # convert all data to numpy arrays for computations etc
-                # this should be done within C++ in future versions
-                for key, arr in list(trajectory_datadict.items()):
-                    trajectory_datadict[key] = np.array(arr)
+    #     for i, arr in enumerate(trajvec_arr.T):
+    #         arr = np.trim_zeros(arr, trim="b")
+    #         trimmed_trajvecarr.append(arr)
 
-                # lastly get the boolean of if the particle has escaped or not
-                # in binary format
-                # this helps with the geomagnetic cutoff procedure
-                # alternatively this can be inside the geomagnetic things
-                self.particle_escaped = int(traj_tracer.particle_escaped)
+    #     r_arr, theta_arr, phi_arr, pr_arr, ptheta_arr, pphi_arr = trimmed_trajvecarr
 
-                return trajectory_datadict
+    #     # np.trim_zeros(r_arr, trim="b")
+    #     # np.trim_zeros(theta_arr, trim="b")
+    #     # np.trim_zeros(phi_arr, trim="b")
+    #     # np.trim_zeros(pr_arr, trim="b")
+    #     # np.trim_zeros(ptheta_arr, trim="b")
+    #     # np.trim_zeros(pphi_arr, trim="b")
 
-            else:
-                # simply evaluate without returning the dictionary
-                traj_tracer.evaluate(initial_values)
-                # lastly get the boolean of if the particle has escaped or not
-                # in binary format
-                # this helps with the geomagnetic cutoff procedure
-                # alternatively this can be inside the geomagnetic things
-                self.particle_escaped = int(traj_tracer.particle_escaped)
+    #     trajdata_dict = {
+    #         "t": t_arr,
+    #         "r": r_arr,
+    #         "theta": theta_arr,
+    #         "phi": phi_arr,
+    #         "pr": pr_arr,
+    #         "ptheta": ptheta_arr,
+    #         "pphi": pphi_arr
+    #     }
 
-                return None
+    #     # print(trajdata_dict["r"])
+
+    #     return trajdata_dict
+
+    # # if get_data=False then dont return anything
+    # else:
+    #     return None
+    ''' below is the working C++ version'''
+
+    # evaluates the trajectory using Runge-Kutta methods
+    # def get_trajectory(self, max_step=10000, step_size=1e-5, get_data=False):
+
+    #     # get the 6-vector for the detector location
+    #     detector_tp = TrajectoryPoint()
+    #     detector_tp.set_geodesic_coord(self.latitude, self.longitude,
+    #                                    self.detector_altitude)
+
+    #     # print(detector_tp)
+    #     # get the 6-vector for the particle, initially defined in
+    #     # detector frame, and transform it to geocentric
+    #     # coordinates
+    #     particle_tp = self.detector_to_geocentric(detector_tp)
+
+    #     # print(particle_tp)
+
+    #     # start iteration process
+
+    # initialize the trajectory tracer
+    # traj_tracer = TrajectoryTracer(self.particle.charge,
+    #                                self.particle.mass,
+    #                                self.escape_altitude, step_size,
+    #                                max_step)
+
+    # get the initial values
+    # part_t = 0.
+    # (part_r, part_theta, part_phi, part_pr, part_ptheta,
+    #  part_pphi) = tuple(vars(particle_tp).values())
+
+    # initial_values = [
+    #     part_t, part_r, part_theta, part_phi, part_pr, part_ptheta,
+    #     part_pphi
+    # ]
+
+    # # print(initial_values)
+
+    # if get_data:
+    #     # evaluate the trajectory tracer
+    #     # get data dictionary of the trajectory
+    #     trajectory_datadict = traj_tracer.evaluate_and_get_trajectories(
+    #         initial_values)
+
+    #     # print(trajectory_datadict)
+
+    #     # get the final point of the trajectory
+    #     # and make it into a trajectory point
+    #     # not sure if we would use this, but we might...
+    #     particle_final_sixvector = tuple(
+    #         trajectory_datadict.pop("final_values"))
+
+    #     particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
+
+    #     # print(particle_finaltp)
+
+    #     # convert all data to numpy arrays for computations etc
+    #     # this should be done within C++ in future versions
+    #     for key, arr in list(trajectory_datadict.items()):
+    #         trajectory_datadict[key] = np.array(arr)
+
+    #     # lastly get the boolean of if the particle has escaped or not
+    #     # in binary format
+    #     # this helps with the geomagnetic cutoff procedure
+    #     # alternatively this can be inside the geomagnetic things
+    #     self.particle_escaped = int(traj_tracer.particle_escaped)
+
+    #     return trajectory_datadict
+
+    # else:
+    #     # simply evaluate without returning the dictionary
+    #     traj_tracer.evaluate(initial_values)
+    #     # lastly get the boolean of if the particle has escaped or not
+    #     # in binary format
+    #     # this helps with the geomagnetic cutoff procedure
+    #     # alternatively this can be inside the geomagnetic things
+    #     self.particle_escaped = int(traj_tracer.particle_escaped)
+
+    #     return None
+
+    # print("All done!\n")
+
+    # return trajectory_datadict
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)

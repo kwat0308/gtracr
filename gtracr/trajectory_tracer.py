@@ -15,9 +15,9 @@ from datetime import datetime as dt
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(CURRENT_DIR)
 
-from gtracr.trajectorypoint import TrajectoryPoint
-from gtracr.constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
-from gtracr.magnetic_field import MagneticField, IGRF13
+from trajectorypoint import TrajectoryPoint
+from constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
+from magnetic_field import MagneticField, IGRF13
 from scipy import interpolate
 
 
@@ -49,22 +49,19 @@ class pTrajectoryTracer:
                  mass,
                  escape_radius=10. * EARTH_RADIUS,
                  stepsize=1e-5,
-                 max_time=10,
-                 max_step=None,
+                 max_step=10000,
                  bfield_type="dipole"):
         self.charge = charge * ELEMENTARY_CHARGE  # convert to coulombs
         self.mass = mass * KG_PER_GEVC2  # convert to kg
         self.escape_radius = escape_radius
         self.stepsize = stepsize
-        self.max_time = max_time  # default 10s
-        self.max_step = int(max_time / stepsize) \
-            if max_step is None else max_step  # N = (tf - t0) / h
+        self.max_step = max_step
         self.particle_escaped = False  # check if particle escaped or not
 
         # initialize magnetic field
-        if bfield_type.find("dipole") != -1:
+        if bfield_type.find("d") != -1:
             self.bfield = MagneticField()
-        elif bfield_type.find("igrf") != -1:
+        elif bfield_type.find("i") != -1:
             curr_year = dt.now().year
             nmax = 13  # should be able to vary in future versions
             self.bfield = IGRF13(curr_year, nmax=nmax)
@@ -96,13 +93,13 @@ class pTrajectoryTracer:
         gamma = np.sqrt(1. + (pmag / (self.mass * SPEED_OF_LIGHT))**2.)
         rel_mass = self.mass * gamma
 
-        #
-
         # evaluate B-field
         # bf_r = self.bfield.Br(r, theta, phi)
         # bf_theta = self.bfield.Btheta(r, theta, phi)
         # bf_phi = self.bfield.Bphi(r, theta, phi)
         bf_r, bf_theta, bf_phi = self.bfield.values(r, theta, phi)
+
+        # print(bf_r, bf_theta, bf_phi)
 
         # define the momentum odes first
         # invert charge for back tracking
@@ -137,7 +134,7 @@ class pTrajectoryTracer:
 
         return ode_lrz
 
-    def evaluate(self, t0, vec0, get_data=False):
+    def evaluate(self, t0, vec0):
         '''
         Evaluate the trajectory by performing a 4th order Runge Kutta integration.
         
@@ -147,34 +144,18 @@ class pTrajectoryTracer:
         - t0: the initial time
         - vec0 : the initial six-vector (r0, theta0, phi0, pr0, pphi0, ptheta0)
         - get_data: whether to extract the trajectory arrays as a dictionary or not (default False)
+
+        Returns
+        --------
+        
+        - None
         '''
         # set initial conditions
         t = t0
         vec = vec0
-
-        # print(t, vec)
-        # create empty arrays
-        # if get_data is false it wont be appended so its fine to do this
-        # without conditional case
-        t_arr = np.zeros(self.max_step)
-        vec_arr = np.zeros((self.max_step, 6))
+        h = self.stepsize  # for more compact writing
         # start the loop
         for i in range(self.max_step):
-
-            # print(vec)
-
-            # append only if get_data is true
-            if get_data:
-                # print(get_data)
-                # print(t, vec)
-                # np.append(t_arr, t)
-                # np.append(vec_arr, vec.reshape((1, 6)), axis=0)
-                # np.append(t_arr, t)
-                # np.append(vec_arr, vec.reshape((1, 6)))
-                t_arr[i] = t
-                vec_arr[i] = vec
-
-            h = self.stepsize  # for more compact writing
             # evaluate k-coefficients
             k1_vec = h * self.ode_lrz(t, vec)
             k2_vec = h * self.ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec))
@@ -200,11 +181,97 @@ class pTrajectoryTracer:
             if r < EARTH_RADIUS:
                 break
 
-        # define the last point as a trajectory point
-        final_tp = TrajectoryPoint(*vec)
+        # return None
+
+    def evaluate_and_get_trajectory(self, t0, vec0):
+        '''
+        Evaluate the trajectory by performing a 4th order Runge Kutta integration and get the corresponding trajectory data, that is, the duration of the trajectory and the six-vector of the trajectory as a numpy array. 
+        
+        Parameters
+        ----------
+
+        - t0: the initial time
+        - vec0 : the initial six-vector (r0, theta0, phi0, pr0, pphi0, ptheta0)
+        - get_data: whether to extract the trajectory arrays as a dictionary or not (default False)
+
+        Returns
+        --------
+        
+        - trajectory_data (dict<str, numpy array>) : 
+            The dictionary that contains the trajectory information as well as the final six-vector of the trajectory. 
+            - keys are ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
+        '''
+        # set initial conditions
+        t = t0
+        vec = vec0
+        h = self.stepsize  # for more compact writing
+        # print(t, vec)
+        t_arr = []
+        # vec_arr = []
+        r_arr = []
+        theta_arr = []
+        phi_arr = []
+        pr_arr = []
+        ptheta_arr = []
+        pphi_arr = []
+        # start the loop
+        for i in range(self.max_step):
+
+            # print(vec)
+
+            # append data
+            t_arr.append(t)
+            r_arr.append(vec[0])
+            theta_arr.append(vec[1])
+            phi_arr.append(vec[2])
+            pr_arr.append(vec[3])
+            ptheta_arr.append(vec[4])
+            pphi_arr.append(vec[5])
+
+            # evaluate k-coefficients
+            k1_vec = h * self.ode_lrz(t, vec)
+            k2_vec = h * self.ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec))
+            k3_vec = h * self.ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec))
+            k4_vec = h * self.ode_lrz(t + h, vec + k3_vec)
+
+            # increment by weighted sum of k-coeffs
+            vec += (1. / 6.) * (k1_vec + (2. * k2_vec) +
+                                (2. * k3_vec) + k4_vec)
+            t += h  # increment time
+
+            # print(vec, t)
+
+            # breaking conditions based on value of r
+            r = vec[0]  # for readability
+            # if particle has reached escape radius or not
+            # then trajectory is allowed
+            if r > EARTH_RADIUS + self.escape_radius:
+                self.particle_escaped = True
+                break
+            # if particle has came back to earth
+            # then trajectory is forbidden
+            if r < EARTH_RADIUS:
+                break
+
+        # redefine the final vector
+        final_vec = vec
+
+        # print(vec_arr)
+        # get each component as array
+        # r_arr, theta_arr, phi_arr, pr_arr, ptheta_arr, pphi_arr = zip(*vec_arr)
+
+        # create the dictionary that contains the trajectory data
+        trajectory_data = {
+            "t": t_arr,
+            "r": r_arr,
+            "theta": theta_arr,
+            "phi": phi_arr,
+            "pr": pr_arr,
+            "ptheta": ptheta_arr,
+            "pphi": pphi_arr,
+            "final_vector": final_vec
+        }
 
         # print(t_arr, vec_arr)
 
-        # return the arrays regardless of the conditions
-        # the upper interface will deal with the cases anyways
-        return np.array(t_arr), np.array(vec_arr), final_tp
+        return trajectory_data
