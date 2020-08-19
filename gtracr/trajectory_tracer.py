@@ -21,9 +21,9 @@ from gtracr.magnetic_field import MagneticField, IGRF13
 from scipy import interpolate
 
 
-class TrajectoryTracer:
+class pTrajectoryTracer:
     '''
-    A class that traces the trajectory of the particle
+    A class that traces the trajectory of the particle. 
     
     Members
     --------
@@ -37,6 +37,12 @@ class TrajectoryTracer:
     - max_step: the maximum number of steps, evaluated from max_time and stepsize
     - particle_escaped: boolean to check if particle has escaped or not
     - bfield: the magnetic field model that will be used
+
+    Note:
+    The "p" in front of pTrajectoryTracer
+    indicates that this is the Python version. Such naming is required since we want to distinguish between
+    the TrajectoryTracer class in Python vs C++, and the Python version is mainly used as a 
+    tester for the C++ version.
     '''
     def __init__(self,
                  charge,
@@ -60,7 +66,7 @@ class TrajectoryTracer:
             self.bfield = MagneticField()
         elif bfield_type.find("igrf") != -1:
             curr_year = dt.now().year
-            nmax = 13
+            nmax = 13  # should be able to vary in future versions
             self.bfield = IGRF13(curr_year, nmax=nmax)
         else:
             raise Exception("Only modes 'dipole' and 'igrf' are allowed!")
@@ -202,17 +208,3 @@ class TrajectoryTracer:
         # return the arrays regardless of the conditions
         # the upper interface will deal with the cases anyways
         return np.array(t_arr), np.array(vec_arr), final_tp
-
-    # '''
-    # Evaluate the trajectory by performing a 4th order Runge Kutta integration.
-    # Inputs:
-    # - t0: the initial time
-    # - rvec0: the initial position vector (r0, theta0, phi0)
-    # - pvec0: the initial momentum vector (pr0, ptheta0, pphi0)
-
-    # Returns a dictionary that contains the trajectory information
-    # of the 7-vector
-    # '''
-
-    # def evaluate_and_get_trajectories(self, t0, rvec0, pvec0):
-    #     pass

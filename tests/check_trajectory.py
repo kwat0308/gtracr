@@ -81,19 +81,9 @@ if __name__ == "__main__":
     # convert lat, long in decimal notation to dms
     lat_dms, lng_dms = dec_to_dms(lat, lng)
 
-    # figures for the projections and momentum ratio vs steps
-    fig_proj, ax_proj = plt.subplots(
-        ncols=2,
-        nrows=2,
-        figsize=(16, 12),
-    )
-    #constrained_layout=True)
-
-    # relabel them for each projection type
-    ax_pmag = ax_proj[0, 0]
-    ax_xy = ax_proj[0, 1]
-    ax_xz = ax_proj[1, 0]
-    ax_yz = ax_proj[1, 1]
+    # figure for momentum vs steps
+    # for physics checking
+    fig_pmag, ax_pmag = plt.subplots(figsize=(12, 9))
 
     # momentum ratio vs steps
     ax_pmag.plot(p_ratio, color="b")
@@ -102,6 +92,19 @@ if __name__ == "__main__":
     ax_pmag.set_xlabel(r"Steps")
     ax_pmag.set_ylabel(r"$p/p_0$")
     ax_pmag.set_title(r"Momentum ratio $p/p_0$ per step")
+
+    # figures for the projections
+    fig_proj, ax_proj = plt.subplots(ncols=2,
+                                     nrows=2,
+                                     figsize=(16, 12),
+                                     constrained_layout=True)
+
+    # relabel them for each projection type
+
+    ax_xy = ax_proj[0, 0]
+    ax_xz = ax_proj[0, 1]
+    ax_yz = ax_proj[1, 0]
+    ax_mag = ax_proj[1, 1]
 
     # projection onto xy plane
     cm_xy = ax_xy.scatter(x_arr, y_arr, c=t_arr)
@@ -154,6 +157,15 @@ if __name__ == "__main__":
     cbar_yz.ax.set_ylabel("Time [s]")
     ax_yz.set_title("Trajectory projected onto y-z plane")
 
+    # magnitude vs time
+    mag_arr = np.sqrt(x_arr**2. + y_arr**2. + z_arr**2.)
+    ax_mag.plot(t_arr, mag_arr)
+    # ax_mag.set_xlim([-3, 3])
+    # ax_mag.set_ylim([-3, 3])
+    ax_mag.set_xlabel("Time [s]")
+    ax_mag.set_ylabel(r"$\| \vec{r} \|$")
+    ax_mag.set_title("Magnitude of location throughout trajectory propagation")
+
     fig_proj.suptitle(
         "Particle Trajectory at {:s}, {:s} with Zenith Angle {:.1f}°, \
            \n Azimuth Angle {:.1f}° and Rigidity R = {:.1f}GV".format(
@@ -199,7 +211,7 @@ if __name__ == "__main__":
             lat_dms, lng_dms, zenith, azimuth, rigidity))
 
     # mpld3.save_html(fig_3d, os.path.join(PLOT_DIR, "test_trajectory_3d.html"))
-    plt.savefig(os.path.join(PLOT_DIR, "test_trajectory_3d.png"), dpi=800)
+    plt.savefig(os.path.join(PLOT_DIR, "test_trajectory_3d.png"))
     '''
     plotly implementation
     # use plotly for the nice user interface
