@@ -4,7 +4,7 @@ Keeps track of particle trajectory with considerations to cutoffs and E-W effect
 
 import os, sys
 import numpy as np
-from _gtracr import TrajectoryTracer
+from _gtracr import TrajectoryTracer, uTrajectoryTracer
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(CURRENT_DIR)
@@ -139,25 +139,36 @@ class Trajectory:
         # max step
         max_step = int(np.ceil(max_time /
                                dt)) if max_step is None else max_step
-        # print(particle_tp)
+
+        # raise issues if both use python and use unvectorized form is True
+        if use_python and use_unvectorized:
+            raise Exception("Unvectorized Python version does not exist!")
 
         # start iteration process
 
         # initialize trajectory tracer
-        traj_tracer = TrajectoryTracer(self.particle.charge,
-                                       self.particle.mass,
-                                       self.escape_altitude, dt, max_step,
-                                       self.bfield_type)
+        if use_python:
+            # the python trajectory tracer version
+            traj_tracer = pTrajectoryTracer(self.particle.charge,
+                                            self.particle.mass,
+                                            self.escape_altitude, dt, max_step,
+                                            self.bfield_type)
+        elif use_unvectorized:
+            # the unvectorized trajectory tracer version
+            traj_tracer = uTrajectoryTracer(self.particle.charge,
+                                            self.particle.mass,
+                                            self.escape_altitude, dt, max_step,
+                                            self.bfield_type)
+        else:
+            # the vectorized trajectory tracer version
+            traj_tracer = TrajectoryTracer(self.particle.charge,
+                                           self.particle.mass,
+                                           self.escape_altitude, dt, max_step,
+                                           self.bfield_type)
 
         # set initial values
         particle_t0 = 0.
         particle_vec0 = self.particle_tp.asarray()
-
-        # evaluate the trajectory
-        # arrays obtained wil be empty is get_data=False
-        t_arr, trajvec_arr, final_tp = traj_tracer.evaluate(particle_t0,
-                                                            particle_vec0,
-                                                            get_data=get_data)
 
         if get_data:
             # evaluate the trajectory tracer

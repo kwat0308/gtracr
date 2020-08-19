@@ -4,6 +4,7 @@
 #include "MagneticField.h"
 #include "Particle.h"         // Particle header file
 #include "TrajectoryTracer.h" // TrajectoryTracer header file
+#include "uTrajectoryTracer.h" // uTrajectoryTracer header file
 #include "pybind11/stl.h"     // for STL container type conversions
 
 namespace py = pybind11;
@@ -33,7 +34,30 @@ PYBIND11_MODULE(_gtracr, M) {
                              &TrajectoryTracer::particle_escaped)
       .def("evaluate", &TrajectoryTracer::evaluate)
       .def("evaluate_and_get_trajectory",
-           &TrajectoryTracer::evaluate_and_get_trajectory);
+           &TrajectoryTracer::evaluate_and_get_trajectory),
+
+  py::class_<uTrajectoryTracer>(M, "uTrajectoryTracer")
+      .def(py::init<>())
+      .def(py::init<const int, const double &, const double &, const double &,
+                    const int, const char>())
+      // .def_property("charge", &uTrajectoryTracer::charge,
+      // &uTrajectoryTracer::set_charge) .def_property("mass",
+      // &uTrajectoryTracer::mass, &uTrajectoryTracer::set_mass)
+      // .def_property("escape_radius", &uTrajectoryTracer::escape_radius,
+      // &uTrajectoryTracer::set_escape_radius) .def_property("step_size",
+      // &uTrajectoryTracer::stepsize, &uTrajectoryTracer::set_stepsize)
+      // .def_property("max_iter", &uTrajectoryTracer::max_iter,
+      // &uTrajectoryTracer::set_max_iter)
+      .def_property_readonly("charge", &uTrajectoryTracer::charge)
+      .def_property_readonly("mass", &uTrajectoryTracer::mass)
+      .def_property_readonly("escape_radius", &uTrajectoryTracer::escape_radius)
+      .def_property_readonly("step_size", &uTrajectoryTracer::stepsize)
+      .def_property_readonly("max_iter", &uTrajectoryTracer::max_iter)
+      .def_property_readonly("particle_escaped",
+                             &uTrajectoryTracer::particle_escaped)
+      .def("evaluate", &uTrajectoryTracer::evaluate)
+      .def("evaluate_and_get_trajectory",
+           &uTrajectoryTracer::evaluate_and_get_trajectory);
 
   // py::class_<Particle>(M, "Particle")
   //     .def(py::init<>())

@@ -31,6 +31,7 @@ ext_module = [
         '_gtracr',
         sources=[
             "gtracr/lib/src/TrajectoryTracer.cc",
+            "gtracr/lib/src/uTrajectoryTracer.cc",
             # "gtracr/lib/wrapper/TrajectoryTracerWrapper.cc",
             # "gtracr/lib/src/Location.cc",
             # "gtracr/lib/wrapper/LocationWrapper.cc",

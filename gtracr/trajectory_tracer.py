@@ -33,7 +33,7 @@ class pTrajectoryTracer:
     - escape_radius: the radius in which the particle effectively escaped (default at 10RE). Defined relative to sea level (at Earth's surface).
     - stepsize: the stepsize of the integrator (default:1e-5)
     - max_time: the maximum time for the trajectory tracing procedure (default=10s)
-    - bfield_type: the type of magnetic field to use for trajectory tracing, either "dipole" or "igrf" (default="dipole")
+    - bfield_type: the type of magnetic field to use for trajectory tracing, either "d" for dipole or "i" for igrf (default="d")
     - max_step: the maximum number of steps, evaluated from max_time and stepsize
     - particle_escaped: boolean to check if particle has escaped or not
     - bfield: the magnetic field model that will be used
@@ -50,7 +50,7 @@ class pTrajectoryTracer:
                  escape_radius=10. * EARTH_RADIUS,
                  stepsize=1e-5,
                  max_step=10000,
-                 bfield_type="dipole"):
+                 bfield_type="d"):
         self.charge = charge * ELEMENTARY_CHARGE  # convert to coulombs
         self.mass = mass * KG_PER_GEVC2  # convert to kg
         self.escape_radius = escape_radius
