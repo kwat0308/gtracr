@@ -18,11 +18,12 @@
 
 // Constructor for TrajectoryTracer
 // default: proton
+
 uTrajectoryTracer::uTrajectoryTracer()
     : bfield_{MagneticField()},
       charge_{1. * constants::ELEMENTARY_CHARGE},
       mass_{0.938 * constants::KG_PER_GEVC2},
-      escape_radius_{10. * constants::RE},
+      escape_radius_{9. * constants::RE},
       stepsize_{1e-5},
       max_iter_{10000},
       particle_escaped_{false} {}
@@ -30,7 +31,7 @@ uTrajectoryTracer::uTrajectoryTracer()
 // Requires the charge and mass of the particle
 uTrajectoryTracer::uTrajectoryTracer(
     const int charge, const double &mass,
-    const double &escape_radius = 10. * constants::RE,
+    const double &escape_radius = 9. * constants::RE,
     const double &stepsize = 1e-5, const int max_iter = 10000,
     const char bfield_type = 'd')
     : charge_{charge * constants::ELEMENTARY_CHARGE},
@@ -64,32 +65,19 @@ None
 
 */
 
-void uTrajectoryTracer::evaluate(double &t0, std::array<double, 6> &vec0) {
+void uTrajectoryTracer::evaluate(double t0, std::array<double, 6> vec0) {
   // std::array<double, 7> traj_vector = vec0;
   // assign initial values from array to trajectory vector structure
   traj_vector_.t = t0;
-  traj_vector_.r = vec0[1];
-  traj_vector_.theta = vec0[2];
-  traj_vector_.phi = vec0[3];
-  traj_vector_.pr = vec0[4];
-  traj_vector_.ptheta = vec0[5];
-  traj_vector_.pphi = vec0[6];
+  traj_vector_.r = vec0[0];
+  traj_vector_.theta = vec0[1];
+  traj_vector_.phi = vec0[2];
+  traj_vector_.pr = vec0[3];
+  traj_vector_.ptheta = vec0[4];
+  traj_vector_.pphi = vec0[5];
 
   // start the integration process
   for (int i = 0; i < max_iter_; ++i) {
-    // append to arrays first
-    // to do this we need to convert spherical to cartesian
-
-    // first rename the variables for readability
-    // these can probably be const but lets leave that for now
-    // double t = traj_vector[0];
-    // double r = traj_vector[1];
-    // double theta = traj_vector[2];
-    // double phi = traj_vector[3];
-    // double pr = traj_vector[4];
-    // double ptheta = traj_vector[5];
-    // double pphi = traj_vector[6];
-
     // evaluate a runge kutta step
     // return the next iteration of values
     // traj_vector = rk_step(traj_vector);
@@ -98,8 +86,6 @@ void uTrajectoryTracer::evaluate(double &t0, std::array<double, 6> &vec0) {
     // this is set based on if particle has "escaped"
     // or if the particle has reached back to earth
     // i.e. an allowed or forbidden trajectory
-
-    // const double &radius = traj_vector[1];
 
     // an allowed trajectory
     if (traj_vector_.r > constants::RE + escape_radius_) {
@@ -142,8 +128,8 @@ Returns
 */
 
 std::map<std::string, std::vector<double>>
-uTrajectoryTracer::evaluate_and_get_trajectory(double &t0,
-                                               std::array<double, 6> &vec0) {
+uTrajectoryTracer::evaluate_and_get_trajectory(double t0,
+                                               std::array<double, 6> vec0) {
   // a container that holds the variables throughout each step
   // variables are given in the order [t, r, theta, phi, pr, ptheta,
   //   pphi]
@@ -151,12 +137,12 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double &t0,
   //   rk_step
   // directly into the for loop
   traj_vector_.t = t0;
-  traj_vector_.r = vec0[1];
-  traj_vector_.theta = vec0[2];
-  traj_vector_.phi = vec0[3];
-  traj_vector_.pr = vec0[4];
-  traj_vector_.ptheta = vec0[5];
-  traj_vector_.pphi = vec0[6];
+  traj_vector_.r = vec0[0];
+  traj_vector_.theta = vec0[1];
+  traj_vector_.phi = vec0[2];
+  traj_vector_.pr = vec0[3];
+  traj_vector_.ptheta = vec0[4];
+  traj_vector_.pphi = vec0[5];
 
   // set up the vectors for the values on trajectory
   // in spherical coordinates
@@ -233,7 +219,7 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double &t0,
       {"t", time_arr},      {"r", r_arr},
       {"theta", theta_arr}, {"phi", phi_arr},
       {"pr", pr_arr},       {"ptheta", ptheta_arr},
-      {"pphi", pphi_arr},   {"final_values", final_values}};
+      {"pphi", pphi_arr},   {"final_vector", final_values}};
 
   return trajectory_data;
 }
@@ -253,8 +239,8 @@ inline double uTrajectoryTracer::dphi_dt(double r, double theta, double pphi) {
 // dvrdt
 inline double uTrajectoryTracer::dpr_dt(double r, double theta, double phi,
                                         double pr, double ptheta, double pphi) {
-  double lorentz_term = (-1. * charge_ * constants::ELEMENTARY_CHARGE) *
-                        (ptheta * bfield_.Bphi(r, theta, phi) -
+  double lorentz_term =
+      (-1. * charge_) * (ptheta * bfield_.Bphi(r, theta, phi) -
                          bfield_.Btheta(r, theta, phi) * pphi);
   double auxiliary_terms = ((ptheta * ptheta) / r) + ((pphi * pphi) / r);
   double dpr_dt = lorentz_term + auxiliary_terms;
@@ -265,9 +251,8 @@ inline double uTrajectoryTracer::dpr_dt(double r, double theta, double phi,
 inline double uTrajectoryTracer::dptheta_dt(double r, double theta, double phi,
                                             double pr, double ptheta,
                                             double pphi) {
-  double lorentz_term =
-      (charge_ * constants::ELEMENTARY_CHARGE) *
-      (bfield_.Bphi(r, theta, phi) * pr - pphi * bfield_.Br(r, theta, phi));
+  double lorentz_term = (charge_) * (bfield_.Bphi(r, theta, phi) * pr -
+                                     pphi * bfield_.Br(r, theta, phi));
   double auxiliary_terms =
       ((pphi * pphi * cos(theta)) / (r * sin(theta))) - ((pr * ptheta) / r);
   double dptheta_dt = lorentz_term + auxiliary_terms;
@@ -278,9 +263,8 @@ inline double uTrajectoryTracer::dptheta_dt(double r, double theta, double phi,
 inline double uTrajectoryTracer::dpphi_dt(double r, double theta, double phi,
                                           double pr, double ptheta,
                                           double pphi) {
-  double lorentz_term =
-      (-1. * charge_ * constants::ELEMENTARY_CHARGE) *
-      (pr * bfield_.Btheta(r, theta, phi) - bfield_.Br(r, theta, phi) * ptheta);
+  double lorentz_term = (-1. * charge_) * (pr * bfield_.Btheta(r, theta, phi) -
+                                           bfield_.Br(r, theta, phi) * ptheta);
   double auxiliary_terms =
       ((pr * pphi) / r) + ((ptheta * pphi * cos(theta)) / (r * sin(theta)));
   double dpphi_dt = lorentz_term - auxiliary_terms;
@@ -307,7 +291,7 @@ void uTrajectoryTracer::perform_rkstep() {
   double pphi = traj_vector_.pphi;
 
   // evaluate relativistic mass here
-  double rel_mass = mass_ * gamma(pr, ptheta, pphi) * constants::KG_PER_GEVC2;
+  double rel_mass = mass_ * gamma(pr, ptheta, pphi);
 
   double r_k1 = stepsize_ * dr_dt(pr);
   double theta_k1 = stepsize_ * dtheta_dt(r, ptheta);

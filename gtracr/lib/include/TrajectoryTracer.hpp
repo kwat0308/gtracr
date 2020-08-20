@@ -52,6 +52,13 @@ class TrajectoryTracer {
   int max_iter() { return max_iter_; }
   // return the boolean if particle has escaped or not
   bool particle_escaped() { return particle_escaped_; }
+
+  /*
+  Mathematical operations to speed up the evaluation process
+  */
+  /*
+
+  */
   /* The ordinary differential equations that describes the motion
   of charge particles in Earth's magnetic field via the Lorentz force
   in spherical coordinates.
@@ -71,6 +78,25 @@ class TrajectoryTracer {
   */
   std::array<double, 6> ode_lrz(const double t,
                                 const std::array<double, 6> &vec);
+
+  /*
+  The differential equation for the momentum in
+  the radial component (dprdt)
+
+  Parameters
+  -----------
+  - r, theta, phi (double):
+        the coordinates at time t
+  - br, btheta, bphi (double):
+        the magnetic field components at time t
+  */
+  inline double dprdt(const double &r, const double &theta, const double &phi,
+                      const double &br, const double &btheta,
+                      const double &bphi);
+
+  /*
+  The lorentz factor
+  */
 
   /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
   algorithm.

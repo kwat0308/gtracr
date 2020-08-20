@@ -8,6 +8,7 @@
 
 #include "TrajectoryTracer.hpp"
 #include "constants.hpp"
+#include "uTrajectoryTracer.hpp"
 
 int main() {
   int max_iter = 10000;  // max number of iterations
@@ -22,7 +23,8 @@ int main() {
       0.                                 // pphi0
   };
 
-  TrajectoryTracer traj_tracer = TrajectoryTracer();
+  // TrajectoryTracer traj_tracer = TrajectoryTracer();
+  uTrajectoryTracer traj_tracer = uTrajectoryTracer();
   // contain everything within a for loop
   // since we imitate whats done in Python but just doing it all in C++
   for (int i = 0; i < max_iter; ++i) {
@@ -33,6 +35,7 @@ int main() {
     // std::map<std::string, std::vector<double> > result_map =
     //     traj_tracer.evaluate_and_get_trajectories(initial_values);
     // here now we just evaluate and dont get the trajectory data
+    // MTR_SCOPE("C++", "traj_tracer.evaluate(t0, vec0)");
     traj_tracer.evaluate(t0, vec0);
   }
 }

@@ -19,6 +19,7 @@ class uTrajectoryTracer {
   // binary value to store if particle has escaped or not
   bool particle_escaped_;
 
+  // container for trajectory data throughout integration
   struct {
     double t;
     double r;
@@ -44,7 +45,7 @@ class uTrajectoryTracer {
   // TrajectoryTracer(const int charge, const double &mass);                 //
   // charge and mass TrajectoryTracer(const int charge, const double &mass,
   // const double &stepsize); // charge, mass, and stepsize Destructor
-  ~uTrajectoryTracer(){};
+  // ~uTrajectoryTracer(){};
   // copy constructor and assignment operator
   // TrajectoryTracer(const TrajectoryTracer &traj_tracer);
   // TrajectoryTracer &operator=(const TrajectoryTracer &traj_tracer);
@@ -78,7 +79,7 @@ class uTrajectoryTracer {
   None
 
   */
-  void evaluate(double &t0, std::array<double, 6> &vec0);
+  void evaluate(double t0, std::array<double, 6> vec0);
 
   /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
   algorithm and return a map that contains the information of the particle
@@ -105,32 +106,32 @@ class uTrajectoryTracer {
 
   */
   std::map<std::string, std::vector<double>> evaluate_and_get_trajectory(
-      double &t0, std::array<double, 6> &vec0);
+      double t0, std::array<double, 6> vec0);
 
   // velocity in the radial component
-  double dr_dt(double pr);
+  inline double dr_dt(double pr);
   // velocity in the polar component
-  double dtheta_dt(double r, double ptheta);
+  inline double dtheta_dt(double r, double ptheta);
   // velocity in the azimuthal component
-  double dphi_dt(double r, double theta, double pphi);
+  inline double dphi_dt(double r, double theta, double pphi);
   // acceleration in r component (time derivative of pr) from Lorentz force
-  double dpr_dt(double r, double theta, double phi, double pr, double ptheta,
-                double pphi);
+  inline double dpr_dt(double r, double theta, double phi, double pr,
+                       double ptheta, double pphi);
   // acceleration in theta component (time derivative of ptheta) from Lorentz
   // force
-  double dptheta_dt(double r, double theta, double phi, double pr,
-                    double ptheta, double pphi);
+  inline double dptheta_dt(double r, double theta, double phi, double pr,
+                           double ptheta, double pphi);
   // acceleration in phi component (time derivative of pphi) from Lorentz
   // force
-  double dpphi_dt(double r, double theta, double phi, double pr, double ptheta,
-                  double pphi);
+  inline double dpphi_dt(double r, double theta, double phi, double pr,
+                         double ptheta, double pphi);
   // the Lorentz factor, computed from spherical components
-  double gamma(double pr, double ptheta, double pphi);
+  inline double gamma(double pr, double ptheta, double pphi);
   // evaluate / perform one step of the Runge-Kutta algorithm
   // takes the 7-vector consisting of the following format:
   // [t, r, theta, phi, pr, ptheta, pphi]
   // and returns the modified 7-vector in that same format
   //   std::array<double, 7> &rk_step(std::array<double, 7> &vec);
   void perform_rkstep();
-};
+};      // end class uTrajectoryTracer
 #endif  //__UTRAJECTORYTRACER_HPP_

@@ -101,14 +101,14 @@ TrajectoryTracer::TrajectoryTracer()
     : bfield_{MagneticField()},
       charge_{1. * constants::ELEMENTARY_CHARGE},
       mass_{0.938 * constants::KG_PER_GEVC2},
-      escape_radius_{10. * constants::RE},
+      escape_radius_{9. * constants::RE},
       stepsize_{1e-5},
       max_iter_{10000},
       particle_escaped_{false} {}
 
 // Requires the charge and mass of the particle
 TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
-                                   const double &escape_radius = 10. *
+                                   const double &escape_radius = 9. *
                                                                  constants::RE,
                                    const double &stepsize = 1e-5,
                                    const int max_iter = 10000,
@@ -232,6 +232,9 @@ void TrajectoryTracer::evaluate(double &t0, std::array<double, 6> &vec0) {
   std::array<double, 6> vec = vec0;
 
   // start the loop
+  // #pragma clang loop unroll(enable)
+  // #pragma clang loop vectorize(enable)
+  // #pragma clang loop interleave(enable)
   for (int i = 0; i < max_iter_; ++i) {
     // evaluate the k-coefficients
 

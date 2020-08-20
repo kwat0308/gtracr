@@ -30,15 +30,12 @@ ext_module = [
     Extension(
         '_gtracr',
         sources=[
-            "gtracr/lib/src/TrajectoryTracer.cc",
-            "gtracr/lib/src/uTrajectoryTracer.cc",
-            # "gtracr/lib/wrapper/TrajectoryTracerWrapper.cc",
+            "gtracr/lib/src/TrajectoryTracer.cpp",
+            "gtracr/lib/src/uTrajectoryTracer.cpp",
             # "gtracr/lib/src/Location.cc",
-            # "gtracr/lib/wrapper/LocationWrapper.cc",
             # "gtracr/lib/src/Particle.cc",
-            # "gtracr/lib/wrapper/ParticleWrapper.cc",
             # "gtracr/lib/src/MagneticField.cc"
-            "gtracr/lib/wrapper.cc"
+            "gtracr/lib/pybind11_wrapper.cpp"
         ],
         #   library_dirs=["gtracr/lib"],
         language='c++',
@@ -48,7 +45,7 @@ ext_module = [
         #     "-Rpass=.*", "-foptimization-record-file=" +
         #     os.path.join(local_path, "opt_reports", "_gtracr.opt.yaml")
         # ]
-    ),
+        extra_compile_args=["-O3"]),
 ]
 
 with open("README.md", "r") as f:
