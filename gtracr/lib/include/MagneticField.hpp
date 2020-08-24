@@ -4,38 +4,50 @@
 
 #include <math.h>
 
+#include <array>
+
 #include "constants.hpp"
 
 class MagneticField {
  private:
   // double* gcoeffs;
   // double* hcoeffs;
-  double g10;  // mean value of the magnetic field at the magnetic
-               //   equator
+  double B0;  // mean value of the magnetic field at the magnetic
+              //   equator
 
  public:
   // Constructor
-  MagneticField() : g10{-29404.8 * (1e-9)} {}
+  MagneticField() : B0{-29404.8 * (1e-9)} {}
   // Destructor
   // ~MagneticField() {delete[] gcoeffs; delete[] hcoeffs;}
   // MagneticField();
-  // the radial component of the Earth's magnetic field
-  inline const double Br(const double &r, const double &theta,
-                         const double &phi) {
-    return 2. * (constants::RE / r) * (constants::RE / r) *
-           (constants::RE / r) * g10 * cos(theta);
+  inline std::array<double, 3> values(const double &r, const double &theta,
+                                      const double &phi) {
+    std::array<double, 3> val;
+    val[0] = 2. * (constants::RE / r) * (constants::RE / r) *
+             (constants::RE / r) * B0 * cos(theta);
+    val[1] = (constants::RE / r) * (constants::RE / r) * (constants::RE / r) *
+             B0 * sin(theta);
+    val[2] = 0.;
+    return val;
   }
-  // the polar component of the Earth's magnetic field
-  inline const double Btheta(const double &r, const double &theta,
-                             const double &phi) {
-    return (constants::RE / r) * (constants::RE / r) * (constants::RE / r) *
-           g10 * sin(theta);
-  }
-  // the azimuthal-component of the Earth's magnetic field
-  inline const double Bphi(const double &r, const double &theta,
-                           const double &phi) {
-    return 0.;
-  }
+  // // the radial component of the Earth's magnetic field
+  // inline const double Br(const double &r, const double &theta,
+  //                        const double &phi) {
+  //   return 2. * (constants::RE / r) * (constants::RE / r) *
+  //          (constants::RE / r) * B0 * cos(theta);
+  // }
+  // // the polar component of the Earth's magnetic field
+  // inline const double Btheta(const double &r, const double &theta,
+  //                            const double &phi) {
+  //   return (constants::RE / r) * (constants::RE / r) * (constants::RE / r) *
+  //          B0 * sin(theta);
+  // }
+  // // the azimuthal-component of the Earth's magnetic field
+  // inline const double Bphi(const double &r, const double &theta,
+  //                          const double &phi) {
+  //   return 0.;
+  // }
 };
 
 #endif  // __MAGNETICFIELD_HPP_

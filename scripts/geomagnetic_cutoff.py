@@ -125,9 +125,9 @@ def plot_heatmap(data_arr,
     # only save plot is save_plot is True
     # otherwise show the plot in a GUI window
     if save_plot:
-        plt.savefig(os.path.join(
-            PLOT_DIR, "{0}_{1}_cutoffplot.png".format(locname, pname)),
-                    dpi=800)
+        plt.savefig(
+            os.path.join(PLOT_DIR,
+                         "{0}_{1}_cutoffplot.png".format(locname, pname)))
     else:
         plt.show()
 

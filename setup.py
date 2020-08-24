@@ -31,10 +31,7 @@ ext_module = [
         '_gtracr',
         sources=[
             "gtracr/lib/src/TrajectoryTracer.cpp",
-            "gtracr/lib/src/uTrajectoryTracer.cpp",
-            # "gtracr/lib/src/Location.cc",
-            # "gtracr/lib/src/Particle.cc",
-            # "gtracr/lib/src/MagneticField.cc"
+            "gtracr/lib/src/uTrajectoryTracer.cpp", "gtracr/lib/src/igrf.cpp",
             "gtracr/lib/pybind11_wrapper.cpp"
         ],
         #   library_dirs=["gtracr/lib"],
@@ -53,7 +50,7 @@ with open("README.md", "r") as f:
 
 setup(
     name='gtracr',
-    version='0.1.0',
+    version='0.4.0',
     description=
     'A GPU-based simulation that tracks cosmic rays from any location on Earth.',
     long_description=long_description,

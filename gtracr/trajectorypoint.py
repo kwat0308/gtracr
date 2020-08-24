@@ -40,8 +40,6 @@ class TrajectoryPoint:
     # obtain attributes as an array
     def asarray(self):
         return np.array(list(vars(self).values()))
-        # return np.array(
-        #     [self.r, self.theta, self.phi, self.pr, self.ptheta, self.pphi])
 
     # get geodesic coordinate equivalents of spherical ones
     def geodesic_coordinate(self):

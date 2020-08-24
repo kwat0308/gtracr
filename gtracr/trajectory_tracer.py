@@ -30,13 +30,14 @@ class pTrajectoryTracer:
 
     - charge: the particle's charge in electrons
     - mass: the particle's mass in GeV
-    - escape_radius: the radius in which the particle effectively escaped (default at 10RE). Defined relative to sea level (at Earth's surface).
+    - escape_radius: the radius in which the particle effectively escaped (default at 10RE). Defined relative to Earth's center.
     - stepsize: the stepsize of the integrator (default:1e-5)
     - max_time: the maximum time for the trajectory tracing procedure (default=10s)
     - bfield_type: the type of magnetic field to use for trajectory tracing, either "d" for dipole or "i" for igrf (default="d")
     - max_step: the maximum number of steps, evaluated from max_time and stepsize
     - particle_escaped: boolean to check if particle has escaped or not
     - bfield: the magnetic field model that will be used
+    - igrf_params : the path to the data directory and the current date used in the IGRF model
 
     Note:
     The "p" in front of pTrajectoryTracer
@@ -50,7 +51,8 @@ class pTrajectoryTracer:
                  escape_radius=10. * EARTH_RADIUS,
                  stepsize=1e-5,
                  max_step=10000,
-                 bfield_type="d"):
+                 bfield_type="d",
+                 igrf_params=None):
         self.charge = charge * ELEMENTARY_CHARGE  # convert to coulombs
         self.mass = mass * KG_PER_GEVC2  # convert to kg
         self.escape_radius = escape_radius
@@ -62,7 +64,7 @@ class pTrajectoryTracer:
         if bfield_type.find("d") != -1:
             self.bfield = MagneticField()
         elif bfield_type.find("i") != -1:
-            curr_year = dt.now().year
+            curr_year = igrf_params[1]  # the current date
             nmax = 13  # should be able to vary in future versions
             self.bfield = IGRF13(curr_year, nmax=nmax)
         else:

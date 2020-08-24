@@ -1,18 +1,9 @@
-// Runge Kutta integrator class
+/*
+Trajectory Tracer class that traces the trajectory of the particle
+by performing a 4th-order Runge Kutta numerical integration algorithm.
+*/
 
 #include "TrajectoryTracer.hpp"
-
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
-
-#include "MagneticField.hpp"
-#include "constants.hpp"
 
 /*
 Operator overloading between std::array
@@ -95,24 +86,119 @@ inline std::array<double, 6> operator*(const double lh_val,
 
 // TrajectoryTracer class
 
-// Constructor for TrajectoryTracer
-// default: proton
+/* Default Constructor for TrajectoryTracer class
+
+  Creates an instance of the TrajectoryTracer, that is, the object that keeps
+  track of a single particle trajectory in Earth's magnetic field.
+
+  The default constructor initializes the object with the default values
+  provided for the members.
+
+  Members
+  --------
+  - bfield_ (MagneticField instance):
+      The MagneticField object that contains the information pertaining the
+      Earth's magnetic field model (default is dipole model).
+  - charge_ (double) :
+      The charge of the particle in units of Coulombs (default 1.602e-19 C, i.e.
+  1e).
+  - mass_ (double) :
+      The (rest) mass of the particle in units of kilograms
+  (default 1.672e-27 kg, i.e. proton mass).
+  - escape_radius_ (double) :
+      The radial distance relative to Earth's center in which the particle is
+      set to have "escaped" Earth, i.e. a valid cosmic ray coming from some
+      astrophysical source. Units are in kilometers (default 10*Earth's radius)
+  - stepsize_ (double) :
+      The stepsize for the integration process (default 1e-5)
+  - max_iter_ (int) :
+      The maximum number of iterations performed for the integration process
+      (default 10000)
+  - particle_escaped_ (bool) :
+      True if particle has effectively "escaped" from Earth (i.e. when the
+      radial component of the trajectory > escape_radius_) (default false).
+
+  Parameters
+  ------------
+  None
+*/
 TrajectoryTracer::TrajectoryTracer()
     : bfield_{MagneticField()},
       charge_{1. * constants::ELEMENTARY_CHARGE},
       mass_{0.938 * constants::KG_PER_GEVC2},
-      escape_radius_{9. * constants::RE},
+      escape_radius_{10. * constants::RE},
       stepsize_{1e-5},
       max_iter_{10000},
       particle_escaped_{false} {}
 
-// Requires the charge and mass of the particle
+/* Constructor for TrajectoryTracer class
+
+Creates an instance of the TrajectoryTracer, that is, the object that keeps
+track of a single particle trajectory in Earth's magnetic field.
+
+This constructor requires 2 parameters, and the rest may be optional.
+
+Class Members
+--------
+- bfield_ (MagneticField instance):
+    The MagneticField object that contains the information pertaining the
+    Earth's magnetic field model (default is dipole model).
+- charge_ (double) :
+    The charge of the particle in units of Coulombs (default 1.602e-19 C, i.e.
+1e).
+- mass_ (double) :
+    The (rest) mass of the particle in units of kilograms
+(default 1.672e-27 kg, i.e. proton mass).
+- escape_radius_ (double) :
+    The radial distance relative to Earth's center in which the particle is
+    set to have "escaped" Earth, i.e. a valid cosmic ray coming from some
+    astrophysical source. Units are in kilometers (default 10*Earth's radius)
+- stepsize_ (double) :
+    The stepsize for the integration process (default 1e-5)
+- max_iter_ (int) :
+    The maximum number of iterations performed for the integration process
+    (default 10000)
+- particle_escaped_ (bool) :
+    True if particle has effectively "escaped" from Earth (i.e. when the
+    radial component of the trajectory > escape_radius_) (default false).
+
+Required Parameters
+-------------------
+- charge (int) :
+      The charge of the particle in units of electrons.
+- mass (double) :
+      The mass of the particle in units of GeV.
+
+Optional Parameters
+-------------------
+- escape_radius (double) :
+      The radius in which the particle has "escaped" relative to
+      Earth's center in units of km (default 10*RE)
+- stepsize (double) :
+      The step size of the integration (default 1e-5)
+- max_iter (int) :
+      The maximum number of iterations performed in the integration process
+      (default 10000)
+- bfield_type (char) :
+      The type of Magnetic Field to evaluate the trajectory with. Only types
+      'd' (for dipole model) or 'i' (IGRF model) are allowed (default 'd').
+- igrf_params (std::pair<std::string, double>) :
+      Parameters required for instantiating the IGRF model. The first entry
+      contains the path of the directory in which the .COF data file is
+      stored (default to the author's path to the directory). The second entry
+      contains the date in which the evaluation of the trajectory is requested
+      in decimal date (default 2020.).
+*/
 TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
-                                   const double &escape_radius = 9. *
-                                                                 constants::RE,
-                                   const double &stepsize = 1e-5,
-                                   const int max_iter = 10000,
-                                   const char bfield_type = 'd')
+                                   const double
+                                       &escape_radius /*= 10. * constants::RE*/,
+                                   const double &stepsize /*= 1e-5*/,
+                                   const int max_iter /* = 10000*/,
+                                   const char bfield_type /*= 'd'*/,
+                                   const std::pair<std::string, double>
+                                       &igrf_params /*=
+      {"/home/keito/devel/gtracr/data",
+      2020.}*/)
     : charge_{charge * constants::ELEMENTARY_CHARGE},
       mass_{mass * constants::KG_PER_GEVC2},
       escape_radius_{escape_radius},
@@ -122,9 +208,13 @@ TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
   switch (bfield_type) {
     case 'd':
       bfield_ = MagneticField();
+      break;
     case 'i':
-      // bfield = IGRF13();
-      bfield_ = MagneticField();
+      // add file name to DATA_DIR (first component in igrf_params)
+      std::string DATA_PATH = igrf_params.first + "/IGRF13.COF";
+      double sdate = igrf_params.second;
+      bfield_ = IGRF(DATA_PATH, sdate);
+      break;
   }
 }
 
@@ -166,10 +256,13 @@ std::array<double, 6> TrajectoryTracer::ode_lrz(
   double rel_mass = mass_ * gamma;
 
   // evaluate B-field
-  double bf_r = bfield_.Br(r, theta, phi);
-  double bf_theta = bfield_.Btheta(r, theta, phi);
-  double bf_phi = bfield_.Bphi(r, theta, phi);
-
+  // double bf_r = bfield_.Br(r, theta, phi);
+  // double bf_theta = bfield_.Btheta(r, theta, phi);
+  // double bf_phi = bfield_.Bphi(r, theta, phi);
+  std::array<double, 3> bf_values = bfield_.values(r, theta, phi);
+  double bf_r = bf_values[0];
+  double bf_theta = bf_values[1];
+  double bf_phi = bf_values[2];
   // std::cout << bf_r << ' ' << bf_theta << ' ' << bf_phi << std::endl;
 
   // get the momentum ODE
@@ -256,7 +349,7 @@ void TrajectoryTracer::evaluate(double &t0, std::array<double, 6> &vec0) {
 
     // breaking condition
     // if particle reaches escape radius
-    if (r > constants::RE + escape_radius_) {
+    if (r > escape_radius_) {
       particle_escaped_ = true;
       break;
     }
@@ -354,7 +447,7 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
 
     // breaking condition
     // if particle reaches escape radius
-    if (r > constants::RE + escape_radius_) {
+    if (r > escape_radius_) {
       particle_escaped_ = true;
       break;
     }

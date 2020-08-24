@@ -1,22 +1,24 @@
-#include <pybind11/pybind11.h>
-// #include <pybind11/numpy.h>
-#include "Location.hpp"  // Location header file
+
 #include "MagneticField.hpp"
-#include "Particle.hpp"           // Particle header file
-#include "TrajectoryTracer.hpp"   // TrajectoryTracer header file
+#include "TrajectoryTracer.hpp"  // TrajectoryTracer header file
+#include "igrf.hpp"              // IGRF model
+#include "pybind11/pybind11.h"
 #include "pybind11/stl.h"         // for STL container type conversions
 #include "uTrajectoryTracer.hpp"  // uTrajectoryTracer header file
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(_gtracr, M) {
-  // matrix class
-  //   M.doc() = "Evaluates the trajectory of a particle with a given mass and
-  //   charge using a 4th-order Runge Kutta algorithm.";
-  py::class_<TrajectoryTracer>(M, "TrajectoryTracer")
+  /*
+  Extension module for gtracr to C++.
+  */
+  // M.def("Extension module for gtracr to C++.");
+  py::class_<TrajectoryTracer>(M, "TrajectoryTracer",
+                               py::module_local())  // TrajectoryTracer class
       .def(py::init<>())
       .def(py::init<const int, const double &, const double &, const double &,
-                    const int, const char>())
+                    const int, const char,
+                    const std::pair<std::string, double> &>())
       .def_property_readonly("charge", &TrajectoryTracer::charge)
       .def_property_readonly("mass", &TrajectoryTracer::mass)
       .def_property_readonly("escape_radius", &TrajectoryTracer::escape_radius)
@@ -28,10 +30,13 @@ PYBIND11_MODULE(_gtracr, M) {
       .def("evaluate_and_get_trajectory",
            &TrajectoryTracer::evaluate_and_get_trajectory),
 
-      py::class_<uTrajectoryTracer>(M, "uTrajectoryTracer")
+      py::class_<uTrajectoryTracer>(
+          M, "uTrajectoryTracer",
+          py::module_local())  // TrajectoryTracer class unvectorized
           .def(py::init<>())
           .def(py::init<const int, const double &, const double &,
-                        const double &, const int, const char>())
+                        const double &, const int, const char,
+                        const std::pair<std::string, double> &>())
           .def_property_readonly("charge", &uTrajectoryTracer::charge)
           .def_property_readonly("mass", &uTrajectoryTracer::mass)
           .def_property_readonly("escape_radius",
@@ -42,7 +47,14 @@ PYBIND11_MODULE(_gtracr, M) {
                                  &uTrajectoryTracer::particle_escaped)
           .def("evaluate", &uTrajectoryTracer::evaluate)
           .def("evaluate_and_get_trajectory",
-               &uTrajectoryTracer::evaluate_and_get_trajectory);
+               &uTrajectoryTracer::evaluate_and_get_trajectory),
+
+      py::class_<IGRF>(M, "IGRF", py::module_local())  // IGRF class
+          .def(py::init<const std::string &, const double>())
+          .def_property_readonly("sdate", &IGRF::sdate)
+          .def_property_readonly("nmax", &IGRF::nmax)
+          .def_property_readonly("cartesian_values", &IGRF::cartesian_values)
+          .def("values", &IGRF::values);
 
   // py::class_<Particle>(M, "Particle")
   //     .def(py::init<>())

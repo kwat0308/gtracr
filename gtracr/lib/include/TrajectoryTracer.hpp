@@ -1,14 +1,52 @@
-// header file for Runge Kutta Integrator
+/*
+Trajectory Tracer class that traces the trajectory of the particle
+by performing a 4th-order Runge Kutta numerical integration algorithm.
+*/
 #ifndef __TRAJECTORYTRACER_HPP_
 #define __TRAJECTORYTRACER_HPP_
+#include <algorithm>
 #include <array>
+#include <cmath>
+#include <functional>
+#include <iostream>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "MagneticField.hpp"
+#include "constants.hpp"
+#include "igrf.hpp"
 
 class TrajectoryTracer {
+  /*
+Trajectory Tracer class that traces the trajectory of the particle
+by performing a 4th-order Runge Kutta numerical integration algorithm.
+
+Class Members
+--------------
+  - bfield_ (MagneticField instance):
+      The MagneticField object that contains the information pertaining the
+      Earth's magnetic field model (default is dipole model).
+  - charge_ (double) :
+      The charge of the particle in units of Coulombs (default 1.602e-19 C, i.e.
+  1e).
+  - mass_ (double) :
+      The (rest) mass of the particle in units of kilograms
+  (default 1.672e-27 kg, i.e. proton mass).
+  - escape_radius_ (double) :
+      The radial distance relative to Earth's center in which the particle is
+      set to have "escaped" Earth, i.e. a valid cosmic ray coming from some
+      astrophysical source. Units are in kilometers (default 10*Earth's radius)
+  - stepsize_ (double) :
+      The stepsize for the integration process (default 1e-5)
+  - max_iter_ (int) :
+      The maximum number of iterations performed for the integration process
+      (default 10000)
+  - particle_escaped_ (bool) :
+      True if particle has effectively "escaped" from Earth (i.e. when the
+      radial component of the trajectory > escape_radius_) (default false).
+*/
  private:
   MagneticField bfield_;  // the magnetic field
   double charge_;         // charge of the particle in coulumbs
@@ -20,45 +58,74 @@ class TrajectoryTracer {
   bool particle_escaped_;
 
  public:
-  // default constructor
-  TrajectoryTracer();
-  // construct using charge and mass of particle
-  // optional parameters:
-  // - escape_radius: radius from center of Earth in which particle has
-  // effectively escaped
-  // - step_size: the step size of the integration
-  // - max_iter: the maximum number of iterations for integration
-  TrajectoryTracer(const int charge, const double &mass,
-                   const double &escape_radius, const double &stepsize,
-                   const int max_iter, const char bfield_type);
-  // TrajectoryTracer(const int charge, const double &mass);                 //
-  // charge and mass TrajectoryTracer(const int charge, const double &mass,
-  // const double &stepsize); // charge, mass, and stepsize Destructor
-  ~TrajectoryTracer(){};
-  // copy constructor and assignment operator
-  // TrajectoryTracer(const TrajectoryTracer &traj_tracer);
-  // TrajectoryTracer &operator=(const TrajectoryTracer &traj_tracer);
+  /* Default Constructor for TrajectoryTracer class
 
-  // return the charge of the particle associated with the Runge-Kutta
-  // integrator
+  Creates an instance of the TrajectoryTracer, that is, the object that keeps
+  track of a single particle trajectory in Earth's magnetic field.
+
+  The default constructor initializes the object with the default values
+  provided for the members.
+
+  Parameters
+  ------------
+  None
+*/
+  TrajectoryTracer();
+  /* Constructor for TrajectoryTracer class
+
+  Creates an instance of the TrajectoryTracer, that is, the object that keeps
+  track of a single particle trajectory in Earth's magnetic field.
+
+  This constructor requires 2 parameters, and the rest may be optional.
+
+  Required Parameters
+  -------------------
+  - charge (int) :
+        The charge of the particle in units of electrons.
+  - mass (double) :
+        The mass of the particle in units of GeV.
+
+  Optional Parameters
+  -------------------
+  - escape_radius (double) :
+        The radius in which the particle has "escaped" relative to
+        Earth's center in units of km (default 10*RE)
+  - stepsize (double) :
+        The step size of the integration (default 1e-5)
+  - max_iter (int) :
+        The maximum number of iterations performed in the integration process
+        (default 10000)
+  - bfield_type (char) :
+        The type of Magnetic Field to evaluate the trajectory with. Only types
+        'd' (for dipole model) or 'i' (IGRF model) are allowed (default 'd').
+  - igrf_params (std::pair<std::string, double>) :
+        Parameters required for instantiating the IGRF model. The first entry
+        contains the path of the directory in which the .COF data file is
+        stored (default to the author's path to the directory). The second entry
+        contains the date in which the evaluation of the trajectory is requested
+        in decimal date (default 2020.).
+ */
+  TrajectoryTracer(const int charge, const double &mass,
+                   const double &escape_radius = 10. * constants::RE,
+                   const double &stepsize = 1e-5, const int max_iter = 10000,
+                   const char bfield_type = 'd',
+                   const std::pair<std::string, double> &igrf_params = {
+                       "/home/keito/devel/gtracr/data", 2020.});
+
+  /* the charge of the particle associated with the Runge-Kutta
+   integrator */
   const double &charge() { return charge_ / constants::ELEMENTARY_CHARGE; }
-  // return the mass of the particle associated with the Runge-Kutta integrator
+  // the mass of the particle associated with the Runge-Kutta integrator
   const double &mass() { return mass_ / constants::KG_PER_GEVC2; }
-  // return the escape radius of the tracer
+  // the escape radius of the tracer
   const double &escape_radius() { return escape_radius_; }
-  // return the step size of the Runge-Kutta integrator
+  // the step size of the Runge-Kutta integrator
   const double &stepsize() { return stepsize_; }
-  // return the maximum number of steps of the integrator
+  // the maximum number of steps of the integrator
   int max_iter() { return max_iter_; }
-  // return the boolean if particle has escaped or not
+  // the boolean if particle has escaped or not
   bool particle_escaped() { return particle_escaped_; }
 
-  /*
-  Mathematical operations to speed up the evaluation process
-  */
-  /*
-
-  */
   /* The ordinary differential equations that describes the motion
   of charge particles in Earth's magnetic field via the Lorentz force
   in spherical coordinates.

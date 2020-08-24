@@ -23,8 +23,8 @@ int main() {
       0.                                 // pphi0
   };
 
-  // TrajectoryTracer traj_tracer = TrajectoryTracer();
-  uTrajectoryTracer traj_tracer = uTrajectoryTracer();
+  TrajectoryTracer traj_tracer = TrajectoryTracer();
+  // uTrajectoryTracer traj_tracer = uTrajectoryTracer();
   // contain everything within a for loop
   // since we imitate whats done in Python but just doing it all in C++
   for (int i = 0; i < max_iter; ++i) {

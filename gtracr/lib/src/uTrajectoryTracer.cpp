@@ -2,38 +2,99 @@
 
 #include "uTrajectoryTracer.hpp"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
-
-#include "MagneticField.hpp"
-#include "constants.hpp"
-
 // TrajectoryTracer class
 
-// Constructor for TrajectoryTracer
-// default: proton
+/* Default Constructor for TrajectoryTracer class
+
+  Creates an instance of the TrajectoryTracer, that is, the object that keeps
+  track of a single particle trajectory in Earth's magnetic field.
+
+  The default constructor initializes the object with the default values
+  provided for the members.
+
+  Members
+  --------
+  - bfield_ (MagneticField instance):
+      The MagneticField object that contains the information pertaining the
+      Earth's magnetic field model (default is dipole model).
+  - charge_ (double) :
+      The charge of the particle in units of Coulombs (default 1.602e-19 C, i.e.
+  1e).
+  - mass_ (double) :
+      The (rest) mass of the particle in units of kilograms
+  (default 1.672e-27 kg, i.e. proton mass).
+  - escape_radius_ (double) :
+      The radial distance relative to Earth's center in which the particle is
+      set to have "escaped" Earth, i.e. a valid cosmic ray coming from some
+      astrophysical source. Units are in kilometers (default 10*Earth's radius)
+  - stepsize_ (double) :
+      The stepsize for the integration process (default 1e-5)
+  - max_iter_ (int) :
+      The maximum number of iterations performed for the integration process
+      (default 10000)
+  - particle_escaped_ (bool) :
+      True if particle has effectively "escaped" from Earth (i.e. when the
+      radial component of the trajectory > escape_radius_) (default false).
+
+  Parameters
+  ------------
+  None
+*/
 
 uTrajectoryTracer::uTrajectoryTracer()
     : bfield_{MagneticField()},
       charge_{1. * constants::ELEMENTARY_CHARGE},
       mass_{0.938 * constants::KG_PER_GEVC2},
-      escape_radius_{9. * constants::RE},
+      escape_radius_{10. * constants::RE},
       stepsize_{1e-5},
       max_iter_{10000},
       particle_escaped_{false} {}
 
-// Requires the charge and mass of the particle
-uTrajectoryTracer::uTrajectoryTracer(
-    const int charge, const double &mass,
-    const double &escape_radius = 9. * constants::RE,
-    const double &stepsize = 1e-5, const int max_iter = 10000,
-    const char bfield_type = 'd')
+/* Constructor for TrajectoryTracer class
+
+Creates an instance of the TrajectoryTracer, that is, the object that keeps
+track of a single particle trajectory in Earth's magnetic field.
+
+This constructor requires 2 parameters, and the rest may be optional.
+
+Required Parameters
+-------------------
+- charge (int) :
+      The charge of the particle in units of electrons.
+- mass (double) :
+      The mass of the particle in units of GeV.
+
+Optional Parameters
+-------------------
+- escape_radius (double) :
+      The radius in which the particle has "escaped" relative to
+      Earth's center in units of km (default 10*RE)
+- stepsize (double) :
+      The step size of the integration (default 1e-5)
+- max_iter (int) :
+      The maximum number of iterations performed in the integration process
+      (default 10000)
+- bfield_type (char) :
+      The type of Magnetic Field to evaluate the trajectory with. Only types
+      'd' (for dipole model) or 'i' (IGRF model) are allowed (default 'd').
+- igrf_params (std::pair<std::string, double>) :
+      Parameters required for instantiating the IGRF model. The first entry
+      contains the path of the directory in which the .COF data file is
+      stored (default to the author's path to the directory). The second entry
+      contains the date in which the evaluation of the trajectory is requested
+      in decimal date (default 2020.).
+*/
+uTrajectoryTracer::uTrajectoryTracer(const int charge, const double &mass,
+                                     const double &
+                                         escape_radius /*= 10. * constants::RE*/
+                                     ,
+                                     const double &stepsize /*= 1e-5*/,
+                                     const int max_iter /*= 10000*/,
+                                     const char bfield_type /*= 'd'*/,
+                                     const std::pair<std::string, double>
+                                         &igrf_params /*=
+        {"/home/keito/devel/gtracr/data/IGRF13.COF",
+        2020.}*/)
     : charge_{charge * constants::ELEMENTARY_CHARGE},
       mass_{mass * constants::KG_PER_GEVC2},
       escape_radius_{escape_radius},
@@ -43,9 +104,13 @@ uTrajectoryTracer::uTrajectoryTracer(
   switch (bfield_type) {
     case 'd':
       bfield_ = MagneticField();
+      break;
     case 'i':
-      // bfield = IGRF13();
-      bfield_ = MagneticField();
+      // add file name to DATA_DIR (first component in igrf_params)
+      std::string DATA_PATH = igrf_params.first + "/IGRF13.COF";
+      double sdate = igrf_params.second;
+      bfield_ = IGRF(DATA_PATH, sdate);
+      break;
   }
 }
 
@@ -66,7 +131,6 @@ None
 */
 
 void uTrajectoryTracer::evaluate(double t0, std::array<double, 6> vec0) {
-  // std::array<double, 7> traj_vector = vec0;
   // assign initial values from array to trajectory vector structure
   traj_vector_.t = t0;
   traj_vector_.r = vec0[0];
@@ -88,7 +152,7 @@ void uTrajectoryTracer::evaluate(double t0, std::array<double, 6> vec0) {
     // i.e. an allowed or forbidden trajectory
 
     // an allowed trajectory
-    if (traj_vector_.r > constants::RE + escape_radius_) {
+    if (traj_vector_.r > escape_radius_) {
       particle_escaped_ = true;
       // std::cout << "Allowed Trajectory!" << std::endl;
       break;
@@ -190,7 +254,7 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double t0,
     // const double &radius = traj_vector[1];
 
     // an allowed trajectory
-    if (traj_vector_.r > constants::RE + escape_radius_) {
+    if (traj_vector_.r > escape_radius_) {
       particle_escaped_ = true;
       // std::cout << "Allowed Trajectory!" << std::endl;
       break;
@@ -203,14 +267,10 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double t0,
     }
   }
 
-  // std::cout << "Total Number of iterations: " << i << std::endl;
-
   // convert the final values of the trajectory into a std::vector
   // to put this into our map
   // dont want the time component, so start from 2nd component of
   // trajectory vector
-  // std::vector<double> final_values(traj_vector.begin() + 1,
-  // traj_vector.end());
   std::vector<double> final_values{traj_vector_.r,      traj_vector_.theta,
                                    traj_vector_.phi,    traj_vector_.pr,
                                    traj_vector_.ptheta, traj_vector_.pphi};
@@ -240,8 +300,8 @@ inline double uTrajectoryTracer::dphi_dt(double r, double theta, double pphi) {
 inline double uTrajectoryTracer::dpr_dt(double r, double theta, double phi,
                                         double pr, double ptheta, double pphi) {
   double lorentz_term =
-      (-1. * charge_) * (ptheta * bfield_.Bphi(r, theta, phi) -
-                         bfield_.Btheta(r, theta, phi) * pphi);
+      (-1. * charge_) * (ptheta * bfield_.values(r, theta, phi)[2] -
+                         bfield_.values(r, theta, phi)[1] * pphi);
   double auxiliary_terms = ((ptheta * ptheta) / r) + ((pphi * pphi) / r);
   double dpr_dt = lorentz_term + auxiliary_terms;
   return dpr_dt;
@@ -251,8 +311,8 @@ inline double uTrajectoryTracer::dpr_dt(double r, double theta, double phi,
 inline double uTrajectoryTracer::dptheta_dt(double r, double theta, double phi,
                                             double pr, double ptheta,
                                             double pphi) {
-  double lorentz_term = (charge_) * (bfield_.Bphi(r, theta, phi) * pr -
-                                     pphi * bfield_.Br(r, theta, phi));
+  double lorentz_term = (charge_) * (bfield_.values(r, theta, phi)[2] * pr -
+                                     pphi * bfield_.values(r, theta, phi)[0]);
   double auxiliary_terms =
       ((pphi * pphi * cos(theta)) / (r * sin(theta))) - ((pr * ptheta) / r);
   double dptheta_dt = lorentz_term + auxiliary_terms;
@@ -263,8 +323,9 @@ inline double uTrajectoryTracer::dptheta_dt(double r, double theta, double phi,
 inline double uTrajectoryTracer::dpphi_dt(double r, double theta, double phi,
                                           double pr, double ptheta,
                                           double pphi) {
-  double lorentz_term = (-1. * charge_) * (pr * bfield_.Btheta(r, theta, phi) -
-                                           bfield_.Br(r, theta, phi) * ptheta);
+  double lorentz_term =
+      (-1. * charge_) * (pr * bfield_.values(r, theta, phi)[1] -
+                         bfield_.values(r, theta, phi)[0] * ptheta);
   double auxiliary_terms =
       ((pr * pphi) / r) + ((ptheta * pphi * cos(theta)) / (r * sin(theta)));
   double dpphi_dt = lorentz_term - auxiliary_terms;
@@ -371,55 +432,3 @@ void uTrajectoryTracer::perform_rkstep() {
 
   // return vec;
 }
-
-/* Element-wise addition between itself and another
-    std::array.
-    Used for compact notations when evaluating the ODE
-
-    Example: vec += vec1 is the same thing as:
-    for (int i=0; i<vec.size(); ++i) {
-      vec[i] = vec[i] + vec1[i];
-    }
-
-  Parameters
-  ------------
-  - lh_vec (std::array<double, 6>) : the array being summed to
-  - rh_vec (std::array<double, 6>) : the array that will sum
-  Returns
-  --------
-  - lh_vec (std::array<double, 6>) : the array being summed to
-*/
-// inline std::array<double, 6> operator+=(std::array<double, 6> lh_vec,
-//                                         std::array<double, 6> rh_vec) {
-//   std::transform(lh_vec.begin(), lh_vec.end(), rh_vec.begin(),
-//   lh_vec.begin(),
-//                  std::plus<double>());
-//   // for (int i = 0; i < 6; ++i) {
-//   //   vec[i] = vec[i] + vec1[i];
-//   // }
-//   return lh_vec;
-// }
-
-// // copy constructor
-// uTrajectoryTracer::TrajectoryTracer(const TrajectoryTracer &traj_tracer)
-//     : bfield_{traj_tracer.bfield_},
-//       charge_{traj_tracer.charge_},
-//       mass_{traj_tracer.mass_},
-//       escape_radius_{traj_tracer.escape_radius_},
-//       stepsize_{traj_tracer.stepsize_},
-//       max_iter_{traj_tracer.max_iter_},
-//       particle_escaped_{false} {}
-
-// // copy assignment operator
-// TrajectoryTracer &TrajectoryTracer::operator=(
-//     const TrajectoryTracer &traj_tracer)
-// {
-//   bfield_ = traj_tracer.bfield_;
-//   charge_ = traj_tracer.charge_;
-//   mass_ = traj_tracer.mass_;
-//   escape_radius_ = traj_tracer.escape_radius_;
-//   stepsize_ = traj_tracer.stepsize_;
-//   max_iter_ = traj_tracer.max_iter_;
-//   particle_escaped_ = false;
-//   return *this;
-// }

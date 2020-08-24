@@ -59,7 +59,9 @@ std::map<std::string, std::vector<double>> convert_trajectory_to_cartesian(
 
   return value_map;
 }  // namespace
-   // std::map<std::string,std::vector<double>>convert_trajectory_to_cartesian(std::map<std::string,std::vector<double>>result_map)
+   //
+// std::map<std::string, std::vector<double>> convert_trajectory_to_cartesian(
+//     std::map<std::string, std::vector<double>> result_map)
 
 void plot_trajectory(
     std::map<std::string, std::vector<double>> trajectory_map) {
@@ -69,7 +71,8 @@ void plot_trajectory(
   std::vector<double> z_arr = trajectory_map["z"];
 
   plt::plot(x_arr, y_arr);
-  plt::save("test.png");
+  // plt::save("test.png");
+  plt::show();
 }
 
 int main() {
@@ -79,23 +82,22 @@ int main() {
   //   for (int i = 0; i < max_iter; ++i) {
   // initialize trajectory tracer
   // use default (proton, stepsize=1e-5, maxsteps=10000)
-  TrajectoryTracer traj_tracer = TrajectoryTracer();
+  TrajectoryTracer traj_tracer =
+      TrajectoryTracer(1, 0.938, 10 * constants::RE, 1e-5, 10000, 'i');
 
   // define initial values
-  std::array<double, 7> initial_values{
-      0.,                                 // t0
-      constants::RE + 100000. + 100000.,  // r0
-      constants::pi / 2.,                 // theta0
-      constants::pi / 2.,                 // phi0
-      1.3784624371202607e-33,             // pr0
-      21. * constants::KG_M_S_PER_GEVC,   // ptheta0
-      0.};                                // pphi0
-  // };
+  double t0 = 0.;
+  std::array<double, 6> vec0{constants::RE + 100000. + 100000.,  // r0
+                             constants::pi / 2.,                 // theta0
+                             constants::pi / 2.,                 // phi0
+                             0.,                                 // pr0
+                             21. * constants::KG_M_S_PER_GEVC,   // ptheta0
+                             0.};                                // pphi0
   // obtain the result as a map (as it is currently)
   std::map<std::string, std::vector<double>> result_map =
-      traj_tracer.evaluate_and_get_trajectories(initial_values);
-  // here now we just evaluate and dont get the trajectory data
-  // traj_tracer.evaluate(initial_values);
+      traj_tracer.evaluate_and_get_trajectory(t0, vec0);
+  // // here now we just evaluate and dont get the trajectory data
+  // // traj_tracer.evaluate(initial_values);
 
   std::map<std::string, std::vector<double>> cartesian_map =
       convert_trajectory_to_cartesian(result_map);

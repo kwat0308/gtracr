@@ -1,13 +1,53 @@
 // header file for Runge Kutta Integrator
 #ifndef __UTRAJECTORYTRACER_HPP_
 #define __UTRAJECTORYTRACER_HPP_
+#include <algorithm>
 #include <array>
+#include <cmath>
+#include <functional>
+#include <iostream>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "MagneticField.hpp"
+#include "constants.hpp"
+#include "igrf.hpp"
 
+/*
+Class that traces / tracks the trajectory of a single particle within
+Earth's magnetic field.
+
+This is different from the similar class TrajectoryTracer in that the
+integration algorithm is performed individually instead of in vector form
+(i.e. evaluates each ODE as its own rather as evaluating the ODE as a vector).
+
+
+Class Members
+--------
+- bfield_ (MagneticField instance):
+    The MagneticField object that contains the information pertaining the
+    Earth's magnetic field model (default is dipole model).
+- charge_ (double) :
+    The charge of the particle in units of Coulombs (default 1.602e-19 C, i.e.
+1e).
+- mass_ (double) :
+    The (rest) mass of the particle in units of kilograms
+(default 1.672e-27 kg, i.e. proton mass).
+- escape_radius_ (double) :
+    The radial distance relative to Earth's center in which the particle is
+    set to have "escaped" Earth, i.e. a valid cosmic ray coming from some
+    astrophysical source. Units are in kilometers (default 10*Earth's radius)
+- stepsize_ (double) :
+    The stepsize for the integration process (default 1e-5)
+- max_iter_ (int) :
+    The maximum number of iterations performed for the integration process
+    (default 10000)
+- particle_escaped_ (bool) :
+    True if particle has effectively "escaped" from Earth (i.e. when the
+    radial component of the trajectory > escape_radius_) (default false).
+*/
 class uTrajectoryTracer {
  private:
   MagneticField bfield_;  // the magnetic field
@@ -30,25 +70,85 @@ class uTrajectoryTracer {
     double pphi;
   } traj_vector_;
 
+  /* velocity in the radial component */
+  inline double dr_dt(double pr);
+  /* velocity in the polar component */
+  inline double dtheta_dt(double r, double ptheta);
+  /* velocity in the azimuthal component */
+  inline double dphi_dt(double r, double theta, double pphi);
+  /* acceleration in r component (time derivative of pr) from Lorentz force */
+  inline double dpr_dt(double r, double theta, double phi, double pr,
+                       double ptheta, double pphi);
+  /* acceleration in theta component (time derivative of ptheta) from Lorentz
+   * force */
+  inline double dptheta_dt(double r, double theta, double phi, double pr,
+                           double ptheta, double pphi);
+  /* acceleration in phi component (time derivative of pphi) from Lorentz
+  force */
+  inline double dpphi_dt(double r, double theta, double phi, double pr,
+                         double ptheta, double pphi);
+  /* the Lorentz factor, computed from spherical components */
+  inline double gamma(double pr, double ptheta, double pphi);
+  /* evaluate / perform one step of the Runge-Kutta algorithm
+   takes the 7-vector consisting of the following format:
+   [t, r, theta, phi, pr, ptheta, pphi]
+   and returns the modified 7-vector in that same format */
+  void perform_rkstep();
+
  public:
-  // default constructor
+  /* Default Constructor for TrajectoryTracer class
+
+  Creates an instance of the TrajectoryTracer, that is, the object that keeps
+  track of a single particle trajectory in Earth's magnetic field.
+
+  The default constructor initializes the object with the default values
+  provided for the members.
+
+  Parameters
+  ------------
+  None
+*/
   uTrajectoryTracer();
-  // construct using charge and mass of particle
-  // optional parameters:
-  // - escape_radius: radius from center of Earth in which particle has
-  // effectively escaped
-  // - step_size: the step size of the integration
-  // - max_iter: the maximum number of iterations for integration
+  /* Constructor for TrajectoryTracer class
+
+  Creates an instance of the TrajectoryTracer, that is, the object that keeps
+  track of a single particle trajectory in Earth's magnetic field.
+
+  This constructor requires 2 parameters, and the rest may be optional.
+
+  Required Parameters
+  -------------------
+  - charge (int) :
+        The charge of the particle in units of electrons.
+  - mass (double) :
+        The mass of the particle in units of GeV.
+
+  Optional Parameters
+  -------------------
+  - escape_radius (double) :
+        The radius in which the particle has "escaped" relative to
+        Earth's center in units of km (default 10*RE)
+  - stepsize (double) :
+        The step size of the integration (default 1e-5)
+  - max_iter (int) :
+        The maximum number of iterations performed in the integration process
+        (default 10000)
+  - bfield_type (char) :
+        The type of Magnetic Field to evaluate the trajectory with. Only types
+        'd' (for dipole model) or 'i' (IGRF model) are allowed (default 'd').
+  - igrf_params (std::pair<std::string, double>) :
+        Parameters required for instantiating the IGRF model. The first entry
+        contains the path of the directory in which the .COF data file is
+        stored (default to the author's path to the directory). The second entry
+        contains the date in which the evaluation of the trajectory is requested
+        in decimal date (default 2020.).
+  */
   uTrajectoryTracer(const int charge, const double &mass,
-                    const double &escape_radius, const double &stepsize,
-                    const int max_iter, const char bfield_type);
-  // TrajectoryTracer(const int charge, const double &mass);                 //
-  // charge and mass TrajectoryTracer(const int charge, const double &mass,
-  // const double &stepsize); // charge, mass, and stepsize Destructor
-  // ~uTrajectoryTracer(){};
-  // copy constructor and assignment operator
-  // TrajectoryTracer(const TrajectoryTracer &traj_tracer);
-  // TrajectoryTracer &operator=(const TrajectoryTracer &traj_tracer);
+                    const double &escape_radius = 10. * constants::RE,
+                    const double &stepsize = 1e-5, const int max_iter = 10000,
+                    const char bfield_type = 'd',
+                    const std::pair<std::string, double> &igrf_params = {
+                        "/home/keito/devel/gtracr/data", 2020.});
 
   // return the charge of the particle associated with the Runge-Kutta
   // integrator
@@ -107,31 +207,5 @@ class uTrajectoryTracer {
   */
   std::map<std::string, std::vector<double>> evaluate_and_get_trajectory(
       double t0, std::array<double, 6> vec0);
-
-  // velocity in the radial component
-  inline double dr_dt(double pr);
-  // velocity in the polar component
-  inline double dtheta_dt(double r, double ptheta);
-  // velocity in the azimuthal component
-  inline double dphi_dt(double r, double theta, double pphi);
-  // acceleration in r component (time derivative of pr) from Lorentz force
-  inline double dpr_dt(double r, double theta, double phi, double pr,
-                       double ptheta, double pphi);
-  // acceleration in theta component (time derivative of ptheta) from Lorentz
-  // force
-  inline double dptheta_dt(double r, double theta, double phi, double pr,
-                           double ptheta, double pphi);
-  // acceleration in phi component (time derivative of pphi) from Lorentz
-  // force
-  inline double dpphi_dt(double r, double theta, double phi, double pr,
-                         double ptheta, double pphi);
-  // the Lorentz factor, computed from spherical components
-  inline double gamma(double pr, double ptheta, double pphi);
-  // evaluate / perform one step of the Runge-Kutta algorithm
-  // takes the 7-vector consisting of the following format:
-  // [t, r, theta, phi, pr, ptheta, pphi]
-  // and returns the modified 7-vector in that same format
-  //   std::array<double, 7> &rk_step(std::array<double, 7> &vec);
-  void perform_rkstep();
 };      // end class uTrajectoryTracer
 #endif  //__UTRAJECTORYTRACER_HPP_
