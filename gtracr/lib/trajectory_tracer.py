@@ -1,3 +1,7 @@
+from scipy import interpolate
+from gtracr.lib.constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
+from gtracr.lib.trajectorypoint import TrajectoryPoint
+from gtracr.lib.magnetic_field.magnetic_field import MagneticField, IGRF13
 '''
 Class that traces the trajectory of the particle
 
@@ -8,23 +12,19 @@ This is directly taken from the C++ version, but vectorized to some extent
 with the aid of numpy arrays
 
 '''
-import os, sys
+import os
+import sys
 import numpy as np
 from datetime import datetime as dt
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(CURRENT_DIR)
 
-from trajectorypoint import TrajectoryPoint
-from constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
-from magnetic_field import MagneticField, IGRF13
-from scipy import interpolate
-
 
 class pTrajectoryTracer:
     '''
     A class that traces the trajectory of the particle. 
-    
+
     Members
     --------
 
@@ -45,6 +45,7 @@ class pTrajectoryTracer:
     the TrajectoryTracer class in Python vs C++, and the Python version is mainly used as a 
     tester for the C++ version.
     '''
+
     def __init__(self,
                  charge,
                  mass,
@@ -75,7 +76,7 @@ class pTrajectoryTracer:
         The system of ordinary differential equations that describe the motion of charged
         particles in Earth's magnetic field via the Lorentz force in spherical coordinates.
         This version differs from the C++ code in that we perform this in a vectorized fashion.
-        
+
         Parameters
         -----------
 
@@ -139,7 +140,7 @@ class pTrajectoryTracer:
     def evaluate(self, t0, vec0):
         '''
         Evaluate the trajectory by performing a 4th order Runge Kutta integration.
-        
+
         Parameters
         ----------
 
@@ -149,7 +150,7 @@ class pTrajectoryTracer:
 
         Returns
         --------
-        
+
         - None
         '''
         # set initial conditions
@@ -188,7 +189,7 @@ class pTrajectoryTracer:
     def evaluate_and_get_trajectory(self, t0, vec0):
         '''
         Evaluate the trajectory by performing a 4th order Runge Kutta integration and get the corresponding trajectory data, that is, the duration of the trajectory and the six-vector of the trajectory as a numpy array. 
-        
+
         Parameters
         ----------
 
@@ -198,7 +199,7 @@ class pTrajectoryTracer:
 
         Returns
         --------
-        
+
         - trajectory_data (dict<str, numpy array>) : 
             The dictionary that contains the trajectory information as well as the final six-vector of the trajectory. 
             - keys are ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]

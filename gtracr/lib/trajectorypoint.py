@@ -1,10 +1,11 @@
-import os, sys
+from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG
+import os
+import sys
 import numpy as np
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(CURRENT_DIR)
 
-from constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG
 
 # KEY_LIST = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]
 
@@ -15,7 +16,7 @@ class TrajectoryPoint:
 
     Members
     -------
-    
+
     - r: the radial component [m] (default: EARTH_RADIUS)
     - theta: the polar component, with 0 defined at the North Pole (default: 0.)
     - phi: the azimuthal component, with 0 defined at the Prime Meridian (domain: [-pi, pi]) (default:0.)
@@ -23,6 +24,7 @@ class TrajectoryPoint:
     - ptheta: the momentum in the polar direction (default: 0 )
     - pphi: the momentum in the azimuthal direction (default: 0 )
     '''
+
     def __init__(self,
                  r=EARTH_RADIUS,
                  theta=0.,
@@ -55,7 +57,8 @@ class TrajectoryPoint:
         self.theta = (
             90. - latitude
         ) * DEG_PER_RAD  # theta defined in [0, pi], theta = 90 at equator
-        self.phi = longitude * DEG_PER_RAD  # phi defined in [-pi, pi], phi = 0 at prime meridian
+        # phi defined in [-pi, pi], phi = 0 at prime meridian
+        self.phi = longitude * DEG_PER_RAD
 
     # get cartesian coordinate equivalents of spherical ones
     def cartesian_coord(self):
@@ -84,17 +87,6 @@ class TrajectoryPoint:
 
     # return cartesian momenta from spherical ones
     def cartesian_momentum(self):
-        # px = self.pr * np.sin(self.theta) * np.cos(
-        #     self.phi) + self.r * self.ptheta * np.cos(self.theta) * np.cos(
-        #         self.phi) - self.r * self.pphi * np.sin(self.theta) * np.sin(
-        #             self.phi)
-        # py = self.pr * np.sin(self.theta) * np.sin(
-        #     self.phi) + self.r * self.ptheta * np.cos(self.theta) * np.sin(
-        #         self.phi) + self.r * self.pphi * np.sin(self.theta) * np.cos(
-        #             self.phi)
-        # pz = self.pr * np.cos(self.theta) - self.r * self.ptheta * np.sin(
-        #     self.theta)
-
         tfmat_sph2car = np.array([[
             [
                 np.sin(self.theta) * np.cos(self.phi),

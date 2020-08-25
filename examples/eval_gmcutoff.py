@@ -1,10 +1,12 @@
+from gtracr.trajectory import Trajectory
 '''
 Obtains the geomagnetic cutoff for each zenith and azimuthal angle
 
 Structure will be much similar to test_trajectory.py
 '''
 
-import sys, os
+import sys
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -18,9 +20,8 @@ CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 sys.path.append(PARENT_DIR)
 
-from gtracr.trajectory import Trajectory
-from gtracr.add_location import location_dict
-from gtracr.add_particle import particle_dict
+# from gtracr.add_location import location_dict
+# from gtracr.add_particle import particle_dict
 
 # path for plots
 PLOT_DIR = os.path.join(PARENT_DIR, "..", "gtracr_plots")
@@ -48,7 +49,7 @@ def plot_heatmap(data_arr,
     ----------
     - data_arr (list of tuples):
         An array that consists of the azimuthal and zenith components of the particle trajectory and its corresponding rigidity cutoff in the following order: (azimuth, zenith, rigidity cutoff)
-    
+
     - rigidity_list (array of floats):
         The list of rigidities in which each Monte Carlo iteration had evaluated the rigidity cutoff for. Required to determine colorbar limits and contour levels.
 
@@ -173,7 +174,7 @@ def plot_scatter(data_arr, locname, pname, save_plot=False):
     if save_plot:
         plt.savefig(os.path.join(
             PLOT_DIR, "{0}_{1}_scatterplot.png".format(locname, pname)),
-                    dpi=800)
+            dpi=800)
     else:
         plt.show()
 
@@ -256,7 +257,7 @@ if __name__ == "__main__":
     # create particle trajectory with desired particle and energy
     rigidity_list = np.arange(5, 55, 5)
     particle_list = [("p+", particle_dict["p+"])
-                     ]  #, ("e-", particle_dict["e-"])]
+                     ]  # , ("e-", particle_dict["e-"])]
     location_list = [("Kamioka", location_dict["Kamioka"])]
 
     iter_num = 10000  # total number of points used for Monte Carlo process

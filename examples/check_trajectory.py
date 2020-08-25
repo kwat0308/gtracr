@@ -1,6 +1,11 @@
-import os, sys
+from gtracr.utils import dec_to_dms
+from gtracr.lib.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
+from gtracr.trajectory import Trajectory
+import os
+import sys
 import numpy as np
-import matplotlib.pyplot as plt, mpld3
+import matplotlib.pyplot as plt
+# import mpld3
 import matplotlib.patches as patches
 from mpl_toolkits import mplot3d
 
@@ -13,10 +18,7 @@ sys.path.append(PARENT_DIR)
 
 PLOT_DIR = os.path.join(PARENT_DIR, "..", "gtracr_plots")
 
-from gtracr.trajectory import Trajectory
 # from gtracr.utils import spherical_to_cartesian
-from gtracr.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
-from gtracr.utils import dec_to_dms
 
 if __name__ == "__main__":
     # set initialization parameters

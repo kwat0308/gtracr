@@ -1,3 +1,6 @@
+from gtracr.utils import dec_to_dms
+from gtracr.lib.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
+from gtracr.trajectory import Trajectory
 '''
 A command-line interface to obtain the trajectory plots,
 both the projections and the 3-D plot.
@@ -5,10 +8,12 @@ both the projections and the 3-D plot.
 This should support some html format with interactive window
 like PlotLy in the future. 
 '''
-import os, sys
+import os
+import sys
 import numpy as np
 import argparse
-import matplotlib.pyplot as plt, mpld3
+import matplotlib.pyplot as plt
+# import mpld3
 import matplotlib.patches as patches
 from mpl_toolkits import mplot3d
 
@@ -17,10 +22,6 @@ PARENT_DIR = os.path.dirname(CURRENT_DIR)
 sys.path.append(PARENT_DIR)
 
 PLOT_DIR = os.path.join(PARENT_DIR, "..", "gtracr_plots")
-
-from gtracr.trajectory import Trajectory
-from gtracr.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
-from gtracr.utils import dec_to_dms
 
 
 def convert_to_cartesian(r_arr, theta_arr, phi_arr):
@@ -33,7 +34,7 @@ def convert_to_cartesian(r_arr, theta_arr, phi_arr):
     return x_arr, y_arr, z_arr
 
 
-def plot_momentum(traj_datadict, show_plot=False):
+def plot_momentum(traj_datadict, p0, show_plot=False):
     # check momentum magnitude vs steps since |p| should be
     # constant throughout the trajectory
     p_arr = np.sqrt(traj_datadict["pr"]**2. + traj_datadict["ptheta"]**2. +
@@ -211,12 +212,12 @@ def get_trajectory():
     # initialize trajectory
     traj = Trajectory(
         "p+",
-        latitude=lat,
-        longitude=lng,
-        detector_altitude=detector_alt,
         zenith_angle=zenith,
         azimuth_angle=azimuth,
         particle_altitude=particle_alt,
+        latitude=lat,
+        longitude=lng,
+        detector_altitude=detector_alt,
         rigidity=rigidity,
     )
 
@@ -236,7 +237,7 @@ def get_trajectory():
 
     # get momentum only if check_pmag is true
     if check_pmag:
-        plot_momentum(traj_datadict, show_plot)
+        plot_momentum(traj_datadict, p0, show_plot)
 
     # plot the trajectory
     plot_trajectory(traj_datadict, title, check_3dtraj, show_plot)

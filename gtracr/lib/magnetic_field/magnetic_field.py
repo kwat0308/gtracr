@@ -1,8 +1,11 @@
+import gtracr.lib.magnetic_field.igrf_utils as iuf
+from gtracr.lib.constants import EARTH_RADIUS, G10
 '''
 Library that controls the equation for the Earth's magnetic field.
 '''
 
-import os, sys
+import os
+import sys
 import os.path as p
 import numpy as np
 # import csv
@@ -14,9 +17,6 @@ from scipy.interpolate import interp1d
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 sys.path.append(PARENT_DIR)
-
-from constants import EARTH_RADIUS, G10
-import igrf_utils as iuf
 
 
 class MagneticField:
@@ -35,6 +35,7 @@ class MagneticField:
     no external currents, i.e. curl(B) = 0
 
     '''
+
     def __init__(self):
         pass
 
@@ -104,6 +105,7 @@ class IGRF13(MagneticField):
                         from the .shc file.
 
     '''
+
     def __init__(self, curr_year, nmax=None):
         # override MagneticField __init__ function
         # not necessary, but for decorative sake
