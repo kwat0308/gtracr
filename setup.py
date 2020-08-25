@@ -90,16 +90,16 @@ setup(
     long_description_content_type="text/markdown",
     license='BSD 3-Clause License',
     url="https://github.com/kwat0308/gtracr",
-    # packages=['gtracr', 'gtracr.scripts', 'gtracr.tests',
-    #           'gtracr.lib', 'gtracr.lib.magnetic_field'],
+    packages=['gtracr', 'gtracr.scripts', 'gtracr.tests',
+              'gtracr.lib', 'gtracr.lib.magnetic_field'],
 
-    packages=find_packages(
-        exclude=exclude_dirs),  # finds dir with __init__.py, excludes tests
+    # packages=find_packages(
+    #     exclude=exclude_dirs),  # finds dir with __init__.py, excludes tests
     incluse_package_data=True,
     ext_modules=[_libgtracr],
     install_requires=[
         'scipy',
-        'numpy' 
+        'numpy'
     ],
     extras_require=extras_require,
     classifiers=[
@@ -109,7 +109,7 @@ setup(
         'Topic :: Scientific/Engineering :: Physics',
         'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',
-        'Development Status :: 1 - Planning', 'Natural Language :: English',
+        'Development Status :: 4 - Beta', 'Natural Language :: English',
         'License :: OSI Approved :: BSD License'
     ],
     python_requires='>=3.0',
