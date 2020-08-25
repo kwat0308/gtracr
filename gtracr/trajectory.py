@@ -2,23 +2,26 @@
 Keeps track of particle trajectory with considerations to cutoffs and E-W effects etc
 '''
 
-import os, sys
+# from add_particle import particle_dict
+from gtracr.misc import get_particledict, get_locationdict
+from gtracr.lib.trajectorypoint import TrajectoryPoint
+from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
+from gtracr.lib.trajectory_tracer import pTrajectoryTracer
+
+import os
+import sys
 import numpy as np
+import pickle
 from datetime import datetime as dt
-from _gtracr import TrajectoryTracer, uTrajectoryTracer
+from _libgtracr import TrajectoryTracer, uTrajectoryTracer
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 sys.path.append(CURRENT_DIR)
 
 # from trajectory_tracer import TrajectoryTracer
-from gtracr.trajectory_tracer import pTrajectoryTracer
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
-
-from constants import *
-from trajectorypoint import TrajectoryPoint
-from add_particle import particle_dict
 
 
 class Trajectory:
@@ -28,7 +31,7 @@ class Trajectory:
     Members
     -------
 
-    - plabel: the label of the particle defined in particle_dict in add_particle.py
+    - plabel: the label of the particle defined in particle_dict
     - latitude: the geographic latitude of the detector, with 0 defined at the equator in degrees
     - longitude: the geographic longitude of the detector, with 0 defined at the Prime Meridian in degrees
     - detector_altitude: the height of the detector from sea level (0=sea level) in km
@@ -40,30 +43,44 @@ class Trajectory:
     - escape_altitude: the altitude in which the particle has "escaped" Earth (default 10 * RE)
     - bfield_type: the type of bfield to evaluate the trajectory with (either 'dipole' or 'igrf', default: dipole)
     '''
+
     def __init__(self,
                  plabel,
-                 latitude,
-                 longitude,
-                 detector_altitude,
                  zenith_angle,
                  azimuth_angle,
                  particle_altitude=100.,
+                 latitude=0.,
+                 longitude=0.,
+                 detector_altitude=0.,
+                 location_name=None,
                  energy=None,
                  rigidity=None,
                  escape_altitude=10. * EARTH_RADIUS,
-                 bfield_type="dipole"):
-        self.particle = particle_dict[plabel]
-        self.latitude = latitude
-        self.longitude = longitude
-        self.detector_altitude = detector_altitude * (1e3)  # convert to meters
+                 bfield_type="dipole",
+                 ):
         self.zenith_angle = zenith_angle
         self.azimuth_angle = azimuth_angle
         self.particle_altitude = particle_altitude * (1e3)  # convert to meters
         self.escape_altitude = escape_altitude
 
+        # define particle from particle_dict
+        particle_dict = get_particledict()
+        self.particle = particle_dict[plabel]
+
+        # only import location dictionary and use those values if location_name is not None
+        if location_name is not None:
+            location_dict = get_locationdict()
+            loc = location_dict[location_name]
+
+            latitude = loc.latitude
+            longitude = loc.longtitude
+            detector_altitude = loc.altitude
+
+        self.latitude = latitude
+        self.longitude = longitude
+        self.detector_altitude = detector_altitude * (1e3)  # convert to meters
         # define rigidity and energy only if they are provided, evaluate for the other member
         # also set momentum in each case
-        # self.particle.print()
         if rigidity is None:
             self.particle.set_from_energy(energy)
             self.rigidity = self.particle.rigidity
@@ -77,7 +94,6 @@ class Trajectory:
             raise Exception(
                 "Provide either energy or rigidity as input, not both!")
 
-        # self.particle.print()
         self.particle_escaped = 0  # check if trajectory is allowed or not
         # type of bfield to use
         # take only first character for compatibility with char in c++
@@ -240,7 +256,7 @@ class Trajectory:
             The six vector of the particle defined as a TrajectoryPoint, evaluated
             based on the location of the detector, the direction in which the particle
             comes from, and the altitude in which a shower occurs.
-        
+
         '''
 
         # transformation process for coordinate
