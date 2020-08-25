@@ -33,4 +33,4 @@ Check out the [documentation](docs) for more details on using the package.
 
 ## Copyright and License
 
-This project is under the BSD 3-Clause License. See <LICENSE> for more details.
+This project is under the BSD 3-Clause License. See [LICENSE](LICENSE) for more details.
