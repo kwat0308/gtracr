@@ -2,4 +2,7 @@
 # plots/**
 .ipynb_checkpoints
 **.pyc
-.vscode/**
+.vscode/
+gtracr.egg-info/
+*.pyd
+*.so

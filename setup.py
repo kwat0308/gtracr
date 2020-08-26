@@ -60,12 +60,16 @@ setup(
     license='BSD 3-Clause License',
     url="https://github.com/kwat0308/gtracr",
     packages=['gtracr', 'gtracr.scripts', 'gtracr.tests',
-              'gtracr.lib', 'gtracr.lib.magnetic_field'],
-    incluse_package_data=True,
+              'gtracr.lib'],
+    # include_package_data=True,
+    package_data={
+        'gtracr': ['data/**'],
+    },
     ext_modules=[_libgtracr],
     install_requires=[
         'scipy',
-        'numpy'
+        'numpy',
+        'datetime'
     ],
     extras_require=extras_require,
     classifiers=[
