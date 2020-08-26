@@ -323,11 +323,9 @@ void TrajectoryTracer::evaluate(double &t0, std::array<double, 6> &vec0) {
   // set the initial conditions
   double t = t0;
   std::array<double, 6> vec = vec0;
+  // TODO: make arrays into references for no copying
 
   // start the loop
-  // #pragma clang loop unroll(enable)
-  // #pragma clang loop vectorize(enable)
-  // #pragma clang loop interleave(enable)
   for (int i = 0; i < max_iter_; ++i) {
     // evaluate the k-coefficients
 
@@ -352,15 +350,19 @@ void TrajectoryTracer::evaluate(double &t0, std::array<double, 6> &vec0) {
     if (r > escape_radius_) {
       particle_escaped_ = true;
       break;
-    }
+    }  // if (r > escape_radius_)
 
     // breaking condition
     // if particle reaches back onto Earth's surface again
     if (r < constants::RE) {
       break;
-    }
-  }
-}
+    }  // if (r < constants::RE)
+  }  // for (int i = 0; i < max_iter_; ++i)
+  // store the final time and six-vector for checking purposes
+  // the last recorded time and six-vector is the final six-vector / time
+  final_time_ = t;
+  final_sixvector_ = vec;
+}  // evaluate
 
 /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
 algorithm and return a map that contains the information of the particle
@@ -450,24 +452,27 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
     if (r > escape_radius_) {
       particle_escaped_ = true;
       break;
-    }
+    } // if (r > escape_radius_)
 
     // breaking condition
     // if particle reaches back onto Earth's surface again
     if (r < constants::RE) {
       break;
-    }
-  }
+    } // if (r < constants::RE)
+    
+  } // for (int i = 0; i < max_iter_; ++i)
 
-  // convert final six-vector from std::array into std::vector
-  std::vector<double> final_vec(vec.cbegin(), vec.cend());
+  // store the final time and six-vector for checking purposes
+  // the last recorded time and six-vector is the final six-vector / time
+  final_time_ = t;
+  final_sixvector_ = vec;
 
   // create map that contains trajectory data
   std::map<std::string, std::vector<double>> trajectory_data = {
       {"t", t_arr},         {"r", r_arr},
       {"theta", theta_arr}, {"phi", phi_arr},
       {"pr", pr_arr},       {"ptheta", ptheta_arr},
-      {"pphi", pphi_arr},   {"final_vector", final_vec}};
+      {"pphi", pphi_arr}};
 
   return trajectory_data;
-}
+} // evaluate_and_get_trajectory

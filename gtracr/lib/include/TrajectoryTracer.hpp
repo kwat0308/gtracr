@@ -57,6 +57,29 @@ Class Members
   // binary value to store if particle has escaped or not
   bool particle_escaped_;
 
+  double final_time_;  // the final time of the trajectory
+  std::array<double, 6> final_sixvector_; // the final six-vector of the trajectory
+
+    /* The ordinary differential equations that describes the motion
+  of charge particles in Earth's magnetic field via the Lorentz force
+  in spherical coordinates.
+
+  Parameters
+  -----------
+  - t (double) :
+      the time
+  - vec (std::array<double, 6>) :
+       the six-vector (r, theta, phi, pr, ptheta, pphi) at time t
+
+  Returns
+  --------
+  - ode_lrz (std::array<double, 6>) :
+       the ordinary differential equation for the six vector based on the
+  Lorentz force equation
+  */
+  std::array<double, 6> ode_lrz(const double t,
+                                const std::array<double, 6> &vec);
+
  public:
   /* Default Constructor for TrajectoryTracer class
 
@@ -125,26 +148,10 @@ Class Members
   int max_iter() { return max_iter_; }
   // the boolean if particle has escaped or not
   bool particle_escaped() { return particle_escaped_; }
-
-  /* The ordinary differential equations that describes the motion
-  of charge particles in Earth's magnetic field via the Lorentz force
-  in spherical coordinates.
-
-  Parameters
-  -----------
-  - t (double) :
-      the time
-  - vec (std::array<double, 6>) :
-       the six-vector (r, theta, phi, pr, ptheta, pphi) at time t
-
-  Returns
-  --------
-  - ode_lrz (std::array<double, 6>) :
-       the ordinary differential equation for the six vector based on the
-  Lorentz force equation
-  */
-  std::array<double, 6> ode_lrz(const double t,
-                                const std::array<double, 6> &vec);
+  // the final time of the trajectory
+  const double &final_time() { return final_time_; }
+  // the final sixvector of the trajectory
+  const std::array<double, 6> &final_sixvector() { return final_sixvector_; }
 
   /*
   The differential equation for the momentum in
@@ -157,9 +164,9 @@ Class Members
   - br, btheta, bphi (double):
         the magnetic field components at time t
   */
-  inline double dprdt(const double &r, const double &theta, const double &phi,
-                      const double &br, const double &btheta,
-                      const double &bphi);
+//   inline double dprdt(const double &r, const double &theta, const double &phi,
+//                       const double &br, const double &btheta,
+//                       const double &bphi);
 
   /*
   The lorentz factor

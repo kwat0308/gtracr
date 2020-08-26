@@ -129,7 +129,6 @@ Returns
 None
 
 */
-
 void uTrajectoryTracer::evaluate(double t0, std::array<double, 6> vec0) {
   // assign initial values from array to trajectory vector structure
   traj_vector_.t = t0;
@@ -164,6 +163,11 @@ void uTrajectoryTracer::evaluate(double t0, std::array<double, 6> vec0) {
       break;
     }
   }
+  // get final time and six-vector
+  final_time_ = traj_vector_.t;
+  final_sixvector_ = {traj_vector_.r, traj_vector_.theta,
+          traj_vector_.phi,    traj_vector_.pr,
+          traj_vector_.ptheta, traj_vector_.pphi};
 }
 
 /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
@@ -221,25 +225,14 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double t0,
   // start the integration process
   for (int i = 0; i < max_iter_; ++i) {
     // append to arrays first
-    // to do this we need to convert spherical to cartesian
 
-    // first rename the variables for readability
-    // these can probably be const but lets leave that for now
-    double t = traj_vector_.t;
-    double r = traj_vector_.r;
-    double theta = traj_vector_.theta;
-    double phi = traj_vector_.phi;
-    double pr = traj_vector_.pr;
-    double ptheta = traj_vector_.ptheta;
-    double pphi = traj_vector_.pphi;
-
-    time_arr.push_back(t);
-    r_arr.push_back(r);
-    theta_arr.push_back(theta);
-    phi_arr.push_back(phi);
-    pr_arr.push_back(pr);
-    ptheta_arr.push_back(ptheta);
-    pphi_arr.push_back(pphi);
+    time_arr.push_back(traj_vector_.t);
+    r_arr.push_back(traj_vector_.r);
+    theta_arr.push_back(traj_vector_.theta);
+    phi_arr.push_back(traj_vector_.phi);
+    pr_arr.push_back(traj_vector_.pr);
+    ptheta_arr.push_back(traj_vector_.ptheta);
+    pphi_arr.push_back(traj_vector_.pphi);
 
     // evaluate a runge kutta step
     // return the next iteration of values
@@ -250,8 +243,6 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double t0,
     // this is set based on if particle has "escaped"
     // or if the particle has reached back to earth
     // i.e. an allowed or forbidden trajectory
-
-    // const double &radius = traj_vector[1];
 
     // an allowed trajectory
     if (traj_vector_.r > escape_radius_) {
@@ -267,19 +258,25 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double t0,
     }
   }
 
+  // get final time and six-vector
+  final_time_ = traj_vector_.t;
+  final_sixvector_ = {traj_vector_.r, traj_vector_.theta,
+          traj_vector_.phi,    traj_vector_.pr,
+          traj_vector_.ptheta, traj_vector_.pphi};
+
   // convert the final values of the trajectory into a std::vector
   // to put this into our map
   // dont want the time component, so start from 2nd component of
   // trajectory vector
-  std::vector<double> final_values{traj_vector_.r,      traj_vector_.theta,
-                                   traj_vector_.phi,    traj_vector_.pr,
-                                   traj_vector_.ptheta, traj_vector_.pphi};
+  // std::vector<double> final_values{traj_vector_.r,      traj_vector_.theta,
+  //                                  traj_vector_.phi,    traj_vector_.pr,
+  //                                  traj_vector_.ptheta, traj_vector_.pphi};
 
   std::map<std::string, std::vector<double>> trajectory_data = {
       {"t", time_arr},      {"r", r_arr},
       {"theta", theta_arr}, {"phi", phi_arr},
       {"pr", pr_arr},       {"ptheta", ptheta_arr},
-      {"pphi", pphi_arr},   {"final_vector", final_values}};
+      {"pphi", pphi_arr}};
 
   return trajectory_data;
 }

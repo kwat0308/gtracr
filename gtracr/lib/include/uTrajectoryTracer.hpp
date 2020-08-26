@@ -59,6 +59,9 @@ class uTrajectoryTracer {
   // binary value to store if particle has escaped or not
   bool particle_escaped_;
 
+  double final_time_;  // the final time of the trajectory
+  std::array<double, 6> final_sixvector_; // the final six-vector of the trajectory
+
   // container for trajectory data throughout integration
   struct {
     double t;
@@ -163,6 +166,10 @@ class uTrajectoryTracer {
   int max_iter() { return max_iter_; }
   // return the boolean if particle has escaped or not
   bool particle_escaped() { return particle_escaped_; }
+  // the final time of the trajectory
+  const double &final_time() { return final_time_; }
+  // the final sixvector of the trajectory
+  const std::array<double, 6> &final_sixvector() { return final_sixvector_; }
 
   /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
   algorithm.

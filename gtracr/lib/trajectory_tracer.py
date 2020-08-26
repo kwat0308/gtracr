@@ -1,7 +1,7 @@
 from scipy import interpolate
 from gtracr.lib.constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
 from gtracr.lib.trajectorypoint import TrajectoryPoint
-from gtracr.lib.magnetic_field.magnetic_field import MagneticField, IGRF13
+from gtracr.lib.magnetic_field import MagneticField, IGRF13
 '''
 Class that traces the trajectory of the particle
 
@@ -70,6 +70,10 @@ class pTrajectoryTracer:
             self.bfield = IGRF13(curr_year, nmax=nmax)
         else:
             raise Exception("Only modes 'dipole' and 'igrf' are allowed!")
+
+        # the final coordinates
+        self.final_time = 0.
+        self.final_sixvector = np.zeros(6)
 
     def ode_lrz(self, t, vec):
         '''
@@ -183,6 +187,10 @@ class pTrajectoryTracer:
             # then trajectory is forbidden
             if r < EARTH_RADIUS:
                 break
+        
+        # set the final time / vector
+        self.final_time = t
+        self.final_sixvector = vec
 
         # return None
 
@@ -256,12 +264,9 @@ class pTrajectoryTracer:
             if r < EARTH_RADIUS:
                 break
 
-        # redefine the final vector
-        final_vec = vec
-
-        # print(vec_arr)
-        # get each component as array
-        # r_arr, theta_arr, phi_arr, pr_arr, ptheta_arr, pphi_arr = zip(*vec_arr)
+        # set the final time / vector
+        self.final_time = t
+        self.final_sixvector = vec
 
         # create the dictionary that contains the trajectory data
         trajectory_data = {
@@ -271,8 +276,7 @@ class pTrajectoryTracer:
             "phi": phi_arr,
             "pr": pr_arr,
             "ptheta": ptheta_arr,
-            "pphi": pphi_arr,
-            "final_vector": final_vec
+            "pphi": pphi_arr
         }
 
         # print(t_arr, vec_arr)

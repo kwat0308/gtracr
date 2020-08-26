@@ -94,16 +94,21 @@ class Trajectory:
             raise Exception(
                 "Provide either energy or rigidity as input, not both!")
 
-        self.particle_escaped = 0  # check if trajectory is allowed or not
+        self.particle_escaped = False  # check if trajectory is allowed or not
         # type of bfield to use
         # take only first character for compatibility with char in c++
         self.bfield_type = bfield_type[0]
 
         # find the path to the data and set current date for igrf bfield
         datapath = os.path.abspath(os.path.join(PARENT_DIR, "data"))
+        # print(datapath)
         curr_year = dt.now(
         ).year  # should be in decimal years with mm/dd implemented in future
         self.igrf_params = (datapath, curr_year)
+
+        # final time and six-vector, used for testing purposes
+        self.final_time = 0.
+        self.final_sixvector = np.zeros(6)
 
         # get the 6-vector for the detector location
         detector_tp = TrajectoryPoint()
@@ -200,18 +205,6 @@ class Trajectory:
             trajectory_datadict = traj_tracer.evaluate_and_get_trajectory(
                 particle_t0, particle_vec0)
 
-            # print(trajectory_datadict)
-
-            # get the final point of the trajectory
-            # and make it into a trajectory point
-            # not sure if we would use this, but we might...
-            particle_final_sixvector = tuple(
-                trajectory_datadict.pop("final_vector"))
-
-            particle_finaltp = TrajectoryPoint(*particle_final_sixvector)
-
-            # print(particle_finaltp)
-
             # convert all data to numpy arrays for computations etc
             # this should be done within C++ in future versions
             for key, arr in list(trajectory_datadict.items()):
@@ -221,7 +214,11 @@ class Trajectory:
             # in binary format
             # this helps with the geomagnetic cutoff procedure
             # alternatively this can be inside the geomagnetic things
-            self.particle_escaped = int(traj_tracer.particle_escaped)
+            self.particle_escaped = traj_tracer.particle_escaped
+
+            # set the final time and six-vector from the evaluator
+            self.final_time = traj_tracer.final_time
+            self.final_sixvector = np.array(traj_tracer.final_sixvector)
 
             return trajectory_datadict
 
@@ -232,7 +229,11 @@ class Trajectory:
             # in binary format
             # this helps with the geomagnetic cutoff procedure
             # alternatively this can be inside the geomagnetic things
-            self.particle_escaped = int(traj_tracer.particle_escaped)
+            self.particle_escaped = traj_tracer.particle_escaped
+
+            # set the final time and six-vector from the evaluator
+            self.final_time = traj_tracer.final_time
+            self.final_sixvector = np.array(traj_tracer.final_sixvector)
 
             return None
 
@@ -267,10 +268,6 @@ class Trajectory:
         if self.zenith_angle > 90.:
             # here we count both altitude and magnitude as a whole
             # for ease of computation
-            # particle_altitude = 0.
-            # particle_magnitude = -(2. * EARTH_RADIUS + self.particle_altitude
-            #                        ) * np.cos(self.zenith_angle * DEG_TO_RAD)
-            # particle_magnitude = (2. * EARTH_RADIUS + self.particle_altitude)
 
             particle_coord = self.get_particle_coord(
                 altitude=0.,
@@ -291,7 +288,6 @@ class Trajectory:
         # transformation for momentum
         # need to convert from natural units to SI units
         detector_momentum = np.zeros(3)
-        # particle_momentum = self.particle.momentum * KG_M_S_PER_GEVC
         particle_momentum = self.get_particle_coord(
             altitude=0., magnitude=self.particle.momentum * KG_M_S_PER_GEVC)
         # print(detector_momentum, particle_momentum)
@@ -325,10 +321,6 @@ class Trajectory:
         # to allow azimuth = 0 to point to the geographic north pole
         # (if we use normal spherical coordinate conversion, azimuth = 0
         #  means pointing west in detector coordinates)
-
-        # xt = magnitude * np.sin(xi) * np.sin(alpha)
-        # yt = magnitude * np.sin(xi) * np.cos(alpha)
-        # zt = magnitude * np.cos(xi) + altitude
 
         # the below coordinate convention for detector coordinates are used
         # to follow the convention used in Honda's 2002 paper, in which

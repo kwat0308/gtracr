@@ -26,6 +26,10 @@ PYBIND11_MODULE(_libgtracr, M) {
       .def_property_readonly("max_iter", &TrajectoryTracer::max_iter)
       .def_property_readonly("particle_escaped",
                              &TrajectoryTracer::particle_escaped)
+     .def_property_readonly("final_time",
+                             &TrajectoryTracer::final_time)
+     .def_property_readonly("final_sixvector",
+                             &TrajectoryTracer::final_sixvector)
       .def("evaluate", &TrajectoryTracer::evaluate)
       .def("evaluate_and_get_trajectory",
            &TrajectoryTracer::evaluate_and_get_trajectory),
@@ -45,6 +49,10 @@ PYBIND11_MODULE(_libgtracr, M) {
           .def_property_readonly("max_iter", &uTrajectoryTracer::max_iter)
           .def_property_readonly("particle_escaped",
                                  &uTrajectoryTracer::particle_escaped)
+          .def_property_readonly("final_time",
+                             &uTrajectoryTracer::final_time)
+          .def_property_readonly("final_sixvector",
+                             &uTrajectoryTracer::final_sixvector)
           .def("evaluate", &uTrajectoryTracer::evaluate)
           .def("evaluate_and_get_trajectory",
                &uTrajectoryTracer::evaluate_and_get_trajectory),

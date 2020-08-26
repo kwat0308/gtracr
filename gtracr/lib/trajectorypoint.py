@@ -111,6 +111,9 @@ class TrajectoryPoint:
             \nMomentum (pr, ptheta, pphi): ({:.5e}, {:.5e}, {:.5e})\n".format(
             *tuple(vars(self).values()))
 
+    def __eq__(self, other):
+        return np.allclose(self.asarray(), other.asarray())
+
     # both position and momentum in Cartesian coordinates
     def cartesian(self):
         return np.concatenate(
