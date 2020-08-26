@@ -1,4 +1,4 @@
-import gtracr.lib.magnetic_field.igrf_utils as iuf
+import gtracr.lib.igrf_utils as iuf
 from gtracr.lib.constants import EARTH_RADIUS, G10
 '''
 Library that controls the equation for the Earth's magnetic field.
