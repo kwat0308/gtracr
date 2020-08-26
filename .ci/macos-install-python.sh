@@ -40,4 +40,5 @@ which python
 python --version
 python -m ensurepip
 python -m pip install setuptools twine wheel numpy
-export CC=clang++
+export CC=clang 
+export CXX=clang++
