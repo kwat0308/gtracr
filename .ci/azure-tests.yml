@@ -14,5 +14,4 @@ steps:
 
 - script: |
     python -m pytest --cov $(project_name) --cov-report html
-  workingDirectory: tests
   displayName: Test with pytest
