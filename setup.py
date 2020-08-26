@@ -5,36 +5,12 @@ import os
 
 from setuptools import setup, Extension, find_packages
 
-# from distutils.ccompiler import CCompiler
-# from distutils.unixccompiler import UnixCCompiler
-# from distutils.msvccompiler import MSVCCompiler
-
-# local_path = os.path.dirname(os.path.abspath(__file__))
-
 local_path = os.path.dirname(os.path.abspath(__file__))
-# change compiler
-# os.environ["CC"] = "clang++"
-
-# os.environ["CC"] = "g++"
-# os.environ["CC"] = "cl"
-
-# turn off warnings raised by Minuit and generated Cython code that need
-# to be fixed in the original code bases of Minuit and Cython
-# compiler_opts = {
-#     CCompiler: {},
-#     UnixCCompiler: {
-#         "extra_compile_args": [
-#             "-std=c++11",
-#             "-O3"
-#         ]
-#     },
-#     MSVCCompiler: {"extra_compile_args": ["/EHsc", "/O2"]},
-# }
 
 # C/C++ extension of gtracr module
 # contains magnetic field and trajactory evaluation as core of the code
 _libgtracr = Extension(
-    '_libgtracr',
+    'gtracr.lib._libgtracr',
     sources=[
         "gtracr/lib/src/TrajectoryTracer.cpp",
         "gtracr/lib/src/uTrajectoryTracer.cpp", "gtracr/lib/src/igrf.cpp",
@@ -43,13 +19,6 @@ _libgtracr = Extension(
     language='c++',
     include_dirs=['gtracr/lib/include']
 )
-# extra_compile_args=[
-#     "-fsave-optimization-record=yaml", "-fdiagnostics-show-hotness",
-#     "-Rpass=.*", "-foptimization-record-file=" +
-#     os.path.join(local_path, "opt_reports", "_gtracr.opt.yaml")
-# ]
-# extra_compile_args=["-O3"]),
-# extra_compile_args=["/O2"]),
 
 
 # This method is adopted from MCEq https://github.com/afedynitch/MCEq
@@ -71,8 +40,8 @@ extras_require = {
     "examples": ["matplotlib", "mpld3"]
 }
 
-exclude_dirs = ["*.tests", "*.tests.*", "tests.*", "tests",
-                "*.data", "*.data.*", "data.*", "data"]
+# exclude_dirs = ["*.tests", "*.tests.*", "tests.*", "tests",
+#                 "*.data", "*.data.*", "data.*", "data"]
 
 
 # open README for the long descreption of the code
@@ -92,9 +61,6 @@ setup(
     url="https://github.com/kwat0308/gtracr",
     packages=['gtracr', 'gtracr.scripts', 'gtracr.tests',
               'gtracr.lib', 'gtracr.lib.magnetic_field'],
-
-    # packages=find_packages(
-    #     exclude=exclude_dirs),  # finds dir with __init__.py, excludes tests
     incluse_package_data=True,
     ext_modules=[_libgtracr],
     install_requires=[
