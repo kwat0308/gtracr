@@ -9,8 +9,8 @@ local_path = os.path.dirname(os.path.abspath(__file__))
 
 # C/C++ extension of gtracr module
 # contains magnetic field and trajactory evaluation as core of the code
-_libgtracr = Extension(
-    'gtracr.lib._libgtracr',
+libgtracr = Extension(
+    'gtracr.lib.libgtracr',
     sources=[
         "gtracr/lib/src/TrajectoryTracer.cpp",
         "gtracr/lib/src/uTrajectoryTracer.cpp", "gtracr/lib/src/igrf.cpp",
@@ -65,7 +65,7 @@ setup(
     package_data={
         'gtracr': ['data/**'],
     },
-    ext_modules=[_libgtracr],
+    ext_modules=[libgtracr],
     install_requires=[
         'scipy',
         'numpy',

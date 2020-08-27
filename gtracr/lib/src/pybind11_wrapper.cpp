@@ -8,7 +8,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(_libgtracr, M) {
+PYBIND11_MODULE(libgtracr, M) {
   /*
   Extension module for gtracr to C++.
   */

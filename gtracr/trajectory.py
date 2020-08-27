@@ -13,7 +13,7 @@ import sys
 import numpy as np
 import pickle
 from datetime import datetime as dt
-from gtracr.lib._libgtracr import TrajectoryTracer, uTrajectoryTracer
+from gtracr.lib.libgtracr import TrajectoryTracer, uTrajectoryTracer
 
 # from trajectory_tracer import TrajectoryTracer
 # sys.path.append(os.getcwd())
