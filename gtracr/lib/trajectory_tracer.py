@@ -17,8 +17,8 @@ import sys
 import numpy as np
 from datetime import datetime as dt
 
-CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(CURRENT_DIR)
+# CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+# sys.path.append(CURRENT_DIR)
 
 
 class pTrajectoryTracer:

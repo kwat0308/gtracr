@@ -4,5 +4,6 @@
 **.pyc
 .vscode/
 gtracr.egg-info/
+build/
 *.pyd
 *.so

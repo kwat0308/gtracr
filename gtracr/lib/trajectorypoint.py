@@ -3,8 +3,8 @@ import os
 import sys
 import numpy as np
 
-CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(CURRENT_DIR)
+# CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+# sys.path.append(CURRENT_DIR)
 
 
 # KEY_LIST = ["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]

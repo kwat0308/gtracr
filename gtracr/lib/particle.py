@@ -3,8 +3,8 @@ import os
 import sys
 import numpy as np
 
-sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), "gtracr"))
+# sys.path.append(os.getcwd())
+# sys.path.append(os.path.join(os.getcwd(), "gtracr"))
 
 # from gtracr.utils import gamma
 

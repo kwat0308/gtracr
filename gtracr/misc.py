@@ -8,9 +8,6 @@ import numpy
 import pickle
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-PARENT_DIR = os.path.dirname(CURRENT_DIR)
-sys.path.append(CURRENT_DIR)
-
 DATA_DIR = os.path.join(CURRENT_DIR, "data")
 
 

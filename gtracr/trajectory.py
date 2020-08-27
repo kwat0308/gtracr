@@ -15,13 +15,11 @@ import pickle
 from datetime import datetime as dt
 from _libgtracr import TrajectoryTracer, uTrajectoryTracer
 
-CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-PARENT_DIR = os.path.dirname(CURRENT_DIR)
-sys.path.append(CURRENT_DIR)
-
 # from trajectory_tracer import TrajectoryTracer
 # sys.path.append(os.getcwd())
 # sys.path.append(os.path.join(os.getcwd(), "gtracr"))
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+DATA_DIR = os.path.join(CURRENT_DIR, "data")
 
 
 class Trajectory:
@@ -100,10 +98,11 @@ class Trajectory:
         self.bfield_type = bfield_type[0]
 
         # find the path to the data and set current date for igrf bfield
-        datapath = os.path.abspath(os.path.join(PARENT_DIR, "data"))
+        datapath = os.path.abspath(os.path.join(CURRENT_DIR, "data"))
         # print(datapath)
         curr_year = dt.now(
         ).year  # should be in decimal years with mm/dd implemented in future
+        # print(curr_year)
         self.igrf_params = (datapath, curr_year)
 
         # final time and six-vector, used for testing purposes

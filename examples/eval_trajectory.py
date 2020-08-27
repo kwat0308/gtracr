@@ -209,6 +209,10 @@ def get_trajectory():
     check_3dtraj = False  # if we want to check the 3d trajectory or not
     show_plot = False  # if we want to show the plot on some GUI or not
 
+    # first create plot directory if it doesnt exist
+    if not os.path.exists(PLOT_DIR):
+        os.mkdir(PLOT_DIR)
+
     # initialize trajectory
     traj = Trajectory(
         "p+",
@@ -219,6 +223,7 @@ def get_trajectory():
         longitude=lng,
         detector_altitude=detector_alt,
         rigidity=rigidity,
+        bfield_type="igrf"
     )
 
     # obtain the trajectory result
@@ -226,7 +231,8 @@ def get_trajectory():
                                         max_time=max_time,
                                         get_data=True,
                                         max_step=max_step,
-                                        use_python=True)
+                                        use_python=False,
+                                        use_unvectorized=False)
 
     # convert lat, long in decimal notation to dms
     lat_dms, lng_dms = dec_to_dms(lat, lng)
