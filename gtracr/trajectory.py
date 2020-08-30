@@ -70,7 +70,7 @@ class Trajectory:
             loc = location_dict[location_name]
 
             latitude = loc.latitude
-            longitude = loc.longtitude
+            longitude = loc.longitude
             detector_altitude = loc.altitude
 
         self.latitude = latitude
