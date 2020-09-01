@@ -19,7 +19,7 @@ from mpl_toolkits import mplot3d
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
-sys.path.append(PARENT_DIR)
+# sys.path.append(PARENT_DIR)
 
 PLOT_DIR = os.path.join(PARENT_DIR, "..", "gtracr_plots")
 
