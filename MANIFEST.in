@@ -1,1 +1,5 @@
-graft gtracr/data/
+recursive-include gtracr *.h  *.c *.hpp *.cpp *.py *.COF *.json *.pkl *.shc
+recursive-include examples *.py *.ipynb *.cpp 
+include *.py
+include README.md
+include LICENSE
