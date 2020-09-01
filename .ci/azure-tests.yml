@@ -13,7 +13,7 @@ steps:
   displayName: Install testing requirements
 
 - script: |
-    python -m pytest --pyargs=gtracr --junitxml=junit/test-results.xml --cov=gtracr --cov-report=html 
+    python -m pytest --pyargs gtracr --junitxml=junit/test-results.xml --cov=gtracr --cov-report=html 
   # I'm selecting a random directory to not trigger relative imports.
   workingDirectory: examples
   displayName: Test with pytest
