@@ -3,3 +3,4 @@ scipy
 datetime
 pytest
 pytest-cov
+tqdm
