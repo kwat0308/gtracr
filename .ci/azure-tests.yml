@@ -13,5 +13,12 @@ steps:
   displayName: Install testing requirements
 
 - script: |
-    python -m pytest --cov $(project_name) --cov-report html
+    python -m pytest tests --cov $(package_name) --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+  workingDirectory: examples
   displayName: Test with pytest
+
+# - task: PublishTestResults@2
+#   inputs:
+#     testResultsFiles: '**/test-*.xml'
+#     testRunTitle: 'Publish test results for Python $(python.version)'
+#   condition: succeededOrFailed()

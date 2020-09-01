@@ -41,7 +41,6 @@ class Trajectory:
     - escape_altitude: the altitude in which the particle has "escaped" Earth (default 10 * RE)
     - bfield_type: the type of bfield to evaluate the trajectory with (either 'dipole' or 'igrf', default: dipole)
     '''
-
     def __init__(self,
                  plabel,
                  zenith_angle,
@@ -55,7 +54,7 @@ class Trajectory:
                  rigidity=None,
                  escape_altitude=10. * EARTH_RADIUS,
                  bfield_type="dipole",
-                 ):
+                 date=dt.now().year):
         self.zenith_angle = zenith_angle
         self.azimuth_angle = azimuth_angle
         self.particle_altitude = particle_altitude * (1e3)  # convert to meters
@@ -71,7 +70,7 @@ class Trajectory:
             loc = location_dict[location_name]
 
             latitude = loc.latitude
-            longitude = loc.longtitude
+            longitude = loc.longitude
             detector_altitude = loc.altitude
 
         self.latitude = latitude
@@ -100,10 +99,10 @@ class Trajectory:
         # find the path to the data and set current date for igrf bfield
         datapath = os.path.abspath(os.path.join(CURRENT_DIR, "data"))
         # print(datapath)
-        curr_year = dt.now(
-        ).year  # should be in decimal years with mm/dd implemented in future
+        #         curr_year = dt.now(
+        #         ).year  # should be in decimal years with mm/dd implemented in future
         # print(curr_year)
-        self.igrf_params = (datapath, curr_year)
+        self.igrf_params = (datapath, date)
 
         # final time and six-vector, used for testing purposes
         self.final_time = 0.

@@ -30,6 +30,7 @@ variables:
   many_linux_base: quay.io/pypa/manylinux1_
   dev_requirements_file: requirements.txt
   test_requirements_file: requirements.txt
+  test_directory: tests/
   MACOSX_DEPLOYMENT_TARGET: 10.9
 
 

@@ -1,4 +1,5 @@
 from gtracr.trajectory import Trajectory
+from gtracr.misc import get_locationdict, get_particledict
 '''
 Obtains the geomagnetic cutoff for each zenith and azimuthal angle
 
@@ -11,6 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from scipy.interpolate import griddata
+import argparse
+from tqdm import tqdm
 # import matplotlib.tri as tri
 
 # sys.path.append(os.getcwd())
@@ -18,7 +21,8 @@ from scipy.interpolate import griddata
 # add filepath of gtracr to sys.path
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
-sys.path.append(PARENT_DIR)
+PLOT_DIR = os.path.join(PARENT_DIR, "..", "gtracr_plots")
+# sys.path.append(PARENT_DIR)
 
 # from gtracr.add_location import location_dict
 # from gtracr.add_particle import particle_dict
@@ -38,10 +42,10 @@ def export_as_pkl(fpath, ds):
 def plot_heatmap(data_arr,
                  rigidity_list,
                  locname,
-                 pname,
+                 plabel,
                  ngrid_azimuth=70,
                  ngrid_zenith=70,
-                 save_plot=False):
+                 show_plot=False):
     '''
     Plot the heatmap of the geomagnetic rigidity cutoffs at the specified location and type of particle that the cosmic ray constitutes of. 
 
@@ -56,7 +60,7 @@ def plot_heatmap(data_arr,
     - locname (str): 
         The name of the detector location.
 
-    - pname (str):
+    - plabel (str):
         The label of the particle that constitutes the cosmic ray. 
 
     - ngrid_azimuth (int, default=70):
@@ -65,8 +69,8 @@ def plot_heatmap(data_arr,
     - ngrid_zenith (int, default=70):
         The number of grid points used for the interpolation process for the zenith component. The default is set to create a nice plot with linear interpolation.
 
-    - save_plot (bool):
-        Decides to choose to save the generated plot or not. If True, saves the plot in a separate parent directory named `gtracr_plots`. If False, only presents the plot in a GUI window. 
+    - show_plot (bool):
+        Decides to choose to show the generated plot or not. If True, presents the plot in a GUI window. 
 
     '''
 
@@ -121,19 +125,19 @@ def plot_heatmap(data_arr,
     ax.set_xlabel("Azimuthal Angle [Degrees]")
     ax.set_ylabel("Zenith Angle [Degrees]")
     ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
-        locname, pname))
+        locname, plabel))
 
     # only save plot is save_plot is True
     # otherwise show the plot in a GUI window
-    if save_plot:
-        plt.savefig(
-            os.path.join(PLOT_DIR,
-                         "{0}_{1}_cutoffplot.png".format(locname, pname)))
-    else:
+    if show_plot:
         plt.show()
 
+    plt.savefig(
+        os.path.join(PLOT_DIR,
+                     "{0}_{1}_cutoffplot.png".format(locname, plabel)))
 
-def plot_scatter(data_arr, locname, pname, save_plot=False):
+
+def plot_scatter(data_arr, locname, plabel, show_plot=False):
     '''
     Plot the scatter plot of the geomagnetic rigidity cutoffs at the specified location and type of particle that the cosmic ray constitutes of. 
 
@@ -145,11 +149,11 @@ def plot_scatter(data_arr, locname, pname, save_plot=False):
     - locname (str): 
         The name of the detector location.
 
-    - pname (str):
+    - plabel (str):
         The label of the particle that constitutes the cosmic ray. 
 
-    - save_plot (bool):
-        Decides to choose to save the generated plot or not. If True, saves the plot in a separate parent directory named `gtracr_plots`. If False, only presents the plot in a GUI window. 
+    - show_plot (bool):
+        Decides to choose to show the generated plot or not. If True, presents the plot in a GUI window.
 
     '''
 
@@ -161,28 +165,28 @@ def plot_scatter(data_arr, locname, pname, save_plot=False):
     ax.set_xlabel("Azimuthal Angle [Degrees]")
     ax.set_ylabel("Zenith Angle [Degrees]")
     ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
-        locname, pname))
+        locname, plabel))
 
     cbar = fig.colorbar(sc, ax=ax)
-    cbar.ax.set_ylabel("Rigidity [GV/c]")
+    cbar.ax.set_ylabel("Rigidity [GV]")
 
     ax.set_xlim([0., 360.])
     ax.set_ylim([180., 0.])
 
-    # only save plot is save_plot is True
-    # otherwise show the plot in a GUI window
-    if save_plot:
-        plt.savefig(os.path.join(
-            PLOT_DIR, "{0}_{1}_scatterplot.png".format(locname, pname)),
-            dpi=800)
-    else:
+    plt.savefig(os.path.join(PLOT_DIR,
+                             "{0}_{1}_scatterplot.png".format(locname,
+                                                              plabel)),
+                dpi=800)
+
+    if args.show_plot:
         plt.show()
 
 
 def evaluate_rcutoff(rigidity_list,
-                     detector_coord,
-                     particle_label="p+",
-                     iter_num=10000):
+                     location_name,
+                     iter_num,
+                     bfield_type,
+                     particle_label="p+"):
     '''
     Evaluate the rigidity cutoff value at some provided location
     on Earth for a given cosmic ray particle.
@@ -190,17 +194,20 @@ def evaluate_rcutoff(rigidity_list,
     Parameters
     ----------
     - rigidity_list (list / NumPy array):
-        The list of rigidities to evalue the minimum rigidity cutoff value for. 
+        The list of rigidities to evalue the minimum rigidity cutoff value for.  
 
-    - detector_coord (NumPy array, float, size=3):
-        The geodesic coordinates of the location of the detector. This must provide the latitude [decimal], longitude [decimal], and altitude [km] of the detector in the given order. 
+    - location_name (str, default="Kamioka"):
+        The name of the detector / location in which the neutrinos are detected. Must be a valid location in location_dict. Contained in args if eval_all is False.
 
+    - iter_num (int, default 10000):
+        The number of iterations to perform the Monte Carlo integration with. Contained in args.
+        
+    - bfield_type (str, default ="igrf") :
+        The type of the magnetic field model to use. Contained in args.
+    
     - particle_label (str, default="p+") :
         The label of the particle that is acting as the cosmic ray in the simulation. 
         Current valid inputs are: "p+", "p-", "e+", "e-" 
-
-    - iter_num (int, default 10000):
-        The number of iterations to perform the Monte Carlo integration with. 
 
     Returns
     -------
@@ -210,14 +217,14 @@ def evaluate_rcutoff(rigidity_list,
     '''
 
     # unpack the detector coordinates in latitude, longitude, altitude
-    (latitude, longitude, detector_altitude) = detector_coord
+    # (latitude, longitude, detector_altitude) = detector_coord
 
     # array that contains the data as a tuple, that is,
     # the azimuth, zenith, and cutoff rigidity
     data_arr = []
 
     # perform Monte Carlo integration to get cutoff rigidity
-    for i in range(iter_num):
+    for i in tqdm(range(iter_num)):
         # get a random zenith and azimuth angle
         # zenith angles range from 0 to 180
         # azimuth angles range from 0 to 360
@@ -229,83 +236,178 @@ def evaluate_rcutoff(rigidity_list,
 
         # iterate through each rigidity, and break the loop
         # when particle is able to escape earth
-        for k, rigidity in enumerate(rigidity_list):
-            # print("Current rigidity: {:.4e}".format(rigidity))
-            traj = Trajectory(plabel=particle_label,
-                              latitude=latitude,
-                              longitude=longitude,
-                              detector_altitude=detector_altitude,
-                              zenith_angle=zenith,
-                              azimuth_angle=azimuth,
-                              particle_altitude=100.,
-                              rigidity=rigidity)
-            traj.get_trajectory(max_step=10000)
+        for rigidity in rigidity_list:
+            # print("Current rigidity: {:.1f}".format(rigidity))
+            traj = Trajectory(
+                plabel=particle_label,
+                #   latitude=latitude,
+                #   longitude=longitude,
+                #   detector_altitude=detector_altitude,
+                location_name=location_name,
+                zenith_angle=zenith,
+                azimuth_angle=azimuth,
+                particle_altitude=100.,
+                rigidity=rigidity,
+                bfield_type=bfield_type)
+            traj.get_trajectory(dt=1e-5, max_time=1.)
+            # print("Final time : {:.2e}".format(traj.final_time))
             # break loop and append direction and current rigidity if particle has escaped
             if traj.particle_escaped == True:
+                # print("particle escaped")
                 data_arr.append((azimuth, zenith, rigidity))
                 break
 
+        # print(data_arr)
+
         # progress checker
-        if i % (iter_num // 10) == 0:
-            print("{:d} iterations done.".format(i))
+        # if i % (iter_num // 10) == 0:
+        #     print("{:d} iterations done.".format(i))
 
     return data_arr
 
 
-if __name__ == "__main__":
-
+def eval_gmcutoff(args):
     # create particle trajectory with desired particle and energy
     rigidity_list = np.arange(5, 55, 5)
-    particle_list = [("p+", particle_dict["p+"])
-                     ]  # , ("e-", particle_dict["e-"])]
-    location_list = [("Kamioka", location_dict["Kamioka"])]
+    print(rigidity_list)
+    # particle_dict = get_particledict()
+    location_dict = get_locationdict()
 
-    iter_num = 10000  # total number of points used for Monte Carlo process
+    # particle_list = ["p+"]
+    plabel = "p+"
 
     # number of points for azimuth / zenith grid
     ngrid_azimuth = 70
     ngrid_zenith = 70
 
-    # debug mode (bool)
-    # should be done in a better fashion like argparse or smth
-    debug_mode = True
+    # change initial parameters if debug mode is set
+    if args.debug_mode:
+        args.iter_num = 10
+        args.show_plot = True
 
-    # boolean to save plot or not
-    save_plot = False if debug_mode else True
+    if args.eval_all:
+        for locname in list(location_dict.keys()):
+            # for (locname, loc) in location_list:
+            # print(loc)
+            # geomag_cutoffdict["Location"][locname] = {}
+            # for pname, particle in list(particle_dict.items()):
 
-    # locations: kamioka, icecube
-    # for locname, loc in list(location_dict.items()):
-    for (locname, loc) in location_list:
-        # print(loc)
-        detector_coord = np.array([loc.latitude, loc.longitude, loc.altitude])
-        # geomag_cutoffdict["Location"][locname] = {}
-        # for pname, particle in list(particle_dict.items()):
-        for (pname, particle) in particle_list:
+            # for pname in particle_list:
+            # print("Current configuration: {:s}, {:s}".format(
+            #     loc.name, particle.name))
             # geomag_cutoffdict["Location"][locname][pname] = {}
             # evaluate rigidity cutoffs at the location for
             # the specified particle
             data_arr = evaluate_rcutoff(rigidity_list,
-                                        detector_coord,
-                                        particle_label=pname,
-                                        iter_num=iter_num)
+                                        locname,
+                                        iter_num=args.iter_num,
+                                        bfield_type=args.bfield_type,
+                                        particle_label=plabel)
+
+            # print(data_arr)
             # geomag_cutoffdict["Location"][locname][pname][
             # rigidity] = cutoff_arrs[k]
 
             # create a debugger / checker as a scatter plot
             # of the dataset
-            if debug_mode:
-                plot_scatter(data_arr, locname, pname, save_plot=save_plot)
+            if args.debug_mode:
+                plot_scatter(data_arr,
+                             locname,
+                             plabel,
+                             show_plot=args.show_plot)
 
             plot_heatmap(data_arr,
                          rigidity_list,
                          locname=locname,
-                         pname=pname,
+                         plabel=plabel,
                          ngrid_azimuth=ngrid_azimuth,
                          ngrid_zenith=ngrid_zenith,
-                         save_plot=save_plot)
+                         show_plot=args.show_plot)
+
+    else:
+        # evaluate rigidity cutoffs at the location for
+        # the specified particle
+        data_arr = evaluate_rcutoff(rigidity_list,
+                                    args.locname,
+                                    iter_num=args.iter_num,
+                                    bfield_type=args.bfield_type,
+                                    particle_label=plabel)
+
+        # print(data_arr)
+        # geomag_cutoffdict["Location"][locname][pname][
+        # rigidity] = cutoff_arrs[k]
+
+        # create a debugger / checker as a scatter plot
+        # of the dataset
+        if args.debug_mode:
+            plot_scatter(data_arr,
+                         args.locname,
+                         plabel,
+                         show_plot=args.show_plot)
+
+        plot_heatmap(data_arr,
+                     rigidity_list,
+                     locname=args.locname,
+                     plabel=plabel,
+                     ngrid_azimuth=ngrid_azimuth,
+                     ngrid_zenith=ngrid_zenith,
+                     show_plot=args.show_plot)
 
     # fpath = os.path.join(os.getcwd(), "geomagnetic_cutoff.pkl")
     # export_as_pkl(fpath, geomag_cutoffdict)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=
+        'Evaluates the geomagnetic cutoff rigidities of some location for N iterations using a Monte-Carlo scheme, and produces a heatmap for such geomagnetic cutoff rigidities.'
+    )
+    parser.add_argument(
+        '-ln',
+        '--locname',
+        dest="locname",
+        # action="store_const",
+        default="Kamioka",
+        type=str,
+        help="Detector location to evaluate GM cutoffs.")
+    parser.add_argument(
+        '-n',
+        '--iter_num',
+        dest="iter_num",
+        # action="store_const",
+        default=10000,
+        type=int,
+        help="Number of iterations for Monte-Carlo.")
+    parser.add_argument(
+        '-bf',
+        '--bfield',
+        dest="bfield_type",
+        # action="store_const",
+        default="igrf",
+        type=str,
+        help="The geomagnetic field model used.")
+    parser.add_argument('-a',
+                        '--all',
+                        dest="eval_all",
+                        action="store_true",
+                        help="Evaluate GM cutoffs for all locations.")
+    parser.add_argument('--show',
+                        dest="show_plot",
+                        action="store_true",
+                        help="Show the plot in an external display.")
+    parser.add_argument('-d',
+                        '--debug',
+                        dest="debug_mode",
+                        action="store_true",
+                        help="Enable debug mode.")
+    parser.add_argument('-c',
+                        '--clean',
+                        dest="clean_dict",
+                        action="store_true",
+                        help='Clean the dataset. ')
+
+    args = parser.parse_args()
+    eval_gmcutoff(args)
 '''
 
 Below info will be used in a future release so its just 

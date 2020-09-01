@@ -14,8 +14,8 @@ from scipy.interpolate import interp1d
 # sys.path.append(os.getcwd())
 # sys.path.append(p.join(os.getcwd(), "gtracr"))
 
-# CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-# PARENT_DIR = os.path.dirname(CURRENT_DIR)
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+PARENT_DIR = os.path.dirname(CURRENT_DIR)
 # sys.path.append(PARENT_DIR)
 
 
@@ -35,7 +35,6 @@ class MagneticField:
     no external currents, i.e. curl(B) = 0
 
     '''
-
     def __init__(self):
         pass
 
@@ -105,7 +104,6 @@ class IGRF13(MagneticField):
                         from the .shc file.
 
     '''
-
     def __init__(self, curr_year, nmax=None):
         # override MagneticField __init__ function
         # not necessary, but for decorative sake
