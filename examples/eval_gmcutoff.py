@@ -269,7 +269,7 @@ def evaluate_rcutoff(rigidity_list,
 def eval_gmcutoff(args):
     # create particle trajectory with desired particle and energy
     rigidity_list = np.arange(5, 55, 5)
-    print(rigidity_list)
+    # print(rigidity_list)
     # particle_dict = get_particledict()
     location_dict = get_locationdict()
 
