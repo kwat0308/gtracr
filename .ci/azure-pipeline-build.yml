@@ -79,7 +79,7 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
   steps:
-    - template: azure-wheel-helpers/azure-manylinux-wheels.yml
+    - template: azure-manylinux-wheels.yml
     - template: azure-wheel-helpers/azure-publish-dist.yml
 
 - job: macOS
