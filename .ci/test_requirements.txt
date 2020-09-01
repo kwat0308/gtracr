@@ -1,6 +1,7 @@
 numpy
 scipy
 datetime
+tqdm
 pytest
 pytest-cov
-tqdm
+pytest-benchmark
