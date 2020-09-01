@@ -20,7 +20,10 @@ libgtracr = Extension('gtracr.lib.libgtracr',
                       ],
                       language='c++',
                       include_dirs=['gtracr/lib/include'])
-
+'''
+Adopted from boost-histogram from scikit-HEP:
+https://github.com/scikit-hep/boost-histogram/blob/develop/setup.py
+'''
 try:
     from numpy.distutils.ccompiler import CCompiler_compile
     import distutils.ccompiler
@@ -35,10 +38,6 @@ except ImportError:
 #               include_dirs=INCLUDE_DIRS,
 #               language="c++")
 # ]
-'''
-Adopted from boost-histogram from scikit-HEP:
-https://github.com/scikit-hep/boost-histogram/blob/develop/setup.py
-'''
 
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
@@ -71,7 +70,8 @@ def cpp_flag(compiler):
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
 
-    c_opts = {"msvc": ["/EHsc", "/bigobj"], "unix": ["-g0"]}
+    # c_opts = {"msvc": ["/EHsc", "/bigobj"], "unix": ["-g0"]}
+    c_opts = {"unix": ["-g0"]}
 
     if sys.platform == "darwin":
         c_opts["unix"] += ["-stdlib=libc++", "-mmacosx-version-min=10.9"]
@@ -85,9 +85,9 @@ class BuildExt(build_ext):
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, "-fvisibility=hidden"):
                 opts.append("-fvisibility=hidden")
-        elif ct == "msvc":
-            opts.append('/DVERSION_INFO=\\"%s\\"' %
-                        self.distribution.get_version())
+        # elif ct == "msvc":
+        #     opts.append('/DVERSION_INFO=\\"%s\\"' %
+        #                 self.distribution.get_version())
         for ext in self.extensions:
             ext.extra_compile_args = opts
         build_ext.build_extensions(self)
@@ -135,7 +135,11 @@ setup(
     },
     ext_modules=[libgtracr],
     cmdclass={"build_ext": BuildExt},
-    install_requires=['scipy', 'numpy', 'datetime'],
+    install_requires=[
+        'scipy',
+        'numpy',
+        'datetime',
+    ],
     extras_require=extras_require,
     classifiers=[
         'Programming Language :: Python',
