@@ -34,10 +34,7 @@ def get_version():
 
 __version__ = get_version()
 
-extras_require = {
-    "test": ["pytest", "pytest-benchmark", "pytest-cov"],
-    "examples": ["matplotlib", "mpld3"]
-}
+extras_require = {"examples": ["matplotlib", "mpld3"]}
 
 # exclude_dirs = ["*.tests", "*.tests.*", "tests.*", "tests",
 #                 "*.data", "*.data.*", "data.*", "data"]
