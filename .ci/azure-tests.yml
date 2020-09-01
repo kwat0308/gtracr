@@ -19,13 +19,19 @@ steps:
 #   displayName: Test with pytest
 
 - script: |
-    python -m pytest --cov gtracr --cov-report html
+    python -m pytest --pyargs gtracr --junitxml=junit/test-results.xml --cov gtracr gtracr/tests/ --cov-report html
   # I'm selecting a random directory to not trigger relative imports.
   workingDirectory: examples
   displayName: Test with pytest
 
-# - task: PublishTestResults@2
-#   inputs:
-#     testResultsFiles: '**/test-*.xml'
-#     testRunTitle: 'Publish test results for Python $(python.version)'
-#   condition: succeededOrFailed()
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    testRunTitle: 'Publish test results for Python $(python.version)'
+  condition: succeededOrFailed()
+
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
