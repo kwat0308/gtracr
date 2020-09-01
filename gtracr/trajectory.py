@@ -12,7 +12,7 @@ import os
 import sys
 import numpy as np
 import pickle
-# from datetime import datetime as dt
+from datetime import datetime as dt
 from gtracr.lib.libgtracr import TrajectoryTracer, uTrajectoryTracer
 
 # from trajectory_tracer import TrajectoryTracer
@@ -54,7 +54,7 @@ class Trajectory:
                  rigidity=None,
                  escape_altitude=10. * EARTH_RADIUS,
                  bfield_type="dipole",
-                 date=2020.):
+                 date=dt.now().year):
         self.zenith_angle = zenith_angle
         self.azimuth_angle = azimuth_angle
         self.particle_altitude = particle_altitude * (1e3)  # convert to meters

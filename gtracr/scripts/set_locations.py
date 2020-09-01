@@ -59,11 +59,11 @@ if __name__ == "__main__":
         description=
         'Set the data file that contains geodesic coordinate data of different locations.'
     )
-    parser.add_argument('--reset',
-                        '-r',
+    parser.add_argument('-r',
+                        '--reset',
                         dest="reset_dict",
                         action="store_true",
-                        help='Clean the dataset ')
+                        help='Clean the dataset and create from scratch.')
 
     args = parser.parse_args()
 
