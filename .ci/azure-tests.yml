@@ -19,7 +19,7 @@ steps:
 #   displayName: Test with pytest
 
 - script: |
-    python -m pytest tests --junitxml=junit/test-results.xml --cov=gtracr --cov-report=xml --cov-report=html 
+    python -m pytest tests --junitxml=junit/test-results.xml --cov=. --cov-report=html 
   # I'm selecting a random directory to not trigger relative imports.
   workingDirectory: examples
   displayName: Test with pytest
