@@ -9,16 +9,15 @@ local_path = os.path.dirname(os.path.abspath(__file__))
 
 # C/C++ extension of gtracr module
 # contains magnetic field and trajactory evaluation as core of the code
-libgtracr = Extension(
-    'gtracr.lib.libgtracr',
-    sources=[
-        "gtracr/lib/src/TrajectoryTracer.cpp",
-        "gtracr/lib/src/uTrajectoryTracer.cpp", "gtracr/lib/src/igrf.cpp",
-        "gtracr/lib/src/pybind11_wrapper.cpp"
-    ],
-    language='c++',
-    include_dirs=['gtracr/lib/include']
-)
+libgtracr = Extension('gtracr.lib.libgtracr',
+                      sources=[
+                          "gtracr/lib/src/TrajectoryTracer.cpp",
+                          "gtracr/lib/src/uTrajectoryTracer.cpp",
+                          "gtracr/lib/src/igrf.cpp",
+                          "gtracr/lib/src/pybind11_wrapper.cpp"
+                      ],
+                      language='c++',
+                      include_dirs=['gtracr/lib/include'])
 
 
 # This method is adopted from MCEq https://github.com/afedynitch/MCEq
@@ -36,13 +35,12 @@ def get_version():
 __version__ = get_version()
 
 extras_require = {
-    "test": ["pytest", "pytest-benchmark"],
+    "test": ["pytest", "pytest-benchmark", "pytest-cov"],
     "examples": ["matplotlib", "mpld3"]
 }
 
 # exclude_dirs = ["*.tests", "*.tests.*", "tests.*", "tests",
 #                 "*.data", "*.data.*", "data.*", "data"]
-
 
 # open README for the long descreption of the code
 with open("README.md", "r") as f:
@@ -52,25 +50,21 @@ with open("README.md", "r") as f:
 setup(
     name='gtracr',
     version=__version__,
-    description='A GPU-based simulation that tracks cosmic rays from any location on Earth.',
+    description=
+    'A GPU-based simulation that tracks cosmic rays from any location on Earth.',
     author='Keito Watanabe',
     author_email='k.wat8973@gmail.com',
     long_description=long_description,
     long_description_content_type="text/markdown",
     license='BSD 3-Clause License',
     url="https://github.com/kwat0308/gtracr",
-    packages=['gtracr', 'gtracr.scripts', 'gtracr.tests',
-              'gtracr.lib'],
+    packages=['gtracr', 'gtracr.scripts', 'gtracr.tests', 'gtracr.lib'],
     # include_package_data=True,
     package_data={
         'gtracr': ['data/**'],
     },
     ext_modules=[libgtracr],
-    install_requires=[
-        'scipy',
-        'numpy',
-        'datetime'
-    ],
+    install_requires=['scipy', 'numpy', 'datetime'],
     extras_require=extras_require,
     classifiers=[
         'Programming Language :: Python',
@@ -78,9 +72,8 @@ setup(
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Physics',
         'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers',
-        'Development Status :: 4 - Beta', 'Natural Language :: English',
-        'License :: OSI Approved :: BSD License'
+        'Intended Audience :: Developers', 'Development Status :: 4 - Beta',
+        'Natural Language :: English', 'License :: OSI Approved :: BSD License'
     ],
     python_requires='>=3.0',
 )
