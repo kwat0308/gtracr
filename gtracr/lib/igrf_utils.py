@@ -142,7 +142,7 @@ def check_lat_lon_bounds(latd, latm, lond, lonm):
     if lonm < 0 and lond != 0:
         # raise ValueError(f'Longitude mins {lonm} and {lond} out of bounds.')
         raise ValueError(
-            f'Longitude mins {:.3f} and {:.3f} out of bounds.'.format(
+            'Longitude mins {:.3f} and {:.3f} out of bounds.'.format(
                 lonm, lond))
 
     # Convert to decimal degrees
