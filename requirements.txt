@@ -2,3 +2,4 @@ numpy
 scipy
 datetime
 pytest
+pytest-cov
