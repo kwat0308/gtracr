@@ -22,8 +22,11 @@ FILE_PATH = os.path.join(DATA_DIR, FILE_NAME)
 
 
 def export_dict(location_dict, fname):
+    # set protocol=3 for < py3.8 compatibility
+    protocol = 3
+
     with open(fname, "wb") as f:
-        pickle.dump(location_dict, f, protocol=-1)
+        pickle.dump(location_dict, f, protocol=protocol)
 
 
 def import_dict(fname):
