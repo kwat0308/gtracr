@@ -22,7 +22,7 @@ libgtracr = Extension('gtracr.lib._libgtracr',
                           "gtracr/lib/src/pybind11_wrapper.cpp"
                       ],
                       language='c++',
-                      include_dirs=['gtracr/lib/include'])
+                      include_dirs=['gtracr/lib/include', 'gtracr/lib/extern'])
 
 
 extra_flags = []
