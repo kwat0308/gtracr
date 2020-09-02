@@ -4,7 +4,13 @@ Contains conversions between geodesic coordinates and debuggers for the package.
 may also contain other things (not known as of now)
 '''
 
+import os
+import sys
 import numpy as np
+import pickle
+
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+DATA_DIR = os.path.join(CURRENT_DIR, "data")
 
 
 def dec_to_dms(lat_dec, lng_dec):
@@ -60,3 +66,29 @@ def dec_to_dms(lat_dec, lng_dec):
                                              lng_symb)
 
     return lat_dms, lng_dms
+
+def import_dict(fname):
+    '''
+    Import the dictionary with filepath fname.
+    '''
+    with open(fname, "rb") as f:
+        the_dict = pickle.load(f)
+    return the_dict
+
+
+def get_particledict():
+    '''
+    Get the particle dictionary from the .pkl file
+    '''
+    fpath = os.path.join(DATA_DIR, "particle_dict.pkl")
+    particle_dict = import_dict(fpath)
+    return particle_dict
+
+
+def get_locationdict():
+    '''
+    Get the location dictionary from the .pkl file
+    '''
+    fpath = os.path.join(DATA_DIR, "location_dict.pkl")
+    location_dict = import_dict(fpath)
+    return location_dict
