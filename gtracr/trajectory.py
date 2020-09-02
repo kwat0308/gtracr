@@ -3,7 +3,7 @@ Keeps track of particle trajectory with considerations to cutoffs and E-W effect
 '''
 
 # from add_particle import particle_dict
-from gtracr.misc import get_particledict, get_locationdict
+from gtracr.utils import get_particledict, get_locationdict
 from gtracr.lib.trajectorypoint import TrajectoryPoint
 from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
 from gtracr.lib.trajectory_tracer import pTrajectoryTracer

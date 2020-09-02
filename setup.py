@@ -24,6 +24,11 @@ libgtracr = Extension('gtracr.lib._libgtracr',
                       language='c++',
                       include_dirs=['gtracr/lib/include', 'gtracr/lib/extern'])
 
+'''
+The below settings were obtained from the Iminuit package from scikit-HEP:
+https://github.com/scikit-hep/iminuit 
+'''
+
 
 extra_flags = []
 if bool(os.environ.get("COVERAGE", False)):
@@ -63,10 +68,6 @@ class SmartBuildExt(build_ext):
 
         build_ext.build_extensions(self)
 
-
-
-# This method is adopted from MCEq https://github.com/afedynitch/MCEq
-# which is adopted from iMinuit https://github.com/scikit-hep/iminuit
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
 # This is one of the recommended methods that works in Python 2 and 3:
@@ -79,7 +80,7 @@ def get_version():
 
 __version__ = get_version()
 
-extras_require = {"examples": ["matplotlib", "mpld3"]}
+extras_require = {"examples": ["matplotlib", "plotly"]}
 
 # exclude_dirs = ["*.tests", "*.tests.*", "tests.*", "tests",
 #                 "*.data", "*.data.*", "data.*", "data"]

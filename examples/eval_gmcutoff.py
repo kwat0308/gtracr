@@ -1,5 +1,5 @@
 from gtracr.trajectory import Trajectory
-from gtracr.misc import get_locationdict, get_particledict
+from gtracr.utils import get_locationdict, get_particledict
 '''
 Obtains the geomagnetic cutoff for each zenith and azimuthal angle
 
