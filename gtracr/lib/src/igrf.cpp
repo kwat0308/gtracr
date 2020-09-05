@@ -1,5 +1,7 @@
 #include "igrf.hpp"
 
+using json = nlohmann::json;
+
 /*
  Initialize the IGRF model. The coefficients are imported and are stored
  in the corresponding arrays.
@@ -12,121 +14,33 @@
        The current year, month, and day in decimal days
  */
 IGRF::IGRF(const std::string& fname, const double sdate)
-    : model_index{0}, nmodel{24}, igdgc{3}, sdate_{sdate} {
-  readmdfile(fname);
-
-  /* Pick model */
-  for (int i = 0; i < nmodel; i++) {
-    if (sdate_ < yrmax_arr[i]) {
-      model_index = i;
+    : model_index{0}, nmodel{24}, igdgc{3}, sdate_{sdate}, 
+    epoch1_{0.}, epoch2_{0.}, nmain1_{0}, nmain2_{0}, 
+    nsv1_{0}, nsv2_{0} {
+  
+  // get epochs in which we want to interpolate / extrapolate
+  for (double epoch=1900; epoch<=igrf_const::MAXEPOCH; epoch+=5) {
+    if ((sdate_ - epoch) < 2.5) {  // not abs value to get the epoch before the date
+      epoch1_ = epoch;
+      epoch2_ = epoch + 5.;
       break;
-    }
-    if (i == nmodel) {
-      model_index = nmodel - 1; /* if beyond end of last model use last model */
     }
   }
 
-  /* Get altitude min and max for selected model. */
-  minalt = altmin_arr[model_index];
-  maxalt = altmax_arr[model_index];
-
-  // for (auto val : irec_posarr) {
-  //   std::cout << val << std::endl;
-  // }
+  // get the spherical harmonic coefficients
+  getshc(fname);
 
   // get the spherical harmonic coeffiecients for the specific date
   // and either interpolate or extrapolate if we have to
-  if (max2_arr[model_index] == 0)  // if model isnt the last model in the file
+  if (epoch2_ + 5 > igrf_const::MAXEPOCH)  // if model isnt the last model in the file
   {
-    getshc(fname, 1, irec_posarr[model_index], max1_arr[model_index], 1);
-    getshc(fname, 1, irec_posarr[model_index + 1], max1_arr[model_index + 1],
-           2);
-    interpsh(sdate_, yrmin_arr[model_index], max1_arr[model_index],
-             yrmin_arr[model_index + 1], max1_arr[model_index + 1], 3);
-    interpsh(sdate_ + 1, yrmin_arr[model_index], max1_arr[model_index],
-             yrmin_arr[model_index + 1], max1_arr[model_index + 1], 4);
+    extrapsh(sdate_, 3);
+    extrapsh(sdate_ + 1, 4);
   } else {
-    getshc(fname, 1, irec_posarr[model_index], max1_arr[model_index], 1);
-    getshc(fname, 0, irec_posarr[model_index], max2_arr[model_index], 2);
-    extrapsh(sdate_, epoch_arr[model_index], max1_arr[model_index],
-             max2_arr[model_index], 3);
-    extrapsh(sdate_ + 1, epoch_arr[model_index], max1_arr[model_index],
-             max2_arr[model_index], 4);
+    interpsh(sdate_, 3);
+    interpsh(sdate_ + 1, 4);
   }
 }
-
-/*
-Read the file from fname and store the model information into
-the arrays.
-
-Parameters:
------------
-- fname (std::string) :
-  path to the .COF file
-*/
-void IGRF::readmdfile(const std::string& fname) {
-  std::ifstream ifs{fname};
-  if (!ifs) {
-    throw std::runtime_error("Cannot open file!");
-  }
-
-  std::string line;
-
-  // some temporary variables for writing the variables to
-  // the storage arrays
-  int max1, max2, max3;
-  std::string model;
-  double epoch, yrmin, yrmax, altmin, altmax;
-
-  int modelI = 0;
-
-  while (std::getline(ifs, line)) {  // read each line in file
-    // if second entry has no value, then its on model line
-    if (line[1] != ' ') {
-      continue;
-    } else {
-      std::istringstream ss{line};        // stringstream of each row
-      irec_posarr[modelI] = ifs.tellg();  // position in function
-      // same thing as using sscanf, but this is kind of ugly...
-      while (ss >> model >> epoch >> max1 >> max2 >> max3 >> yrmin >> yrmax >>
-             altmin >> altmax) {
-        // std::cout << max1 << std::endl;
-        model_arr[modelI] = model;
-        epoch_arr[modelI] = epoch;
-        max1_arr[modelI] = max1;
-        max2_arr[modelI] = max2;
-        max3_arr[modelI] = max3;
-        yrmin_arr[modelI] = yrmin;
-        yrmax_arr[modelI] = yrmax;
-        altmin_arr[modelI] = altmin;
-        altmax_arr[modelI] = altmax;
-      }  // while (ss >> values)
-    }    // if (line[1] != ' ')
-
-    /* Compute date range for all models */
-    if (modelI == 0) /*If first model */
-    {
-      minyr = yrmin_arr[0];
-      maxyr = yrmax_arr[0];
-    } else {
-      if (yrmin_arr[modelI] < minyr) {
-        minyr = yrmin_arr[modelI];
-      }
-      if (yrmax_arr[modelI] > maxyr) {
-        maxyr = yrmax_arr[modelI];
-      }
-    } /* if modelI == 0 */
-    ++modelI;
-  }  // while (std::getline(ifs, line))
-
-  // std::cout << "Completed reading the file." << std::endl;
-
-  // std::cout << "Checking values..." << std::endl
-  //           << "model_index : " << model_index << std::endl
-  //           << "model_arr : " << model_arr[model_index - 1] << std::endl;
-
-  nmodel = modelI + 1;
-}  // readfile
 
 /****************************************************************************/
 /*                                                                          */
@@ -158,123 +72,56 @@ void IGRF::readmdfile(const std::string& fname) {
 /*           August 15, 1988                                                */
 /*                                                                          */
 /****************************************************************************/
-void IGRF::getshc(const std::string& fname, int iflag, int strec,
-                  int nmax_of_gh, int gh) {
+void IGRF::getshc(const std::string& fname) {
   std::ifstream ifs{fname};
   if (!ifs) {
     throw std::runtime_error("Cannot open file!");
   }
 
-  std::string line;
+  json igrf_map;
 
-  // variables that are used to keep track of the coeffs
-  // and their indices
-  int ii = 0;
-  double g, hh, m, n;
+  ifs >> igrf_map;  // read contents of json file to json object
 
-  // extra variables to make file reading work
-  double tr, tr1;
-  int ln;
-  std::string ir;
+  // convert epoch to strings since thats the form for json keys
+  std::string epoch1 = std::to_string(epoch1_);
+  std::string epoch2 = std::to_string(epoch2_);
 
-  // some temporary variables for writing the variables to
-  // the storage arrays (i.e. irrelavant variables)
-  int line_num;
-  double gt, hht, mt, nt;
-  double trash, trash1;
-  std::string irat;
+  // std::cout << epoch1 << ' ' << epoch2 << std::endl;
 
-  ifs.seekg(strec);
+  // std::cout << igrf_map << std::endl;
+  
+  // set variables (nmain, nsv, gh, gh_sv)
+  nmain1_ = igrf_map[epoch1]["nmain"];
+  nsv1_ = igrf_map[epoch1]["nsv"];
 
-  // std::cout << strec << std::endl;
+  // write the coefficient array for the specified epochs
+  // into the member array
+  for (int i=0; i<nmain1_; ++i) {
+    gh1_arr[i] = igrf_map[epoch1]["gh"][i];
+    ghsv1_arr[i] = igrf_map[epoch1]["gh_sv"][i];
+  }
+  
+  // std::cout << igrf_map[epoch1]["gh"] << std::endl;
 
-  for (int nn = 1; nn <= nmax_of_gh; ++nn) {
-    for (int mm = 0; mm <= nn; ++mm) {
-      // std::cout << "in inner loop" << std::endl;
-      // while (std::getline(ifs, line)) {
-      std::getline(ifs, line);
-      // std::cout << line << std::endl;
-      std::istringstream ss{line};
+  // std::cout << "Read the 1st coefficients" << std::endl;
 
-      if (iflag == 1) {
-        // fgets(inbuff, MAXREAD, stream);
-        while (ss >> nt >> mt >> gt >> hht >> trash >> trash1 >> irat >>
-               line_num) {
-          // std::cout << "inside ss reading" << std::endl;
-          // std::cout << nt << mt << gt << hht << trash << trash1 << irat
-          //           << line_num << std::endl;
-          n = nt;
-          m = mt;
-          g = gt;
-          hh = hht;
-          tr = trash;
-          tr1 = trash1;
-          ir = irat;
-          ln = line_num;
-        }
-        // std::cout << n << ' ' << m << std::endl;
-      } else {
-        while (ss >> nt >> mt >> trash >> trash1 >> gt >> hht >> irat >>
-               line_num) {
-          // std::cout << nt << mt << std::endl;
-          n = nt;
-          m = mt;
-          g = gt;
-          hh = hht;
-          tr = trash;
-          tr1 = trash1;
-          ir = irat;
-          ln = line_num;
-        }
-        // std::cout << n << ' ' << m << std::endl;
-      }
-      // std::cout << "Read line" << std::endl;
-      if ((nn != n) || (mm != m)) {
-        // show some error condition
-        // std::cout << "\nError in subroutine getshc" << std::endl;
-        throw std::runtime_error("\nnn != n or mm != m");
-        break;
-      }
-      ii += 1;
-      switch (gh) {
-        case 1:
-          gh_first[ii] = g;
-          // std::cout << gh_first[ii] << std::endl;
-          break;
-        case 2:
-          gh_second[ii] = g;
-          break;
-        default:
-          // std::cout << "\nError in subroutine getshc" << std::endl;
-          throw std::runtime_error("\nError in subroutine getshc");
-          break;
-      }
-      if (m != 0) {
-        ii += 1;
-        switch (gh) {
-          case 1:
-            gh_first[ii] = hh;
-            // std::cout << gh_first[ii] << std::endl;
-            break;
-          case 2:
-            gh_second[ii] = hh;
-            break;
-          default:
-            // std::cout << "\nError in subroutine getshc" << std::endl;
-            throw std::runtime_error("\nError in subroutine getshc");
-            break;
-        }  // switch (gh)
-      }    // if (m!=0)
-    }      // for (int mm = 0; mm <= nn; ++mm)
-  }        //  for (int nn = 1; nn <= nmax_of_gh; ++nn)
+  // only set epoch2 if epoch2 is smaller than the latest epoch 
+  if (epoch2_ < igrf_const::MAXEPOCH) {
+    nmain2_ = igrf_map[epoch2]["nmain"];
+    nsv2_ = igrf_map[epoch2]["nsv"];
+    for (int i=0; i<nmain2_; ++i) {
+      gh2_arr[i] = igrf_map[epoch2]["gh"][i];
+      ghsv2_arr[i] = igrf_map[epoch2]["gh_sv"][i];
+    }
+  }
 
+  // std::cout << "Read the 2nd coefficients" << std::endl;
   // std::cout << "Finished importing coefficients." << std::endl;
 
   // std::cout << "Check results: " << std::endl;
   // for (int l = 0; l < igrf_const::MAXCOEFF; ++l) {
   //   std::cout << gh_first[l] << std::endl;
   // }
-  // delete[] irat;
 }  // getshc
 
 /****************************************************************************/
@@ -288,11 +135,11 @@ void IGRF::getshc(const std::string& fname, int iflag, int strec,
 /*                                                                          */
 /*     Input:                                                               */
 /*           date     - date of resulting model (in decimal year)           */
-/*           dte1     - date of earlier model                               */
+/*           epoch1_     - date of earlier model                               */
 /*           nmax1    - maximum degree and order of earlier model           */
 /*           gh1      - Schmidt quasi-normal internal spherical             */
 /*                      harmonic coefficients of earlier model              */
-/*           dte2     - date of later model                                 */
+/*           epoch2_     - date of later model                                 */
 /*           nmax2    - maximum degree and order of later model             */
 /*           gh2      - Schmidt quasi-normal internal spherical             */
 /*                      harmonic coefficients of internal model             */
@@ -311,67 +158,67 @@ void IGRF::getshc(const std::string& fname, int iflag, int strec,
 /*           August 17, 1988                                                */
 /*                                                                          */
 /****************************************************************************/
-void IGRF::interpsh(double date, double dte1, int nmax1, double dte2, int nmax2,
-                    int gh) {
+void IGRF::interpsh(double date, int gh) {
   // int nmax;
   int k, l;
   int ii;
   double factor;
 
-  factor = (date - dte1) / (dte2 - dte1);
-  if (nmax1 == nmax2) {
-    k = nmax1 * (nmax1 + 2);
-    nmax_ = nmax1;
+
+  factor = (date - epoch1_) / (epoch2_ - epoch1_);
+  if (nmain1_ == nmain2_) {
+    k = nmain1_ * (nmain1_ + 2);
+    nmax_ = nmain1_;
   } else {
-    if (nmax1 > nmax2) {
-      k = nmax2 * (nmax2 + 2);
-      l = nmax1 * (nmax1 + 2);
+    if (nmain1_ > nmain2_) {
+      k = nmain2_ * (nmain2_ + 2);
+      l = nmain1_ * (nmain1_ + 2);
       switch (gh) {
         case 3:
           for (ii = k + 1; ii <= l; ++ii) {
-            gh_arr[ii] = gh_first[ii] + factor * (-gh_first[ii]);
+            gh_arr[ii] = gh1_arr[ii] + factor * (-gh1_arr[ii]);
           }
           break;
         case 4:
           for (ii = k + 1; ii <= l; ++ii) {
-            ghsv_arr[ii] = gh_first[ii] + factor * (-gh_first[ii]);
+            ghsv_arr[ii] = gh1_arr[ii] + factor * (-gh1_arr[ii]);
           }
           break;
         default:
           std::cout << "\nError in subroutine extrapsh" << std::endl;
           break;
       }
-      nmax_ = nmax1;
+      nmax_ = nmain1_;
     } else {
-      k = nmax1 * (nmax1 + 2);
-      l = nmax2 * (nmax2 + 2);
+      k = nmain1_ * (nmain1_ + 2);
+      l = nmain2_ * (nmain2_ + 2);
       switch (gh) {
         case 3:
           for (ii = k + 1; ii <= l; ++ii) {
-            gh_arr[ii] = factor * gh_second[ii];
+            gh_arr[ii] = factor * gh2_arr[ii];
           }
           break;
         case 4:
           for (ii = k + 1; ii <= l; ++ii) {
-            ghsv_arr[ii] = factor * gh_second[ii];
+            ghsv_arr[ii] = factor * gh2_arr[ii];
           }
           break;
         default:
           std::cout << "\nError in subroutine extrapsh" << std::endl;
           break;
       }
-      nmax_ = nmax2;
+      nmax_ = nmain2_;
     }
   }
   switch (gh) {
     case 3:
       for (ii = 1; ii <= k; ++ii) {
-        gh_arr[ii] = gh_first[ii] + factor * (gh_second[ii] - gh_first[ii]);
+        gh_arr[ii] = gh1_arr[ii] + factor * (gh2_arr[ii] - gh1_arr[ii]);
       }
       break;
     case 4:
       for (ii = 1; ii <= k; ++ii) {
-        ghsv_arr[ii] = gh_first[ii] + factor * (gh_second[ii] - gh_first[ii]);
+        ghsv_arr[ii] = gh1_arr[ii] + factor * (gh2_arr[ii] - gh1_arr[ii]);
       }
       break;
     default:
@@ -397,8 +244,8 @@ void IGRF::interpsh(double date, double dte1, int nmax1, double dte2, int nmax2,
 /*                                                                          */
 /*     Input:                                                               */
 /*           date     - date of resulting model (in decimal year)           */
-/*           dte1     - date of base model                                  */
-/*           nmax1    - maximum degree and order of base model              */
+/*           epoch1_     - date of base model                                  */
+/*           nmain1_    - maximum degree and order of base model              */
 /*           gh1      - Schmidt quasi-normal internal spherical             */
 /*                      harmonic coefficients of base model                 */
 /*           nmax2    - maximum degree and order of rate-of-change model    */
@@ -420,66 +267,66 @@ void IGRF::interpsh(double date, double dte1, int nmax1, double dte2, int nmax2,
 /*           August 16, 1988                                                */
 /*                                                                          */
 /****************************************************************************/
-void IGRF::extrapsh(double date, double dte1, int nmax1, int nmax2, int gh) {
+void IGRF::extrapsh(double date, int gh) {
   // int nmax;
   int k, l;
   int ii;
   double factor;
 
-  factor = date - dte1;
-  if (nmax1 == nmax2) {
-    k = nmax1 * (nmax1 + 2);
-    nmax_ = nmax1;
+  factor = date - epoch1_;
+  if (nmain1_ == nsv1_) {
+    k = nmain1_ * (nmain1_ + 2);
+    nmax_ = nmain1_;
   } else {
-    if (nmax1 > nmax2) {
-      k = nmax2 * (nmax2 + 2);
-      l = nmax1 * (nmax1 + 2);
+    if (nmain1_ > nsv1_) {
+      k = nsv1_ * (nsv1_ + 2);
+      l = nmain1_ * (nmain1_ + 2);
       switch (gh) {
         case 3:
           for (ii = k + 1; ii <= l; ++ii) {
-            gh_arr[ii] = gh_first[ii];
+            gh_arr[ii] = gh1_arr[ii];
           }
           break;
         case 4:
           for (ii = k + 1; ii <= l; ++ii) {
-            ghsv_arr[ii] = gh_first[ii];
+            ghsv_arr[ii] = gh1_arr[ii];
           }
           break;
         default:
           std::cout << "\nError in subroutine extrapsh" << std::endl;
           break;
       }
-      nmax_ = nmax1;
+      nmax_ = nmain1_;
     } else {
-      k = nmax1 * (nmax1 + 2);
-      l = nmax2 * (nmax2 + 2);
+      k = nmain1_ * (nmain1_ + 2);
+      l = nsv1_ * (nsv1_ + 2);
       switch (gh) {
         case 3:
           for (ii = k + 1; ii <= l; ++ii) {
-            gh_arr[ii] = factor * gh_second[ii];
+            gh_arr[ii] = factor * ghsv1_arr[ii];
           }
           break;
         case 4:
           for (ii = k + 1; ii <= l; ++ii) {
-            ghsv_arr[ii] = factor * gh_second[ii];
+            ghsv_arr[ii] = factor * ghsv1_arr[ii];
           }
           break;
         default:
           std::cout << "\nError in subroutine extrapsh" << std::endl;
           break;
       }
-      nmax_ = nmax2;
+      nmax_ = nsv1_;
     }
   }
   switch (gh) {
     case 3:
       for (ii = 1; ii <= k; ++ii) {
-        gh_arr[ii] = gh_first[ii] + factor * gh_second[ii];
+        gh_arr[ii] = gh1_arr[ii] + factor * ghsv1_arr[ii];
       }
       break;
     case 4:
       for (ii = 1; ii <= k; ++ii) {
-        ghsv_arr[ii] = gh_first[ii] + factor * gh_second[ii];
+        ghsv_arr[ii] = gh1_arr[ii] + factor * ghsv1_arr[ii];
       }
       break;
     default:
