@@ -1,5 +1,3 @@
-
-
 #ifndef __IGRF_HPP_
 #define __IGRF_HPP_
 
@@ -10,8 +8,11 @@
 // #include <cstdio>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 #include "MagneticField.hpp"
+
+using json = nlohmann::json;
 
 namespace igrf_const {
 // flag for external variables, not used
@@ -29,6 +30,8 @@ constexpr int PATHLEN = MAXREAD;
 
 constexpr int MAXDEG = 13;
 constexpr int MAXCOEFF = (MAXDEG * (MAXDEG + 2) + 1);
+
+constexpr double MAXEPOCH = 2020.00;
 
 };  // namespace igrf_const
 
@@ -66,12 +69,30 @@ class IGRF : public MagneticField {
   int nmax_;        // number of truncation for specific model
   int model_index;  // index of the model closest to sdate_
 
+  // key members for interpolation
+  double epoch1_;
+  double epoch2_;
+  int nmain1_;
+  int nmain2_;
+  int nsv1_;
+  int nsv2_;
+
   // containers for coefficients
-  std::array<double, igrf_const::MAXCOEFF> gh_first;   // coeff of first model
-  std::array<double, igrf_const::MAXCOEFF> gh_second;  // coeff of second model
+  std::array<double, igrf_const::MAXCOEFF> gh1_arr;   // coeff of first model
+  std::array<double, igrf_const::MAXCOEFF> gh2_arr;  // coeff of second model
+  std::array<double, igrf_const::MAXCOEFF> ghsv1_arr;   // coeff of first sv model
+  std::array<double, igrf_const::MAXCOEFF> ghsv2_arr;  // coeff of second sv model
   std::array<double, igrf_const::MAXCOEFF> gh_arr;     // coefficients
   std::array<double, igrf_const::MAXCOEFF>
       ghsv_arr;  // secular variation coeffs
+
+    // containers for coefficients
+  // std::vector<double> gh1_arr;   // coeff of first model
+  // std::vector<double> gh2_arr;  // coeff of second model
+  // std::vector<double> ghsv1_arr;   // coeff of first sv model
+  // std::vector<double> ghsv2_arr;  // coeff of second sv model
+  // std::vector<double> gh_arr;     // coefficients
+  // std::vector<double> ghsv_arr;  // secular variation coeffs
 
   // bfield values in cartesian coordiantes
   struct {
@@ -96,21 +117,21 @@ class IGRF : public MagneticField {
 
   // containers to store model information
 
-  std::array<int, igrf_const::MAXMOD> irec_posarr;        // file position
-  std::array<std::string, igrf_const::MAXMOD> model_arr;  // model name
-  std::array<double, igrf_const::MAXMOD> epoch_arr;  // epoch (every 5 years)
-  std::array<int, igrf_const::MAXMOD> max1_arr;  // number of main field coeffs
-  std::array<int, igrf_const::MAXMOD> max2_arr;  // number of secular var coeffs
-  std::array<int, igrf_const::MAXMOD>
-      max3_arr;  // number of acceleration coeffs
-  std::array<double, igrf_const::MAXMOD>
-      yrmin_arr;  // minimum year of each model
-  std::array<double, igrf_const::MAXMOD>
-      yrmax_arr;  // maximum year of each model
-  std::array<double, igrf_const::MAXMOD>
-      altmin_arr;  // minimum altitude of each model
-  std::array<double, igrf_const::MAXMOD>
-      altmax_arr;  // maximum altitude of each model
+//   std::array<int, igrf_const::MAXMOD> irec_posarr;        // file position
+//   std::array<std::string, igrf_const::MAXMOD> model_arr;  // model name
+//   std::array<double, igrf_const::MAXMOD> epoch_arr;  // epoch (every 5 years)
+//   std::array<int, igrf_const::MAXMOD> max1_arr;  // number of main field coeffs
+//   std::array<int, igrf_const::MAXMOD> max2_arr;  // number of secular var coeffs
+//   std::array<int, igrf_const::MAXMOD>
+//       max3_arr;  // number of acceleration coeffs
+//   std::array<double, igrf_const::MAXMOD>
+//       yrmin_arr;  // minimum year of each model
+//   std::array<double, igrf_const::MAXMOD>
+//       yrmax_arr;  // maximum year of each model
+//   std::array<double, igrf_const::MAXMOD>
+//       altmin_arr;  // minimum altitude of each model
+//   std::array<double, igrf_const::MAXMOD>
+//       altmax_arr;  // maximum altitude of each model
 
   // control variables
   int nmodel;             // number of models
@@ -158,8 +179,7 @@ class IGRF : public MagneticField {
   /*           August 15, 1988                                                */
   /*                                                                          */
   /****************************************************************************/
-  void getshc(const std::string &fname, int iflag, int strec, int nmax_of_gh,
-              int gh);
+  void getshc(const std::string &fname);
   /****************************************************************************/
   /*                                                                          */
   /*                           Subroutine interpsh                            */
@@ -194,8 +214,7 @@ class IGRF : public MagneticField {
   /*           August 17, 1988                                                */
   /*                                                                          */
   /****************************************************************************/
-  void interpsh(double date, double dte1, int nmax1, double dte2, int nmax2,
-                int gh);
+  void interpsh(double date, int gh);
   /****************************************************************************/
   /*                                                                          */
   /*                           Subroutine extrapsh                            */
@@ -230,7 +249,7 @@ class IGRF : public MagneticField {
   /*           August 16, 1988                                                */
   /*                                                                          */
   /****************************************************************************/
-  void extrapsh(double date, double dte1, int nmax1, int nmax2, int gh);
+  void extrapsh(double date, int gh);
   // not too sure if we need functions below
   /****************************************************************************/
   /*                                                                          */
