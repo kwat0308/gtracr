@@ -17,26 +17,6 @@ IGRF::IGRF(const std::string& fname, const double sdate)
     : model_index{0}, nmodel{24}, igdgc{3}, sdate_{sdate}, 
     epoch1_{0.}, epoch2_{0.}, nmain1_{0}, nmain2_{0}, 
     nsv1_{0}, nsv2_{0} {
-  // readmdfile(fname);
-
-  // /* Pick model */
-  // for (int i = 0; i < nmodel; i++) {
-  //   if (sdate_ < yrmax_arr[i]) {
-  //     model_index = i;
-  //     break;
-  //   }
-  //   if (i == nmodel) {
-  //     model_index = nmodel - 1; /* if beyond end of last model use last model */
-  //   }
-  // }
-
-  // /* Get altitude min and max for selected model. */
-  // minalt = altmin_arr[model_index];
-  // maxalt = altmax_arr[model_index];
-
-  // for (auto val : irec_posarr) {
-  //   std::cout << val << std::endl;
-  // }
   
   // get epochs in which we want to interpolate / extrapolate
   for (double epoch=1900; epoch<=igrf_const::MAXEPOCH; epoch+=5) {
@@ -49,12 +29,6 @@ IGRF::IGRF(const std::string& fname, const double sdate)
 
   // get the spherical harmonic coefficients
   getshc(fname);
-
-  // 
-  // for (int i=0; i<gh1_arr.size(); ++i) {
-  //   gh_arr.push_back(0.);
-  //   ghsv_arr.push_back(0.);
-  // }
 
   // get the spherical harmonic coeffiecients for the specific date
   // and either interpolate or extrapolate if we have to
@@ -119,30 +93,17 @@ void IGRF::getshc(const std::string& fname) {
   // set variables (nmain, nsv, gh, gh_sv)
   nmain1_ = igrf_map[epoch1]["nmain"];
   nsv1_ = igrf_map[epoch1]["nsv"];
-  // std::cout << nsv1_ << ' ' << nmain1_ << std::endl;
 
-  // for (int i=0; i<nmain1_; ++i) {
-  //   gh1_arr.push_back(igrf_map[epoch1]["gh"][i]);
-  //   ghsv1_arr.push_back(igrf_map[epoch1]["gh_sv"][i]);
-  // }
-
+  // write the coefficient array for the specified epochs
+  // into the member array
   for (int i=0; i<nmain1_; ++i) {
     gh1_arr[i] = igrf_map[epoch1]["gh"][i];
     ghsv1_arr[i] = igrf_map[epoch1]["gh_sv"][i];
   }
-  // gh1_arr = igrf_map[epoch1]["gh"];
-  // ghsv1_arr = igrf_map[epoch1]["gh_sv"];
-
-  // std::cout << igrf_map[epoch1] << std::endl;
-
-  // for (auto val:gh1_arr) {
-  //   std::cout << val << '\t';
-  // }
-
   
   // std::cout << igrf_map[epoch1]["gh"] << std::endl;
 
-  std::cout << "Read the 1st coefficients" << std::endl;
+  // std::cout << "Read the 1st coefficients" << std::endl;
 
   // only set epoch2 if epoch2 is smaller than the latest epoch 
   if (epoch2_ < igrf_const::MAXEPOCH) {
@@ -152,20 +113,9 @@ void IGRF::getshc(const std::string& fname) {
       gh2_arr[i] = igrf_map[epoch2]["gh"][i];
       ghsv2_arr[i] = igrf_map[epoch2]["gh_sv"][i];
     }
-    // for (int i=0; i<nmain1_; ++i) {
-    //   gh2_arr.push_back(igrf_map[epoch2]["gh"][i]);
-    //   ghsv2_arr.push_back(igrf_map[epoch2]["gh_sv"][i]);
-    // }
-    // gh2_arr = igrf_map[epoch2]["gh"];
-    // ghsv2_arr = igrf_map[epoch2]["gh_sv"];
   }
 
-  std::cout << "Read the 2nd coefficients" << std::endl;
-
-  // resize vector
-  // gh_arr.resize(gh1_arr.size());
-  // ghsv_arr.resize(ghsv1_arr.size());
-
+  // std::cout << "Read the 2nd coefficients" << std::endl;
   // std::cout << "Finished importing coefficients." << std::endl;
 
   // std::cout << "Check results: " << std::endl;

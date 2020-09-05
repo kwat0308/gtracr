@@ -86,14 +86,6 @@ class IGRF : public MagneticField {
   std::array<double, igrf_const::MAXCOEFF>
       ghsv_arr;  // secular variation coeffs
 
-    // containers for coefficients
-  // std::vector<double> gh1_arr;   // coeff of first model
-  // std::vector<double> gh2_arr;  // coeff of second model
-  // std::vector<double> ghsv1_arr;   // coeff of first sv model
-  // std::vector<double> ghsv2_arr;  // coeff of second sv model
-  // std::vector<double> gh_arr;     // coefficients
-  // std::vector<double> ghsv_arr;  // secular variation coeffs
-
   // bfield values in cartesian coordiantes
   struct {
     double x;  // northern
@@ -115,40 +107,12 @@ class IGRF : public MagneticField {
     double zdot;
   } bfield_sv_;
 
-  // containers to store model information
-
-//   std::array<int, igrf_const::MAXMOD> irec_posarr;        // file position
-//   std::array<std::string, igrf_const::MAXMOD> model_arr;  // model name
-//   std::array<double, igrf_const::MAXMOD> epoch_arr;  // epoch (every 5 years)
-//   std::array<int, igrf_const::MAXMOD> max1_arr;  // number of main field coeffs
-//   std::array<int, igrf_const::MAXMOD> max2_arr;  // number of secular var coeffs
-//   std::array<int, igrf_const::MAXMOD>
-//       max3_arr;  // number of acceleration coeffs
-//   std::array<double, igrf_const::MAXMOD>
-//       yrmin_arr;  // minimum year of each model
-//   std::array<double, igrf_const::MAXMOD>
-//       yrmax_arr;  // maximum year of each model
-//   std::array<double, igrf_const::MAXMOD>
-//       altmin_arr;  // minimum altitude of each model
-//   std::array<double, igrf_const::MAXMOD>
-//       altmax_arr;  // maximum altitude of each model
-
   // control variables
   int nmodel;             // number of models
   int igdgc;              // flag to choose between geodesic vs geocentric
   double minyr, maxyr;    // min / max year (what is this used for?)
   double minalt, maxalt;  // min / max alt (what is this used for?)
 
-  /*
-  Read the file from fname and store the model information into
-  the arrays.
-
-  Parameters:
-  -----------
-  - fname (std::string) :
-    path to the .COF file
-  */
-  void readmdfile(const std::string &fname);
   /****************************************************************************/
   /*                                                                          */
   /*                           Subroutine getshc                              */
