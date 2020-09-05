@@ -556,10 +556,10 @@ void IGRF::shval3(int igdgc, double flat, double flon, double elev, int gh,
     }
     switch (gh) {
       case 3:
-        aa = rr * gh1_arr[l];
+        aa = rr * gh_arr[l];
         break;
       case 4:
-        aa = rr * gh2_arr[l];
+        aa = rr * ghsv_arr[l];
         break;
       default:
         std::cout << "\nError in subroutine shval3" << std::endl;
@@ -583,7 +583,7 @@ void IGRF::shval3(int igdgc, double flat, double flon, double elev, int gh,
     } else {
       switch (gh) {
         case 3:
-          bb = rr * gh1_arr[l + 1];
+          bb = rr * gh_arr[l + 1];
           cc = aa * cl[m] + bb * sl[m];
           bfield_.x += cc * q[k];
           bfield_.z -= cc * p[k];
@@ -596,7 +596,7 @@ void IGRF::shval3(int igdgc, double flat, double flon, double elev, int gh,
           l = l + 2;
           break;
         case 4:
-          bb = rr * gh2_arr[l + 1];
+          bb = rr * ghsv_arr[l + 1];
           cc = aa * cl[m] + bb * sl[m];
           bfield_temp_.x += cc * q[k];
           bfield_temp_.z -= cc * p[k];
