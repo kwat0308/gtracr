@@ -211,7 +211,7 @@ TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
       break;
     case 'i':
       // add file name to DATA_DIR (first component in igrf_params)
-      std::string DATA_PATH = igrf_params.first + "/IGRF13.COF";
+      std::string DATA_PATH = igrf_params.first + "/igrf13.json";
       double sdate = igrf_params.second;
       bfield_ = IGRF(DATA_PATH, sdate);
       break;

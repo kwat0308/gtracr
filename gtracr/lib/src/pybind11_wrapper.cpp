@@ -57,6 +57,10 @@ PYBIND11_MODULE(_libgtracr, M) {
           .def("evaluate_and_get_trajectory",
                &uTrajectoryTracer::evaluate_and_get_trajectory),
 
+     py::class_<MagneticField>(M, "MagneticField", py::module_local())  // Dipole Field class
+          .def(py::init<>())
+          .def("values", &MagneticField::values),
+
       py::class_<IGRF>(M, "IGRF", py::module_local())  // IGRF class
           .def(py::init<const std::string &, const double>())
           .def_property_readonly("sdate", &IGRF::sdate)
