@@ -1,4 +1,4 @@
-recursive-include gtracr *.h  *.c *.hpp *.cpp *.py *.COF *.json *.pkl *.shc LICENSE
+recursive-include gtracr *.h  *.c *.hpp *.cpp *.py *.ipynb *.COF *.json *.pkl *.shc LICENSE 
 recursive-include examples *.py *.ipynb *.cpp 
 include *.py
 include README.md
