@@ -40,6 +40,7 @@ class Trajectory:
     - rigidity: the cosmic ray rigidity 
     - escape_altitude: the altitude in which the particle has "escaped" Earth (default 10 * RE)
     - bfield_type: the type of bfield to evaluate the trajectory with (either 'dipole' or 'igrf', default: dipole)
+    - date: the date in which the field is evaluated in.
     '''
     def __init__(self,
                  plabel,

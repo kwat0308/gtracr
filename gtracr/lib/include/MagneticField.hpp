@@ -31,23 +31,7 @@ class MagneticField {
     val[2] = 0.;
     return val;
   }
-  // // the radial component of the Earth's magnetic field
-  // inline const double Br(const double &r, const double &theta,
-  //                        const double &phi) {
-  //   return 2. * (constants::RE / r) * (constants::RE / r) *
-  //          (constants::RE / r) * B0 * cos(theta);
-  // }
-  // // the polar component of the Earth's magnetic field
-  // inline const double Btheta(const double &r, const double &theta,
-  //                            const double &phi) {
-  //   return (constants::RE / r) * (constants::RE / r) * (constants::RE / r) *
-  //          B0 * sin(theta);
-  // }
-  // // the azimuthal-component of the Earth's magnetic field
-  // inline const double Bphi(const double &r, const double &theta,
-  //                          const double &phi) {
-  //   return 0.;
-  // }
+
 };
 
 #endif  // __MAGNETICFIELD_HPP_

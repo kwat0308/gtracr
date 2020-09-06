@@ -93,7 +93,7 @@ uTrajectoryTracer::uTrajectoryTracer(const int charge, const double &mass,
                                      const char bfield_type /*= 'd'*/,
                                      const std::pair<std::string, double>
                                          &igrf_params /*=
-        {"/home/keito/devel/gtracr/data/IGRF13.COF",
+        {"/home/keito/devel/gtracr/data",
         2020.}*/)
     : charge_{charge * constants::ELEMENTARY_CHARGE},
       mass_{mass * constants::KG_PER_GEVC2},
@@ -107,7 +107,7 @@ uTrajectoryTracer::uTrajectoryTracer(const int charge, const double &mass,
       break;
     case 'i':
       // add file name to DATA_DIR (first component in igrf_params)
-      std::string DATA_PATH = igrf_params.first + "/IGRF13.COF";
+      std::string DATA_PATH = igrf_params.first + "/igrf13.json";
       double sdate = igrf_params.second;
       bfield_ = IGRF(DATA_PATH, sdate);
       break;
