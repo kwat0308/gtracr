@@ -112,6 +112,8 @@ class IGRF13(MagneticField):
         self.curr_year = curr_year
         fpath = os.path.join(PARENT_DIR, "data", "IGRF13.shc")
 
+        leap_year = False
+
         # check if current year is a leap year or not
         if self.curr_year % 4 == 0:
             leap_year = True

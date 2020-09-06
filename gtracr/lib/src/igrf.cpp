@@ -17,13 +17,20 @@ IGRF::IGRF(const std::string& fname, const double sdate)
     : model_index{0}, nmodel{24}, igdgc{3}, sdate_{sdate}, 
     epoch1_{0.}, epoch2_{0.}, nmain1_{0}, nmain2_{0}, 
     nsv1_{0}, nsv2_{0} {
-  
+
+  if (sdate_ > igrf_const::MAXEPOCH) {
+      epoch1_ = igrf_const::MAXEPOCH;
+      epoch2_ = igrf_const::MAXEPOCH + 5.;
+  }
+  else {
   // get epochs in which we want to interpolate / extrapolate
   for (double epoch=1900; epoch<=igrf_const::MAXEPOCH; epoch+=5) {
-    if ((sdate_ - epoch) < 2.5) {  // not abs value to get the epoch before the date
-      epoch1_ = epoch;
-      epoch2_ = epoch + 5.;
-      break;
+    // set date to maximum epoch if given date is extrapolated
+        if ((sdate_ - epoch) < 2.5) {  // not abs value to get the epoch before the date
+        epoch1_ = epoch;
+        epoch2_ = epoch + 5.;
+        break;
+      }
     }
   }
 
