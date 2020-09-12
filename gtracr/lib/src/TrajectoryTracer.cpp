@@ -235,8 +235,8 @@ TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
        the ordinary differential equation for the six vector based on the
   Lorentz force equation
 */
-std::array<double, 6> &TrajectoryTracer::ode_lrz(
-    const double t,  std::array<double, 6> &vec) {
+std::array<double, 6> TrajectoryTracer::ode_lrz(const double t,
+                                                std::array<double, 6> vec) {
   // unpack array for readability
   double r = vec[0];
   double theta = vec[1];
@@ -247,9 +247,10 @@ std::array<double, 6> &TrajectoryTracer::ode_lrz(
 
   // get the lorentz factor
   double gmma = lorentz_factor(pr, ptheta, pphi);
+  double rel_mass = mass_ * gmma;
 
   // evaluate B-field
-  std::array<double, 3> &bf_values = bfield_.values(r, theta, phi);
+  std::array<double, 3> bf_values = bfield_.values(r, theta, phi);
   double bf_r = bf_values[0];
   double bf_theta = bf_values[1];
   double bf_phi = bf_values[2];
@@ -290,7 +291,7 @@ std::array<double, 6> &TrajectoryTracer::ode_lrz(
   std::array<double, 6> ode_lrz = {
       pr, (ptheta / r), (pphi / (r * sin(theta))), dprdt, dpthetadt, dpphidt};
 
-  return (1. / (mass_ * gmma)) * ode_lrz;
+  return (1. / rel_mass) * ode_lrz;
 }
 /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
 algorithm.
@@ -312,21 +313,21 @@ void TrajectoryTracer::evaluate(const double &t0, std::array<double, 6> &vec0) {
 
   // set the initial conditions
   double t = t0;
-  std::array<double, 6> &vec = vec0;
+  std::array<double, 6> vec = vec0;
   // TODO: make arrays into references for no copying
 
   // start the loop
   for (int i = 0; i < max_iter_; ++i) {
     // evaluate the k-coefficients
 
-    std::array<double, 6> &k1_vec = h * ode_lrz(t, vec);
-    std::array<double, 6> &k2_vec =
+    std::array<double, 6> k1_vec = h * ode_lrz(t, vec);
+    std::array<double, 6> k2_vec =
         h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec));
-    std::array<double, 6> &k3_vec =
+    std::array<double, 6> k3_vec =
         h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec));
-    std::array<double, 6> &k4_vec = h * ode_lrz(t + h, vec + k3_vec);
+    std::array<double, 6> k4_vec = h * ode_lrz(t + h, vec + k3_vec);
 
-    std::array<double, 6> &k_vec =
+    std::array<double, 6> k_vec =
         (1. / 6.) * (k1_vec + (2. * k2_vec) + (2. * k3_vec) + k4_vec);
 
     // increment by weighted sum
@@ -347,7 +348,7 @@ void TrajectoryTracer::evaluate(const double &t0, std::array<double, 6> &vec0) {
     if (r < constants::RE) {
       break;
     }  // if (r < constants::RE)
-  }  // for (int i = 0; i < max_iter_; ++i)
+  }    // for (int i = 0; i < max_iter_; ++i)
   // store the final time and six-vector for checking purposes
   // the last recorded time and six-vector is the final six-vector / time
   final_time_ = t;
@@ -442,15 +443,15 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
     if (r > escape_radius_) {
       particle_escaped_ = true;
       break;
-    } // if (r > escape_radius_)
+    }  // if (r > escape_radius_)
 
     // breaking condition
     // if particle reaches back onto Earth's surface again
     if (r < constants::RE) {
       break;
-    } // if (r < constants::RE)
-    
-  } // for (int i = 0; i < max_iter_; ++i)
+    }  // if (r < constants::RE)
+
+  }  // for (int i = 0; i < max_iter_; ++i)
 
   // store the final time and six-vector for checking purposes
   // the last recorded time and six-vector is the final six-vector / time
@@ -459,13 +460,12 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
 
   // create map that contains trajectory data
   std::map<std::string, std::vector<double>> trajectory_data = {
-      {"t", t_arr},         {"r", r_arr},
-      {"theta", theta_arr}, {"phi", phi_arr},
-      {"pr", pr_arr},       {"ptheta", ptheta_arr},
+      {"t", t_arr},      {"r", r_arr},   {"theta", theta_arr},
+      {"phi", phi_arr},  {"pr", pr_arr}, {"ptheta", ptheta_arr},
       {"pphi", pphi_arr}};
 
   return trajectory_data;
-} // evaluate_and_get_trajectory
+}  // evaluate_and_get_trajectory
 
 /*
 Returns the lorentz factor, evaluated from the momentum
@@ -484,8 +484,10 @@ Returns
 - gamma (const double) :
       The lorentz factor for the particular momentum
 */
-inline double &TrajectoryTracer::lorentz_factor(const double& pr, const double& ptheta, const double& pphi) {
-      // momentum magnitude
+inline double TrajectoryTracer::lorentz_factor(const double &pr,
+                                               const double &ptheta,
+                                               const double &pphi) {
+  // momentum magnitude
   double pmag = sqrt((pr * pr) + (ptheta * ptheta) + (pphi * pphi));
   // ||p|| / (m*c)
   double pm_ratio = pmag / (mass_ * constants::SPEED_OF_LIGHT);

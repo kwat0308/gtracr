@@ -279,9 +279,8 @@ def test_trajectories_dates():
     dt = 1e-5
     max_time = 1.
 
-    dates = [1900., 1905.5, 2010., 2020., 2015.,
-             2025., 1917.25, 1918., 2000., 1990.]
-
+    dates = ["1900-01-01", "1909-01-01", "1900-10-31", "2020-09-12", "2004-03-08",
+             "2000-02-28", "1970-03-26", "1952-04-31", "1999-03-08", "2024-03-09"]
     for iexp, date in enumerate(dates):
 
         (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = (
