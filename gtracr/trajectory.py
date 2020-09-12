@@ -4,7 +4,7 @@ import numpy as np
 import pickle
 from datetime import date
 from gtracr.lib._libgtracr import TrajectoryTracer, uTrajectoryTracer
-from gtracr.utils import get_particledict, get_locationdict
+from gtracr.utils import get_particledict, get_locationdict, ymd_to_dec
 from gtracr.lib.trajectorypoint import TrajectoryPoint
 from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
 from gtracr.lib.trajectory_tracer import pTrajectoryTracer
@@ -40,14 +40,14 @@ class Trajectory:
         the height of the detector from sea level in km (default = 0km)
     - location_name : str
         the location name as stored in location_dict (default = None). Available as an alternative option to initialize the location of the trajectory.
-    - plabel : str
-         the label of the particle defined in particle_dict (default = "p+"). Available options are "p+", "p-", "e+", "e-".
-    - escape_altitude : float
-        the altitude in which the particle has "escaped" Earth (default = 10 * RE)
     - bfield_type : str
         the type of bfield to evaluate the trajectory with (either 'dipole' or 'igrf', default = igrf)
     - date : str
         the date in which the field is evaluated in (defaults to the current date). Date must be formatted in "yyyy-mm-dd" format.
+    - plabel : str
+         the label of the particle defined in particle_dict (default = "p+"). Available options are "p+", "p-", "e+", "e-".
+    - escape_altitude : float
+        the altitude in which the particle has "escaped" Earth (default = 10 * RE)
     '''
 
     def __init__(self,
@@ -60,21 +60,27 @@ class Trajectory:
                  longitude=0.,
                  detector_altitude=0.,
                  location_name=None,
-                 plabel="p+",
-                 escape_altitude=10. * EARTH_RADIUS,
                  bfield_type="igrf",
-                 date=2020.):
-
-        # #  date=str(date.today())):
+                 date=str(date.today()),
+                 plabel="p+",
+                 escape_altitude=10. * EARTH_RADIUS
+                 ):
+        '''
+        Cosmic ray direction configurations
+        '''
         self.zenith_angle = zenith_angle
         self.azimuth_angle = azimuth_angle
         self.particle_altitude = particle_altitude * (1e3)  # convert to meters
         self.escape_altitude = escape_altitude
-
+        '''
+        Particle type configuration
+        '''
         # define particle from particle_dict
         particle_dict = get_particledict()
         self.particle = particle_dict[plabel]
-
+        '''
+        Geodesic coordinate configuration
+        '''
         # only import location dictionary and use those values if location_name is not None
         if location_name is not None:
             location_dict = get_locationdict()
@@ -87,6 +93,9 @@ class Trajectory:
         self.latitude = latitude
         self.longitude = longitude
         self.detector_altitude = detector_altitude * (1e3)  # convert to meters
+        '''
+        Cosmic ray energy / rigidity / momentum configuration
+        '''
         # define rigidity and energy only if they are provided, evaluate for the other member
         # also set momentum in each case
         if rigidity is None:
@@ -102,15 +111,21 @@ class Trajectory:
             raise Exception(
                 "Provide either energy or rigidity as input, not both!")
 
-        self.particle_escaped = False  # check if trajectory is allowed or not
+        '''
+        Magnetic Field Model configuration
+        '''
         # type of bfield to use
         # take only first character for compatibility with char in c++
         self.bfield_type = bfield_type[0]
 
         # find the path to the data and set current date for igrf bfield
         datapath = os.path.abspath(os.path.join(CURRENT_DIR, "data"))
-        self.igrf_params = (datapath, date)
-
+        dec_date = ymd_to_dec(date)
+        self.igrf_params = (datapath, dec_date)
+        '''
+        Other set-ups
+        '''
+        self.particle_escaped = False  # check if trajectory is allowed or not
         # final time and six-vector, used for testing purposes
         self.final_time = 0.
         self.final_sixvector = np.zeros(6)

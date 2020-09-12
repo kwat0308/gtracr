@@ -73,6 +73,54 @@ def dec_to_dms(lat_dec, lng_dec):
     return lat_dms, lng_dms
 
 
+def ymd_to_dec(ymd_date):
+    '''
+    Converts a date in yyyy-mm-dd format into decimal format in
+    units of years.
+
+    Parameters
+    ----------
+
+    - ymd : str
+        the year, month, and date of the specified date in yyyy-mm-dd
+        format.
+
+    Returns
+    ---------
+
+    - dec_date : float
+        the date in decimal format, in units of years.
+
+    '''
+    # break down the str to get year, month, date separately
+    year, month, day = [float(val) for val in ymd_date.split("-")]
+
+    # the number of days in each month
+    # not considering leap years right now
+    days_per_mth = np.array(
+        [31., 28., 31., 30., 31., 30., 31., 31., 30., 31., 30., 31.])
+
+    # get the total number of days based on the month + day
+    ndays = np.cumsum(days_per_mth[int(month)-1]) + day
+
+    # check if year is a leap year or not
+    # this will change the maximum # days in a year
+    # also will change the number of days to the given date
+    max_ndays = 365
+    if year % 4 == 0:
+        max_ndays += 1
+        ndays += 1
+
+    # convert month into decimal years
+    dec_mth = month / 12.
+
+    # convert days into decimal years
+    dec_days = ndays / max_ndays
+
+    # return the sum of year, month, day
+    return year + dec_mth + dec_days
+
+
 def import_dict(fname):
     '''
     Import the dictionary with filepath fname.
