@@ -16,12 +16,6 @@ using json = nlohmann::json;
   Namespace for the constants used to evaluate the IGRF model.
 */
 namespace igrf_const {
-// flag for external variables, not used
-constexpr int IEXT = 0;
-// max number of models
-constexpr int MAXMOD = 25;
-// max path and filename length
-constexpr int PATHLEN = MAXREAD;
 // degree of truncation for IGRF model
 constexpr int MAXDEG = 13;
 // maximum number of Gaussian coefficients

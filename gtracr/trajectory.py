@@ -23,7 +23,7 @@ class Trajectory:
         the angle of the cosmic ray trajectory from the local zenith, with 0 being at the local zenith
     - azimuth_angle : float
         the angle of the cosmic ray trajectory with 0 being in the direction of the geographic North in the local tangent plane
-    - energy : float 
+    - energy : float
         the cosmic ray energy. Cannot be used concurrently with rigidity (default = None).
     - rigidity : float
         the cosmic ray rigidity. Cannot be used concurrently with energy (default = None).
@@ -63,7 +63,9 @@ class Trajectory:
                  plabel="p+",
                  escape_altitude=10. * EARTH_RADIUS,
                  bfield_type="igrf",
-                 date=str(date.today())):
+                 date=2020.):
+
+        # #  date=str(date.today())):
         self.zenith_angle = zenith_angle
         self.azimuth_angle = azimuth_angle
         self.particle_altitude = particle_altitude * (1e3)  # convert to meters
