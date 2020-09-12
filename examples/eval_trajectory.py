@@ -12,7 +12,7 @@ import argparse
 
 from gtracr.utils import dec_to_dms
 from gtracr.lib.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
-from gtracr.lib.plotting import plot_3dtraj, plot_projections, plot_momentum
+from gtracr.lib.plotting import plot_3dtraj, plot_2dtraj, plot_trajmomentum
 from gtracr.trajectory import Trajectory
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -38,7 +38,7 @@ def plot_trajectory(traj_datadict, title, check_3dtraj=False, show_plot=False):
     convert_to_cartesian(traj_datadict)
 
     # plot the projections
-    plot_projections(
+    plot_2dtraj(
         traj_datadict,
         plotdir_path=PLOT_DIR
     )
@@ -118,7 +118,7 @@ def get_trajectory():
 
     # get momentum only if check_pmag is true
     if check_pmag:
-        plot_momentum(traj_datadict, p0, show_plot)
+        plot_trajmomentum(traj_datadict, p0, show_plot)
 
     # plot the trajectory
     plot_trajectory(traj_datadict, title, check_3dtraj, show_plot)

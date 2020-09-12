@@ -1,4 +1,3 @@
-from gtracr.lib.constants import KG_M_S_PER_GEVC
 import os
 import sys
 import numpy as np
@@ -7,11 +6,10 @@ from mpl_toolkits import mplot3d
 import matplotlib.patches as patches
 import plotly.graph_objects as go
 
+from gtracr.lib.constants import KG_M_S_PER_GEVC
+
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(CURRENT_DIR))
-
-# sys.path.append(PARENT_DIR)
-
 PLOT_DIR = os.path.join(ROOT_DIR, "..", "gtracr_plots")
 
 
@@ -151,7 +149,7 @@ def plot_3dtraj(
         fig.write_html(os.path.join(plotdir_path, file_name))
 
 
-def plot_projections(
+def plot_2dtraj(
     trajectory_data,
     title_name="Particle Trajectory",
     file_name="test_trajectory_proj.png",
@@ -197,11 +195,11 @@ def plot_projections(
     ax_mag = ax_proj[1, 1]
 
     # projection onto xy plane
-    plot_projection(x_arr, y_arr, t_arr, fig_proj, ax_xy, "x", "y")
+    plot_traj_projection(x_arr, y_arr, t_arr, fig_proj, ax_xy, "x", "y")
     # projection onto xz plane
-    plot_projection(x_arr, z_arr, t_arr, fig_proj, ax_xz, "x", "z")
+    plot_traj_projection(x_arr, z_arr, t_arr, fig_proj, ax_xz, "x", "z")
     # projection onto yz plane
-    plot_projection(y_arr, z_arr, t_arr, fig_proj, ax_yz, "y", "z")
+    plot_traj_projection(y_arr, z_arr, t_arr, fig_proj, ax_yz, "y", "z")
 
     # magnitude vs time
     ax_mag.plot(t_arr, mag_arr)
@@ -218,7 +216,7 @@ def plot_projections(
     plt.savefig(os.path.join(PLOT_DIR, "test_trajectory_proj.png"))
 
 
-def plot_projection(arr1, arr2, t_arr, fig, ax, label1, label2):
+def plot_traj_projection(arr1, arr2, t_arr, fig, ax, label1, label2):
     '''
     Plot the projection of the trajectory.
 
@@ -254,7 +252,7 @@ def plot_projection(arr1, arr2, t_arr, fig, ax, label1, label2):
         label1, label2))
 
 
-def plot_momentum(trajectory_data, p0, show_plot=False):
+def plot_traj_momentum(trajectory_data, p0, show_plot=False):
     '''
     Plot the time evolution of the magnitude of the momentum. 
     This is mainly used for debugging purposes as a cross-check 
@@ -293,3 +291,138 @@ def plot_momentum(trajectory_data, p0, show_plot=False):
     if show_plot:
         plt.show()
     plt.savefig(os.path.join(PLOT_DIR, "pmag_plot.png"))
+
+
+def plot_gmcutoff_scatter(gmcutoff_data,
+                          locname,
+                          plabel,
+                          show_plot=False,
+                          plotdir_path=PLOT_DIR):
+    '''
+    Plot the scatter plot of the geomagnetic rigidity cutoffs at the specified location and type of particle that the cosmic ray constitutes of. Currently only supports matplotlib.
+
+    Parameters
+    ----------
+    - gmcutoff_data : dict(str, np.array)
+        A dictionary that consists of the azimuthal and zenith components of the particle trajectory and its corresponding rigidity cutoff in the following order: (azimuth, zenith, rigidity cutoff)
+
+    - locname : str
+        The name of the detector location.
+
+    - plabel : str
+        The label of the particle that constitutes the cosmic ray. 
+
+    - show_plot : bool
+        Decides to choose to show the generated plot or not. If True, presents the plot in a GUI window.
+
+    - plotdir_path : str
+        The path to the directory in which the plots are stored in. Default is set to a directory `gtracr_plots` placed in parallel with the root directory.
+
+    '''
+
+    # get azimuth, zenith, and rigidity cutoff arrays
+    azimuth_arr = gmcutoff_data["azimuth"]
+    zenith_arr = gmcutoff_data["zenith"]
+    rcutoff_arr = gmcutoff_data["rcutoff"]
+
+    fig, ax = plt.subplots()
+    sc = ax.scatter(azimuth_arr, zenith_arr, c=rcutoff_arr, s=2.0)
+    ax.set_xlabel("Azimuthal Angle [Degrees]")
+    ax.set_ylabel("Zenith Angle [Degrees]")
+    ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
+        locname, plabel))
+
+    cbar = fig.colorbar(sc, ax=ax)
+    cbar.ax.set_ylabel("Rigidity [GV]")
+
+    ax.set_xlim([0., 360.])
+    ax.set_ylim([180., 0.])
+
+    plt.savefig(os.path.join(plotdir_path,
+                             "{0}_{1}_scatterplot.png".format(locname,
+                                                              plabel)),
+                dpi=800)
+
+    if show_plot:
+        plt.show()
+
+
+def plot_gmcutoff_heatmap(gmcutoff_grids,
+                          rigidity_list,
+                          locname,
+                          plabel,
+                          show_plot=False,
+                          plotdir_path=PLOT_DIR):
+    '''
+    Plot the heatmap of the geomagnetic rigidity cutoffs at the specified location and type of particle that the cosmic ray constitutes of. Currently only supports matplotlib.
+
+    Parameters
+    ----------
+    - gmcutoff_grids : tuplpe(np.array(float))
+        An array that consists of the azimuthal and zenith components of the particle trajectory and its corresponding interpolated rigidity cutoff in the following order: (azimuth, zenith, rigidity cutoff)
+
+    - rigidity_list : np.array(float)
+        The list of rigidities in which each Monte Carlo iteration had evaluated the rigidity cutoff for. Required to determine colorbar limits and contour levels.
+
+    - locname : str
+        The name of the detector location.
+
+    - plabel : str
+        The label of the particle that constitutes the cosmic ray. 
+
+    - show_plot : bool
+        Decides to choose to show the generated plot or not. If True, presents the plot in a GUI window.
+
+    - plotdir_path : str
+        The path to the directory in which the plots are stored in. Default is set to a directory `gtracr_plots` placed in parallel with the root directory.
+
+    '''
+
+    (azimuth_grid, zenith_grid, rcutoff_grid) = gmcutoff_grids
+
+    # plot the contour plot
+    # we use imshow to create a mock filled contour plot
+    # and plot contour lines over the imshow plot
+    fig, ax = plt.subplots(figsize=(12, 9), constrained_layout=True)
+
+    image = ax.imshow(rcutoff_grid,
+                      extent=[-2.5, 362.5, -2.5, 182.5],
+                      origin='upper',
+                      cmap="RdBu_r",
+                      interpolation="bilinear",
+                      aspect="auto",
+                      vmin=np.min(rigidity_list),
+                      vmax=np.max(rigidity_list),
+                      alpha=1.)
+    ax.axis('image')
+
+    ax.contour(azimuth_grid,
+               zenith_grid,
+               rcutoff_grid,
+               colors="k",
+               linewidths=0.5,
+               levels=len(rigidity_list),
+               alpha=1.)
+
+    # shrink parameter should change accordingly to
+    # figsize (trial and error for now...)
+    cbar = fig.colorbar(image, ax=ax, shrink=0.6)
+    cbar.ax.set_ylabel("Rigidity [GV]")
+
+    # ylim from 180 to 0 to follow convention in Honda 2002 paper
+    ax.set_xlim([0., 360.])
+    ax.set_ylim([180., 0.])
+
+    ax.set_xlabel("Azimuthal Angle [Degrees]")
+    ax.set_ylabel("Zenith Angle [Degrees]")
+    ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
+        locname, plabel))
+
+    # only save plot is save_plot is True
+    # otherwise show the plot in a GUI window
+    if show_plot:
+        plt.show()
+
+    plt.savefig(
+        os.path.join(plotdir_path,
+                     "{0}_{1}_cutoffplot.png".format(locname, plabel)))
