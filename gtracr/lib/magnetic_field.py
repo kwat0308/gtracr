@@ -8,15 +8,10 @@ import os
 import sys
 import os.path as p
 import numpy as np
-# import csv
 from scipy.interpolate import interp1d
-
-# sys.path.append(os.getcwd())
-# sys.path.append(p.join(os.getcwd(), "gtracr"))
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
-# sys.path.append(PARENT_DIR)
 
 
 class MagneticField:
@@ -35,6 +30,7 @@ class MagneticField:
     no external currents, i.e. curl(B) = 0
 
     '''
+
     def __init__(self):
         pass
 
@@ -45,14 +41,17 @@ class MagneticField:
 
         Parameters
         ----------
-        - r : the radial component in meters
-        - theta: the polar component in radians
-        - phi : the phi component in radians
+        - r : float
+            the radial component in meters
+        - theta : float
+            the polar component in radians
+        - phi : float
+            the phi component in radians
 
         Returns
         -------
-        - Br, Btheta, Bphi: The spherical components
-                            of the magnetic field
+        - Br, Btheta, Bphi: np.array(float), size 3
+            The spherical components of the magnetic field
         '''
 
         Br = 2. * (EARTH_RADIUS / r)**3. * G10 * np.cos(theta)
@@ -60,15 +59,6 @@ class MagneticField:
         Bphi = 0.
 
         return np.array([Br, Btheta, Bphi])
-
-    # def Br(self, r, theta, phi):
-    #     return 2. * (EARTH_RADIUS / r)**3. * G10 * np.cos(theta)
-
-    # def Btheta(self, r, theta, phi):
-    #     return (EARTH_RADIUS / r)**3. * G10 * np.sin(theta)
-
-    # def Bphi(self, r, theta, phi):
-    #     return 0.
 
 
 class IGRF13(MagneticField):
@@ -88,22 +78,26 @@ class IGRF13(MagneticField):
 
     Members
     -------
-    - curr_year: the current year in years
-    - igrf_coeffs : the Gauss coefficients for the year 
-                    specified in curr_year.
-    - nmax : the number of truncation
+    - curr_year : float
+        the current year in years
+    - igrf_coeffs : np.array, float
+        the Gauss coefficients for the year specified in curr_year.
+    - nmax : int
+        the number of truncation
 
     Initialization Parameters
     -------------------------
-    - curr_year: the current year in years. This is required as the 
-            magnetic field values vary in a linear fashion 
-            per year.
+    - curr_year : float
+        the current year in years. This is required as the 
+        magnetic field values vary in a linear fashion per year.
 
-    - nmax (optional): the number to truncate the series expansion of
-                        the magnetic field. The default value is obtained
-                        from the .shc file.
+    - nmax : int, optional
+        the number to truncate the series expansion of the 
+        magnetic field. The default value is obtained from 
+        the .shc file.
 
     '''
+
     def __init__(self, curr_year, nmax=None):
         # override MagneticField __init__ function
         # not necessary, but for decorative sake
@@ -146,49 +140,3 @@ class IGRF13(MagneticField):
                                             nmax=self.nmax)
 
         return np.array([Br, Btheta, Bphi])
-
-    # def get_igrfcoeffs(self, fpath):
-    #     '''
-    #     Get the IGRF Gauss coeffiecients for all years
-    #     by performing an interpolation
-
-    #     Parameters
-    #     ----------
-    #     - fpath: the file path in which the .shc file is in
-
-    #     Returns
-    #     -------
-    #     - coeffs_curr : the Gauss coefficients for the current year
-    #     - nmax : the number of truncation for the series expansion
-    #             of the IGRF model. Obtained from the .shc file.
-    #     '''
-    #     # check if current year is a leap year or not
-    #     if self.curr_year % 4 == 0:
-    #         leap_year = True
-
-    #     # import the coefficients from .shc file
-    #     igrf = iuf.load_shcfile(fpath, leap_year=leap_year)
-
-    #     # interpolate to account for any year
-    #     # linear interpolation since time variation in
-    #     # coefficients is a linear one
-    #     interp_coeffs = interp1d(
-    #         igrf.time,
-    #         igrf.coeffs,
-    #         kind="linear",
-    #     )
-
-    #     # get the number of truncation based on the
-    #     # igrf .shc file
-    #     nmax = igrf.parameters["nmax"]
-
-    #     coeffs_curr = interp_coeffs(self.curr_year).T
-
-    #     return coeffs_curr, nmax
-
-
-# if __name__ == "__main__":
-#     bfield = MagneticField()
-#     bfield.import_coeffs()
-
-#     print(bfield.gcoeffs, bfield.hcoeffs)

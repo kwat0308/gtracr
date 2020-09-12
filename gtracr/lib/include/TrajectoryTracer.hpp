@@ -164,9 +164,6 @@ Class Members
   - br, btheta, bphi (double):
         the magnetic field components at time t
   */
-//   inline double dprdt(const double &r, const double &theta, const double &phi,
-//                       const double &br, const double &btheta,
-//                       const double &bphi);
 
   /*
   The lorentz factor

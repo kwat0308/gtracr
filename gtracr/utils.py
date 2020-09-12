@@ -20,13 +20,17 @@ def dec_to_dms(lat_dec, lng_dec):
 
     Parameters
     ----------
-    - lat_dec (float): the latitude in decimal notation ([-90, 90])
-    - lng_dec (float): the longitude in decimal notation ([-180,180])
+    - lat_dec : float
+        the latitude in decimal notation ([-90, 90])
+    - lng_dec : float
+        the longitude in decimal notation ([-180,180])
 
     Returns
     --------
-    - lat_dms (str) : latitude in DMS notation
-    - lng_dms (str) : longitude in DMS notation
+    - lat_dms : str
+        latitude in DMS notation
+    - lng_dms : str
+        longitude in DMS notation
 
     The evaluation is performed with reference to the DMS to decimal calculator:
     https://www.rapidtables.com/convert/number/degrees-to-degrees-minutes-seconds.html
@@ -44,7 +48,7 @@ def dec_to_dms(lat_dec, lng_dec):
     - latitude goes counter-clockwise from the equator
     - longitude goes counter-clockwise from the Prime Meridian
     '''
-
+    # latitude in dms
     lat_deg = int(np.floor(lat_dec))
     lat_min = int(np.floor((lat_dec - lat_deg) * 60.))
     lat_sec = int(np.floor((lat_dec - lat_deg - (lat_min / 60.)) * 60.))
@@ -55,6 +59,7 @@ def dec_to_dms(lat_dec, lng_dec):
     lat_dms = "{:d}°{:d}\'{:d}\"{:s}".format(lat_deg, lat_min, lat_sec,
                                              lat_symb)
 
+    # longitude in dms
     lng_deg = int(np.floor(lng_dec))
     lng_min = int(np.floor((lng_dec - lng_deg) * 60.))
     lng_sec = int(np.floor((lng_dec - lng_deg - (lng_min / 60.)) * 60.))
@@ -66,6 +71,7 @@ def dec_to_dms(lat_dec, lng_dec):
                                              lng_symb)
 
     return lat_dms, lng_dms
+
 
 def import_dict(fname):
     '''

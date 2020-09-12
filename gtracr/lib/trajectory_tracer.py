@@ -1,7 +1,3 @@
-from scipy import interpolate
-from gtracr.lib.constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
-from gtracr.lib.trajectorypoint import TrajectoryPoint
-from gtracr.lib.magnetic_field import MagneticField, IGRF13
 '''
 Class that traces the trajectory of the particle
 
@@ -17,6 +13,11 @@ import sys
 import numpy as np
 from datetime import datetime as dt
 
+from scipy import interpolate
+from gtracr.lib.constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
+from gtracr.lib.trajectorypoint import TrajectoryPoint
+from gtracr.lib.magnetic_field import MagneticField, IGRF13
+
 # CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 # sys.path.append(CURRENT_DIR)
 
@@ -25,19 +26,33 @@ class pTrajectoryTracer:
     '''
     A class that traces the trajectory of the particle. 
 
-    Members
-    --------
+    Parameters
+    ----------
 
-    - charge: the particle's charge in electrons
-    - mass: the particle's mass in GeV
-    - escape_radius: the radius in which the particle effectively escaped (default at 10RE). Defined relative to Earth's center.
-    - stepsize: the stepsize of the integrator (default:1e-5)
-    - max_time: the maximum time for the trajectory tracing procedure (default=10s)
-    - bfield_type: the type of magnetic field to use for trajectory tracing, either "d" for dipole or "i" for igrf (default="d")
-    - max_step: the maximum number of steps, evaluated from max_time and stepsize
-    - particle_escaped: boolean to check if particle has escaped or not
-    - bfield: the magnetic field model that will be used
-    - igrf_params : the path to the data directory and the current date used in the IGRF model
+    - charge : int
+        the particle's charge in electrons
+    - mass : float
+        the particle's mass in GeV
+    - escape_radius : float
+        the radius in which the particle effectively escaped 
+        (default = 10RE). Defined relative to Earth's center.
+    - stepsize : float
+        the stepsize of the integrator (default = 1e-5)
+    - max_time : float
+        the maximum time for the trajectory tracing procedure (default = 10s)
+    - bfield_type : str
+        the type of magnetic field to use for trajectory tracing, 
+        either "d" for dipole or "i" for igrf (default = "i")
+    - max_step : int
+        the maximum number of steps, evaluated from max_time 
+        and stepsize (default = 100000)
+    - particle_escaped : bool
+        checks if particle has escaped or not (default = False)
+    - bfield : MagneticField
+        the magnetic field model used (default = dipole model)
+    - igrf_params : tuple, size 2
+        the path to the data directory and the current date used 
+        in the IGRF model (default = None)
 
     Note:
     The "p" in front of pTrajectoryTracer
@@ -65,9 +80,13 @@ class pTrajectoryTracer:
         if bfield_type.find("d") != -1:
             self.bfield = MagneticField()
         elif bfield_type.find("i") != -1:
-            curr_year = igrf_params[1]  # the current date
-            nmax = 13  # should be able to vary in future versions
-            self.bfield = IGRF13(curr_year, nmax=nmax)
+            if igrf_params is None:
+                raise Exception(
+                    "The dates used for the IGRF model is not provided!")
+            else:
+                year = igrf_params[1]  # the current date
+                nmax = 13  # should be able to vary in future versions
+                self.bfield = IGRF13(year, nmax=nmax)
         else:
             raise Exception("Only modes 'dipole' and 'igrf' are allowed!")
 
@@ -84,12 +103,15 @@ class pTrajectoryTracer:
         Parameters
         -----------
 
-        - t : the time
-        - vec: the six-vector (r, theta, phi, pr, ptheta, pphi) at time t
+        - t : float
+            the time
+        - vec : np.array(float), size 6
+            the six-vector (r, theta, phi, pr, ptheta, pphi) at time t
 
         Returns
         --------
-        - ode_lrz : the ordinary differential equation for the six vector based on the Lorentz force equation
+        - ode_lrz : np.array(float), size 6
+            the ordinary differential equation for the six vector based on the Lorentz force equation
         '''
         # unpack vector for readability
         (r, theta, phi, pr, ptheta, pphi) = vec
@@ -148,9 +170,10 @@ class pTrajectoryTracer:
         Parameters
         ----------
 
-        - t0: the initial time
-        - vec0 : the initial six-vector (r0, theta0, phi0, pr0, pphi0, ptheta0)
-        - get_data: whether to extract the trajectory arrays as a dictionary or not (default False)
+        - t0 : float
+            the initial time
+        - vec0 : np.array(float), size 6
+            the initial six-vector (r0, theta0, phi0, pr0, pphi0, ptheta0)
 
         Returns
         --------
@@ -187,7 +210,7 @@ class pTrajectoryTracer:
             # then trajectory is forbidden
             if r < EARTH_RADIUS:
                 break
-        
+
         # set the final time / vector
         self.final_time = t
         self.final_sixvector = vec
@@ -201,9 +224,10 @@ class pTrajectoryTracer:
         Parameters
         ----------
 
-        - t0: the initial time
-        - vec0 : the initial six-vector (r0, theta0, phi0, pr0, pphi0, ptheta0)
-        - get_data: whether to extract the trajectory arrays as a dictionary or not (default False)
+        - t0 : float
+            the initial time
+        - vec0 : np.array(float), size 6
+            the initial six-vector (r0, theta0, phi0, pr0, pphi0, ptheta0)
 
         Returns
         --------
@@ -216,15 +240,10 @@ class pTrajectoryTracer:
         t = t0
         vec = vec0
         h = self.stepsize  # for more compact writing
-        # print(t, vec)
+        # initialize arrays
+        # ugly, but appending is better than trimming zeros later
         t_arr = []
-        # vec_arr = []
-        r_arr = []
-        theta_arr = []
-        phi_arr = []
-        pr_arr = []
-        ptheta_arr = []
-        pphi_arr = []
+        vec_arr = []
         # start the loop
         for i in range(self.max_step):
 
@@ -232,12 +251,7 @@ class pTrajectoryTracer:
 
             # append data
             t_arr.append(t)
-            r_arr.append(vec[0])
-            theta_arr.append(vec[1])
-            phi_arr.append(vec[2])
-            pr_arr.append(vec[3])
-            ptheta_arr.append(vec[4])
-            pphi_arr.append(vec[5])
+            vec_arr.append(vec)
 
             # evaluate k-coefficients
             k1_vec = h * self.ode_lrz(t, vec)
@@ -249,8 +263,6 @@ class pTrajectoryTracer:
             vec += (1. / 6.) * (k1_vec + (2. * k2_vec) +
                                 (2. * k3_vec) + k4_vec)
             t += h  # increment time
-
-            # print(vec, t)
 
             # breaking conditions based on value of r
             r = vec[0]  # for readability
@@ -268,6 +280,10 @@ class pTrajectoryTracer:
         self.final_time = t
         self.final_sixvector = vec
 
+        # get corresponding arrays using zip
+        (r_arr, theta_arr, phi_arr, pr_arr,
+         ptheta_arr, pphi_arr) = np.array(vec_arr).T
+
         # create the dictionary that contains the trajectory data
         trajectory_data = {
             "t": t_arr,
@@ -278,7 +294,5 @@ class pTrajectoryTracer:
             "ptheta": ptheta_arr,
             "pphi": pphi_arr
         }
-
-        # print(t_arr, vec_arr)
 
         return trajectory_data

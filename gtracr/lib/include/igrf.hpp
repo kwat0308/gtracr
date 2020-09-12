@@ -5,7 +5,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-// #include <cstdio>
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
@@ -13,24 +12,21 @@
 #include "MagneticField.hpp"
 
 using json = nlohmann::json;
-
+/*
+  Namespace for the constants used to evaluate the IGRF model.
+*/
 namespace igrf_const {
 // flag for external variables, not used
 constexpr int IEXT = 0;
-// ?
-constexpr int RECL = 81;
-// ?
-constexpr int MAXINBUFF = RECL + 14;
-// ?
-constexpr int MAXREAD = MAXINBUFF - 2;
 // max number of models
 constexpr int MAXMOD = 25;
 // max path and filename length
 constexpr int PATHLEN = MAXREAD;
-
+// degree of truncation for IGRF model
 constexpr int MAXDEG = 13;
+// maximum number of Gaussian coefficients
 constexpr int MAXCOEFF = (MAXDEG * (MAXDEG + 2) + 1);
-
+// the longest epoch
 constexpr double MAXEPOCH = 2020.00;
 
 };  // namespace igrf_const
@@ -70,12 +66,12 @@ class IGRF : public MagneticField {
   int model_index;  // index of the model closest to sdate_
 
   // key members for interpolation
-  double epoch1_;
-  double epoch2_;
-  int nmain1_;
-  int nmain2_;
-  int nsv1_;
-  int nsv2_;
+  double epoch1_;  // first epoch
+  double epoch2_;  // next epoch
+  int nmain1_;  // # main coeffs in first epoch
+  int nmain2_;  // # main coeffs in second epoch
+  int nsv1_;  // # secular variation coeffs in first epoch
+  int nsv2_;  // # secular variation coeffs in second epoch
 
   // containers for coefficients
   std::array<double, igrf_const::MAXCOEFF> gh1_arr;   // coeff of first model
@@ -113,106 +109,53 @@ class IGRF : public MagneticField {
   double minyr, maxyr;    // min / max year (what is this used for?)
   double minalt, maxalt;  // min / max alt (what is this used for?)
 
-  /****************************************************************************/
-  /*                                                                          */
-  /*                           Subroutine getshc                              */
-  /*                                                                          */
-  /****************************************************************************/
-  /*                                                                          */
-  /*     Reads spherical harmonic coefficients from the specified             */
-  /*     model into an array.                                                 */
-  /*                                                                          */
-  /*     Input:                                                               */
-  /*           stream     - Logical unit number                               */
-  /*           iflag      - Flag for SV equal to ) or not equal to 0          */
-  /*                        for designated read statements                    */
-  /*           strec      - Starting record number to read from model         */
-  /*           nmax_of_gh - Maximum degree and order of model                 */
-  /*                                                                          */
-  /*     Output:                                                              */
-  /*           gh1 or 2   - Schmidt quasi-normal internal spherical           */
-  /*                        harmonic coefficients                             */
-  /*                                                                          */
-  /*     FORTRAN                                                              */
-  /*           Bill Flanagan                                                  */
-  /*           NOAA CORPS, DESDIS, NGDC, 325 Broadway, Boulder CO.  80301     */
-  /*                                                                          */
-  /*     C                                                                    */
-  /*           C. H. Shaffer                                                  */
-  /*           Lockheed Missiles and Space Company, Sunnyvale CA              */
-  /*           August 15, 1988                                                */
-  /*                                                                          */
-  /****************************************************************************/
+  /*
+    Gets the spherical harmonic coefficients of the epochs closest
+    to the date specified from the JSON file in which the coefficients are
+    stored.
+
+    The relavent Gauss coefficients for the two closest epochs, as well as their
+    secular variation coefficients (if any) are stored in gh1_arr etc.
+
+    Parameters
+    -----------
+    - fname (const std::string &) :
+        the filepath to the coefficient file
+  */
   void getshc(const std::string &fname);
-  /****************************************************************************/
-  /*                                                                          */
-  /*                           Subroutine interpsh                            */
-  /*                                                                          */
-  /****************************************************************************/
-  /*                                                                          */
-  /*     Interpolates linearly, in time, between two spherical harmonic       */
-  /*     models.                                                              */
-  /*                                                                          */
-  /*     Input:                                                               */
-  /*           date     - date of resulting model (in decimal year)           */
-  /*           dte1     - date of earlier model                               */
-  /*           nmax1    - maximum degree and order of earlier model           */
-  /*           gh1      - Schmidt quasi-normal internal spherical             */
-  /*                      harmonic coefficients of earlier model              */
-  /*           dte2     - date of later model                                 */
-  /*           nmax2    - maximum degree and order of later model             */
-  /*           gh2      - Schmidt quasi-normal internal spherical             */
-  /*                      harmonic coefficients of internal model             */
-  /*                                                                          */
-  /*     Output:                                                              */
-  /*           gha or b - coefficients of resulting model                     */
-  /*           nmax     - maximum degree and order of resulting model         */
-  /*                                                                          */
-  /*     FORTRAN                                                              */
-  /*           A. Zunde                                                       */
-  /*           USGS, MS 964, box 25046 Federal Center, Denver, CO.  80225     */
-  /*                                                                          */
-  /*     C                                                                    */
-  /*           C. H. Shaffer                                                  */
-  /*           Lockheed Missiles and Space Company, Sunnyvale CA              */
-  /*           August 17, 1988                                                */
-  /*                                                                          */
-  /****************************************************************************/
+  /*
+    Interpolates the spherical harmonic coefficients in between two epochs to 
+    obtain the coefficients for the specified date. The interpolation is done
+    linearly in time using a first-order Taylor approximation.
+
+    The resulting main field and secular variation coefficients for the specified
+    date is stored in gh_arr, ghsv_arr respectively.
+
+    Parameters
+    ----------
+    - date (double) :
+        the date in which the coefficients are obtained for.
+    - gh (int) :
+        flag to determine between interpolation of main field coefficients
+        or secular variation coefficients.
+  */
   void interpsh(double date, int gh);
-  /****************************************************************************/
-  /*                                                                          */
-  /*                           Subroutine extrapsh                            */
-  /*                                                                          */
-  /****************************************************************************/
-  /*                                                                          */
-  /*     Extrapolates linearly a spherical harmonic model with a              */
-  /*     rate-of-change model.                                                */
-  /*                                                                          */
-  /*     Input:                                                               */
-  /*           date     - date of resulting model (in decimal year)           */
-  /*           dte1     - date of base model                                  */
-  /*           nmax1    - maximum degree and order of base model              */
-  /*           gh1      - Schmidt quasi-normal internal spherical             */
-  /*                      harmonic coefficients of base model                 */
-  /*           nmax2    - maximum degree and order of rate-of-change model    */
-  /*           gh2      - Schmidt quasi-normal internal spherical             */
-  /*                      harmonic coefficients of rate-of-change model       */
-  /*                                                                          */
-  /*     Output:                                                              */
-  /*           gha or b - Schmidt quasi-normal internal spherical             */
-  /*                    harmonic coefficients                                 */
-  /*           nmax   - maximum degree and order of resulting model           */
-  /*                                                                          */
-  /*     FORTRAN                                                              */
-  /*           A. Zunde                                                       */
-  /*           USGS, MS 964, box 25046 Federal Center, Denver, CO.  80225     */
-  /*                                                                          */
-  /*     C                                                                    */
-  /*           C. H. Shaffer                                                  */
-  /*           Lockheed Missiles and Space Company, Sunnyvale CA              */
-  /*           August 16, 1988                                                */
-  /*                                                                          */
-  /****************************************************************************/
+  /*
+    Extrapolates the spherical harmonic coefficients from the latest epoch to
+    obtain the coefficients for the specified date. The extrapolates is done
+    linearly in time using a first-order Taylor approximation.
+
+    The resulting main field and secular variation coefficients for the specified
+    date is stored in gh_arr, ghsv_arr respectively.
+
+    Parameters
+    ----------
+    - date (double) :
+        the date in which the coefficients are obtained for.
+    - gh (int) :
+        flag to determine between extrapolates of main field coefficients
+        or secular variation coefficients.
+  */
   void extrapsh(double date, int gh);
   // not too sure if we need functions below
   /****************************************************************************/
@@ -250,11 +193,34 @@ class IGRF : public MagneticField {
 
  public:
   /*
-   Initialize the IGRF model. The coefficients are imported and are stored
-   in the corresponding arrays.
+  Initialize the IGRF model of Earth's magnetic field. The coefficients 
+  are imported and are stored in the corresponding arrays.
 
-   Parameters
-   -----------
+  This code is derived from the MagneticField class that contains the Earth's
+  magnetic field as a dipole field.
+
+  This code supports dates (year, month, and day) from 1900 to 2025 by utilizing
+  interpolation and extrapolation methods with the spherical harmonic coefficients
+  obtained from IGRF13.COF in the data/ directory.
+
+  This code is derived from the geomag 7.0 software from NGDC (see geomag70.c
+  for the original code). The code is obtained from here :
+  https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html
+
+  Class Members
+  --------------
+  - sdate_ (double) :
+      The starting date for the magnetic field model
+  - nmax_ (int) :
+      The number of truncation for the Taylor series expansion of the evaluation
+  - model_index (int) :
+      The index correlating to the model closest to the provided sdate.
+      of the magnetic field.
+  - bfield_ (struct of doubles) :
+      The main field values in Cartesian coordinates.
+
+   Initialization Parameters
+   --------------------------
    - fname (std::string) :
          The path to the .COF file.
      - sdate (double) :

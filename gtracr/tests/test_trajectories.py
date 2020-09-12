@@ -11,10 +11,10 @@ from gtracr.trajectory import Trajectory
 from gtracr.lib.trajectorypoint import TrajectoryPoint
 
 # in the form :
-# (plabel, zenith, azimuth, particle_altitude, 
+# (plabel, zenith, azimuth, particle_altitude,
 # latitude, longitude, detector_altitude, rigidity, kinetic energy)
 initial_variable_list = [
-    ("p+", 90., 90., 100., 0., 0., 0., 30., None),  
+    ("p+", 90., 90., 100., 0., 0., 0., 30., None),
     ("p+", 120., 90., 100., 0., 0., -1., 30., None),
     ("p+", 0., 25., 100., 50., 100., 0., 50., None),
     ("p+", 90., 5., 100., 89., 20., 0., 20., None),
@@ -29,12 +29,13 @@ initial_variable_list = [
     ("p+", 9., 80., 0., 50., 260., 100., None, 50.),
 ]
 
+
 def test_trajectories_dipole():
     '''
     Test the final times of the trajectory evaluation in the dipole field.
     '''
 
-    expected_times= [
+    expected_times = [
         0.004199999999999997,
         0.29988000000015913,
         0.19221000000005145,
@@ -56,30 +57,31 @@ def test_trajectories_dipole():
     for iexp, initial_variables in enumerate(initial_variable_list):
 
         (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = initial_variables
-        
+
         traj = Trajectory(
             plabel=plabel,
-            zenith_angle = zenith,
-            azimuth_angle = azimuth,
-            particle_altitude = palt,
-            latitude = lat,
-            longitude = lng,
-            detector_altitude = dalt,
-            rigidity = rig,
-            energy = en,
-            bfield_type = "dipole"
+            zenith_angle=zenith,
+            azimuth_angle=azimuth,
+            particle_altitude=palt,
+            latitude=lat,
+            longitude=lng,
+            detector_altitude=dalt,
+            rigidity=rig,
+            energy=en,
+            bfield_type="dipole"
         )
-        
-        traj.get_trajectory(dt = dt, max_time=max_time)
+
+        traj.get_trajectory(dt=dt, max_time=max_time)
 
         assert np.allclose(traj.final_time, expected_times[iexp])
+
 
 def test_trajectories_igrf():
     '''
     Test the final times of the trajectory evaluation in the IGRF field.
     '''
-    
-    expected_times= [
+
+    expected_times = [
         0.004199999999999997,
         0.29988000000015913,
         0.19221000000005145,
@@ -101,21 +103,21 @@ def test_trajectories_igrf():
     for iexp, initial_variables in enumerate(initial_variable_list):
 
         (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = initial_variables
-        
+
         traj = Trajectory(
             plabel=plabel,
-            zenith_angle = zenith,
-            azimuth_angle = azimuth,
-            particle_altitude = palt,
-            latitude = lat,
-            longitude = lng,
-            detector_altitude = dalt,
-            rigidity = rig,
-            energy = en,
+            zenith_angle=zenith,
+            azimuth_angle=azimuth,
+            particle_altitude=palt,
+            latitude=lat,
+            longitude=lng,
+            detector_altitude=dalt,
+            rigidity=rig,
+            energy=en,
             bfield_type="igrf"
         )
-        
-        traj.get_trajectory(dt = dt, max_time=max_time)
+
+        traj.get_trajectory(dt=dt, max_time=max_time)
 
         assert np.allclose(traj.final_time, expected_times[iexp])
 
@@ -125,8 +127,8 @@ def test_trajectories_stepsize():
     Test the final times of the trajectory evaluation in the igrf field for 
     different step sizes
     '''
-    
-    expected_times= [
+
+    expected_times = [
         0.22073792288899635,
         0.22073792269455356,
         0.22073795420430928,
@@ -144,32 +146,34 @@ def test_trajectories_stepsize():
 
     for iexp, dt in enumerate(dt_arr):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = ("p+", 90., 0., 100., 0., 0., 0., 50., None)
-        
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = (
+            "p+", 90., 0., 100., 0., 0., 0., 50., None)
+
         traj = Trajectory(
             plabel=plabel,
-            zenith_angle = zenith,
-            azimuth_angle = azimuth,
-            particle_altitude = palt,
-            latitude = lat,
-            longitude = lng,
-            detector_altitude = dalt,
-            rigidity = rig,
-            energy = en,
+            zenith_angle=zenith,
+            azimuth_angle=azimuth,
+            particle_altitude=palt,
+            latitude=lat,
+            longitude=lng,
+            detector_altitude=dalt,
+            rigidity=rig,
+            energy=en,
             bfield_type="igrf"
         )
-        
-        traj.get_trajectory(dt = dt, max_time=max_time)
+
+        traj.get_trajectory(dt=dt, max_time=max_time)
 
         assert np.allclose(traj.final_time, expected_times[iexp])
+
 
 def test_trajectories_maxtimes():
     '''
     Test the final times of the trajectory evaluation in the igrf field for 
     different maximal times
     '''
-    
-    expected_times= [
+
+    expected_times = [
         0.00999999999999976,
         0.027829999999999036,
         0.07743000000000268,
@@ -187,32 +191,34 @@ def test_trajectories_maxtimes():
 
     for iexp, max_time in enumerate(max_times):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = ("p+", 90., 0., 100., 0., 0., 0., 50., None)
-        
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = (
+            "p+", 90., 0., 100., 0., 0., 0., 50., None)
+
         traj = Trajectory(
             plabel=plabel,
-            zenith_angle = zenith,
-            azimuth_angle = azimuth,
-            particle_altitude = palt,
-            latitude = lat,
-            longitude = lng,
-            detector_altitude = dalt,
-            rigidity = rig,
-            energy = en,
+            zenith_angle=zenith,
+            azimuth_angle=azimuth,
+            particle_altitude=palt,
+            latitude=lat,
+            longitude=lng,
+            detector_altitude=dalt,
+            rigidity=rig,
+            energy=en,
             bfield_type="igrf"
         )
-        
-        traj.get_trajectory(dt = dt, max_time=max_time)
+
+        traj.get_trajectory(dt=dt, max_time=max_time)
 
         assert np.allclose(traj.final_time, expected_times[iexp])
+
 
 def test_trajectories_unvectorized():
     '''
     Test the final times of the trajectory evaluation in the igrf field for 
     the unvectorized Runge Kutta version
     '''
-    
-    expected_times= [
+
+    expected_times = [
         0.004199999999999997,
         0.2999300000001592,
         0.19221000000005145,
@@ -234,31 +240,32 @@ def test_trajectories_unvectorized():
     for iexp, initial_variables in enumerate(initial_variable_list):
 
         (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = initial_variables
-        
+
         traj = Trajectory(
             plabel=plabel,
-            zenith_angle = zenith,
-            azimuth_angle = azimuth,
-            particle_altitude = palt,
-            latitude = lat,
-            longitude = lng,
-            detector_altitude = dalt,
-            rigidity = rig,
-            energy = en,
+            zenith_angle=zenith,
+            azimuth_angle=azimuth,
+            particle_altitude=palt,
+            latitude=lat,
+            longitude=lng,
+            detector_altitude=dalt,
+            rigidity=rig,
+            energy=en,
             bfield_type="igrf"
         )
-        
-        traj.get_trajectory(dt = dt, max_time=max_time, use_unvectorized=True)
+
+        traj.get_trajectory(dt=dt, max_time=max_time, use_unvectorized=True)
 
         assert np.allclose(traj.final_time, expected_times[iexp])
+
 
 def test_trajectories_dates():
     '''
     Test the final times of the trajectory evaluation in the igrf field for 
     different dates
     '''
-    
-    expected_times= [
+
+    expected_times = [
         0.22074000000007998,
         0.22074000000007998,
         0.22074000000007998,
@@ -274,32 +281,34 @@ def test_trajectories_dates():
     dt = 1e-5
     max_time = 1.
 
-    dates = [1900., 1905.5, 2010., 2020., 2015., 2025., 1917.25, 1918., 2000., 1990.]
+    dates = [1900., 1905.5, 2010., 2020., 2015.,
+             2025., 1917.25, 1918., 2000., 1990.]
 
     for iexp, date in enumerate(dates):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = ("p+", 90., 0., 100., 0., 0., 0., 50., None)
-        
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = (
+            "p+", 90., 0., 100., 0., 0., 0., 50., None)
+
         traj = Trajectory(
             plabel=plabel,
-            zenith_angle = zenith,
-            azimuth_angle = azimuth,
-            particle_altitude = palt,
-            latitude = lat,
-            longitude = lng,
-            detector_altitude = dalt,
-            rigidity = rig,
-            energy = en,
+            zenith_angle=zenith,
+            azimuth_angle=azimuth,
+            particle_altitude=palt,
+            latitude=lat,
+            longitude=lng,
+            detector_altitude=dalt,
+            rigidity=rig,
+            energy=en,
             bfield_type="igrf",
-            date = date
+            date=date
         )
-        
-        traj.get_trajectory(dt = dt, max_time=max_time)
+
+        traj.get_trajectory(dt=dt, max_time=max_time)
 
         assert np.allclose(traj.final_time, expected_times[iexp])
 
 # def test_dipole_sixvec():
-    
+
 #     expected_sixvec= [
 #         [ 6.37071829e+06,  1.57079633e+00,  1.94647741e-01, -2.60535458e-18,
 #         1.90107218e-33,  1.58675306e-17],
@@ -331,7 +340,7 @@ def test_trajectories_dates():
 #     for iexp, initial_variables in enumerate(initial_variable_list):
 
 #         (plabel, zenith, azimuth, palt, lat, lng, dalt, rig) = initial_variables
-        
+
 #         traj = Trajectory(
 #             plabel=plabel,
 #             zenith_angle = zenith,
@@ -342,7 +351,7 @@ def test_trajectories_dates():
 #             detector_altitude = dalt,
 #             rigidity = rig
 #         )
-        
+
 #         traj.get_trajectory(dt = dt, max_time=max_time)
 
 #         assert np.allclose(traj.final_sixvector, np.array(expected_sixvec[iexp]))

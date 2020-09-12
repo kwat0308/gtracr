@@ -3,21 +3,24 @@ import os
 import sys
 import numpy as np
 
-# sys.path.append(os.getcwd())
-# sys.path.append(os.path.join(os.getcwd(), "gtracr"))
-
-# from gtracr.utils import gamma
-
 
 class Particle:
     """
     Utility class for cosmic ray particles
-    Members:
-    - name: the name of the particle (string)
-    - pid: the particle id as in pdg (int)
-    - mass: the particle rest mass (float) [units of GeV / c^2]
-    - charge: particle's charge Z (int) [units of elementary charge]
-    - label: the shorthand name for the particle (string)
+
+    Parameters
+    ------------
+
+    - name : str
+        the name of the particle
+    - pid : int
+        the particle id as in the PDG database
+    - mass : float
+        the particle's rest mass in GeV
+    - charge : int
+        the particle's charge in e
+    - label : str
+        the shorthand name for the particle
 
     Notes:
     - PDGID obtained from here: http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
@@ -33,9 +36,7 @@ class Particle:
         self.mass = mass
         self.charge = charge
         self.label = label
-        # set properties as members
         self.momentum = 0.
-        # self.velocity = 0.
         self.rigidity = 0.
 
     def set_from_energy(self, energy):
