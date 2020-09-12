@@ -124,5 +124,5 @@ setup(
         'Intended Audience :: Developers', 'Development Status :: 4 - Beta',
         'Natural Language :: English', 'License :: OSI Approved :: BSD License'
     ],
-    python_requires='>=3.0'
+    python_requires='>=3.6'
 )

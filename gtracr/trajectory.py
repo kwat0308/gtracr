@@ -4,14 +4,14 @@ import numpy as np
 import pickle
 from datetime import date
 from gtracr.lib._libgtracr import TrajectoryTracer, uTrajectoryTracer
-from gtracr.utils import get_particledict, get_locationdict, ymd_to_dec
+# from gtracr.utils import get_particledict, get_locationdict, ymd_to_dec
+from gtracr.utils import particle_dict, location_dict, ymd_to_dec
 from gtracr.lib.trajectorypoint import TrajectoryPoint
 from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
 from gtracr.lib.trajectory_tracer import pTrajectoryTracer
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(CURRENT_DIR, "data")
-
 
 class Trajectory:
     '''
@@ -76,14 +76,14 @@ class Trajectory:
         Particle type configuration
         '''
         # define particle from particle_dict
-        particle_dict = get_particledict()
+        
         self.particle = particle_dict[plabel]
         '''
         Geodesic coordinate configuration
         '''
         # only import location dictionary and use those values if location_name is not None
         if location_name is not None:
-            location_dict = get_locationdict()
+            # location_dict = set_locationdict()
             loc = location_dict[location_name]
 
             latitude = loc.latitude

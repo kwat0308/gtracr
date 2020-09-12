@@ -9,8 +9,15 @@ import sys
 import numpy as np
 import pickle
 
+from gtracr.lib.location import Location
+from gtracr.lib.particle import Particle
+
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(CURRENT_DIR, "data")
+
+# set global dictionaries here
+# global location_dict
+# global particle_dict
 
 
 def dec_to_dms(lat_dec, lng_dec):
@@ -129,20 +136,66 @@ def import_dict(fname):
         the_dict = pickle.load(f)
     return the_dict
 
+# def get_locationdict():
+#     '''
+#     Get the location dictionary from the .pkl file
+#     '''
+#     fpath = os.path.join(DATA_DIR, "location_dict.pkl")
+#     location_dict = import_dict(fpath)
+#     return location_dict
 
-def get_particledict():
+
+def set_locationdict():
     '''
-    Get the particle dictionary from the .pkl file
+    Sets the location dictionary from some set of locations.
     '''
-    fpath = os.path.join(DATA_DIR, "particle_dict.pkl")
-    particle_dict = import_dict(fpath)
+    location_dict = {}
+
+    locations = [
+        Location("Kamioka", 36.434800, 137.276599, 0.),
+        Location("IceCube", -89.99, 0., 0.),
+        Location("SNOLAB", 46.471983, -81.186701, 0.),
+        Location("UofA", 53.523230, -113.526319, 0.),
+        Location("CTA-North", 28.76216, -17.89201, 0.),
+        Location("CTA-South", -24.68342778, -24.68342778, 0.),
+        Location("ORCA", 42.80000000, 6.0333333, 0.),
+        Location("ANTARES", 42.8, 6.1666666, 0.),
+        Location("Baikal-GVD", 51.77139, 104.3978, 0.),
+        Location("TA", 39.208099, -113.121285, 0.)
+    ]
+
+    # add location to location_dict if it does not exist
+    for loc in locations:
+        if loc.name not in list(location_dict.keys()):
+            location_dict[loc.name] = loc
+        else:
+            continue
+
+    return location_dict
+
+
+def set_particledict():
+    '''
+    Sets the particle dictionary from some set of particles.
+    '''
+    particle_dict = {}
+
+    # different cosmic ray particles
+    particles = [
+        Particle("positron", -11, 0.5109 * (1e-3), 1, "e+"),
+        Particle("electron", 11, 0.5109 * (1e-3), -1, "e-"),
+        Particle("proton", 2212, 0.937272, 1, "p+"),
+        Particle("anti-proton", -2212, 0.937272, -1, "p-")
+    ]
+
+    # add particle to particle_dict if it does not exist
+    for particle in particles:
+        if particle.name not in list(particle_dict.keys()):
+            particle_dict[particle.label] = particle
+        else:
+            continue
+
     return particle_dict
 
-
-def get_locationdict():
-    '''
-    Get the location dictionary from the .pkl file
-    '''
-    fpath = os.path.join(DATA_DIR, "location_dict.pkl")
-    location_dict = import_dict(fpath)
-    return location_dict
+location_dict = set_locationdict()
+particle_dict = set_particledict()
