@@ -71,6 +71,8 @@ class SmartBuildExt(build_ext):
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
 # This is one of the recommended methods that works in Python 2 and 3:
+
+
 def get_version():
     version = {}
     with open("gtracr/version.py") as fp:
@@ -93,8 +95,7 @@ with open("README.md", "r") as f:
 setup(
     name='gtracr',
     version=__version__,
-    description=
-    'A GPU-based simulation that tracks cosmic rays from any location on Earth.',
+    description='A GPU-accelerated simulation that tracks cosmic rays from any location on Earth.',
     author='Keito Watanabe',
     author_email='k.wat8973@gmail.com',
     long_description=long_description,
@@ -102,7 +103,6 @@ setup(
     license='BSD 3-Clause License',
     url="https://github.com/kwat0308/gtracr",
     packages=['gtracr', 'gtracr.scripts', 'gtracr.tests', 'gtracr.lib'],
-    # include_package_data=True,
     package_data={
         'gtracr': ['data/**'],
     },
@@ -116,13 +116,23 @@ setup(
     ],
     extras_require=extras_require,
     classifiers=[
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3', 'Topic :: Software Development',
+        'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
+        'Topic :: Scientific/Engineering :: Astronomy',
         'Topic :: Scientific/Engineering :: Physics',
         'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers', 'Development Status :: 4 - Beta',
-        'Natural Language :: English', 'License :: OSI Approved :: BSD License'
+        'Intended Audience :: Developers',
+        'Development Status :: 4 - Beta',
+        'Natural Language :: English',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: Unix',
+        'Programming Language :: C++',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8'
     ],
     python_requires='>=3.6'
 )
