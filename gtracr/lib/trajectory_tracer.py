@@ -15,7 +15,6 @@ from datetime import datetime as dt
 
 from scipy import interpolate
 from gtracr.lib.constants import EARTH_RADIUS, SPEED_OF_LIGHT, ELEMENTARY_CHARGE, KG_PER_GEVC2
-from gtracr.lib.trajectorypoint import TrajectoryPoint
 from gtracr.lib.magnetic_field import MagneticField, IGRF13
 
 # CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
