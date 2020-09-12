@@ -4,14 +4,14 @@ import numpy as np
 import pickle
 from datetime import date
 from gtracr.lib._libgtracr import TrajectoryTracer, uTrajectoryTracer
-# from gtracr.utils import get_particledict, get_locationdict, ymd_to_dec
-from gtracr.utils import particle_dict, location_dict, ymd_to_dec
-from gtracr.lib.trajectorypoint import TrajectoryPoint
-from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
 from gtracr.lib.trajectory_tracer import pTrajectoryTracer
+from gtracr.utils import particle_dict, location_dict, ymd_to_dec
+from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
+
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(CURRENT_DIR, "data")
+
 
 class Trajectory:
     '''
@@ -68,15 +68,15 @@ class Trajectory:
         '''
         Cosmic ray direction configurations
         '''
-        self.zenith_angle = zenith_angle
-        self.azimuth_angle = azimuth_angle
-        self.particle_altitude = particle_altitude * (1e3)  # convert to meters
-        self.escape_altitude = escape_altitude
+        self.zangle = zenith_angle
+        self.azangle = azimuth_angle
+        self.palt = particle_altitude * (1e3)  # convert to meters
+        self.esc_alt = escape_altitude
         '''
         Particle type configuration
         '''
         # define particle from particle_dict
-        
+
         self.particle = particle_dict[plabel]
         '''
         Geodesic coordinate configuration
@@ -90,9 +90,9 @@ class Trajectory:
             longitude = loc.longitude
             detector_altitude = loc.altitude
 
-        self.latitude = latitude
-        self.longitude = longitude
-        self.detector_altitude = detector_altitude * (1e3)  # convert to meters
+        self.lat = latitude
+        self.lng = longitude
+        self.dalt = detector_altitude * (1e3)  # convert to meters
         '''
         Cosmic ray energy / rigidity / momentum configuration
         '''
@@ -119,7 +119,8 @@ class Trajectory:
         self.bfield_type = bfield_type[0]
 
         # find the path to the data and set current date for igrf bfield
-        datapath = os.path.abspath(os.path.join(CURRENT_DIR, "data"))
+        datapath = os.path.abspath(DATA_DIR)
+        # print(datapath)
         dec_date = ymd_to_dec(date)
         self.igrf_params = (datapath, dec_date)
         '''
@@ -130,16 +131,10 @@ class Trajectory:
         self.final_time = 0.
         self.final_sixvector = np.zeros(6)
 
-        # get the 6-vector for the detector location
-        detector_tp = TrajectoryPoint()
-        detector_tp.set_geodesic_coord(self.latitude, self.longitude,
-                                       self.detector_altitude)
-
-        # print(detector_tp)
         # get the 6-vector for the particle, initially defined in
         # detector frame, and transform it to geocentric
         # coordinates
-        self.particle_tp = self.detector_to_geocentric(detector_tp)
+        self.particle_sixvector = self.detector_to_geocentric()
 
     def get_trajectory(self,
                        dt=1e-5,
@@ -171,7 +166,7 @@ class Trajectory:
             decides whether to use the python implementation for the TrajectoryTracer class instead of
             that implemented in C++. This is mainly enabled for debugging purposes (default: False)
         use_unvectorized : bool, optional
-            decides whether to evaluate the Runge Kutta integration in the C++ version in its 
+            decides whether to evaluate the Runge Kutta integration in the C++ version in its
             unvectorized or vectorized form. This is mainly enabled for debugging purposes (default: False)
 
         Returns
@@ -200,24 +195,24 @@ class Trajectory:
             # the python trajectory tracer version
             traj_tracer = pTrajectoryTracer(self.particle.charge,
                                             self.particle.mass,
-                                            self.escape_altitude, dt, max_step,
+                                            self.esc_alt, dt, max_step,
                                             self.bfield_type, self.igrf_params)
         elif use_unvectorized:
             # the unvectorized trajectory tracer version
             traj_tracer = uTrajectoryTracer(self.particle.charge,
                                             self.particle.mass,
-                                            self.escape_altitude, dt, max_step,
+                                            self.esc_alt, dt, max_step,
                                             self.bfield_type, self.igrf_params)
         else:
             # the vectorized trajectory tracer version
             traj_tracer = TrajectoryTracer(self.particle.charge,
                                            self.particle.mass,
-                                           self.escape_altitude, dt, max_step,
+                                           self.esc_alt, dt, max_step,
                                            self.bfield_type, self.igrf_params)
 
         # set initial values
         particle_t0 = 0.
-        particle_vec0 = self.particle_tp.asarray()
+        particle_vec0 = self.particle_sixvector
 
         if get_data:
             # evaluate the trajectory tracer
@@ -259,73 +254,59 @@ class Trajectory:
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
-    def detector_to_geocentric(self, detector_tp):
+    def detector_to_geocentric(self):
         '''
-        Convert the coordinates defined in the detector frame (the coordinate system 
+        Convert the coordinates defined in the detector frame (the coordinate system
         defined in the local tangent plane to Earth's surface at some specified
         latitude and longitude) to geocentric (Earth-centered, Earth-fixed) coordinates.
 
-        Parameters
-        -----------
-        detector_tp : TrajectoryPoint
-            The six vector of the detector location, defined as a TrajectoryPoint
-            This is defined based on the geodesic coordinates (latitude, longitude, altitude).
-
         Returns
         -------
-        particle_tp : TrajectoryPoint
-            The six vector of the particle defined as a TrajectoryPoint, evaluated
+        particle_tp : np.array(float), size 6
+            The six vector of the particle, evaluated
             based on the location of the detector, the direction in which the particle
             comes from, and the altitude in which a shower occurs.
 
         '''
 
         # transformation process for coordinate
-        detector_coord = detector_tp.cartesian_coord()
+        detector_coord = self.geodesic_to_cartesian()
 
         # change particle initial location if zenith angle is > 90
         # so that we only consider upward moving particles
-        if self.zenith_angle > 90.:
+        if self.zangle > 90.:
             # here we count both altitude and magnitude as a whole
             # for ease of computation
 
             particle_coord = self.get_particle_coord(
                 altitude=0.,
-                magnitude=-(2. * EARTH_RADIUS + self.particle_altitude) *
-                np.cos(self.zenith_angle * DEG_PER_RAD))
+                magnitude=-(2. * EARTH_RADIUS + self.palt) *
+                np.cos(self.zangle * RAD_PER_DEG))
 
-        elif self.zenith_angle <= 90.:
+        elif self.zangle <= 90.:
             particle_coord = self.get_particle_coord(
-                altitude=self.particle_altitude, magnitude=1e-10)
+                altitude=self.palt, magnitude=1e-10)
 
         # print(detector_coord, particle_coord)
         # print(self.tf_matrix())
-        (part_x, part_y, part_z) = self.transform(detector_coord,
-                                                  particle_coord)
-
-        # print(part_x, part_y, part_z)
+        transformed_cart_coord = self.transform(detector_coord,
+                                                particle_coord)
 
         # transformation for momentum
         # need to convert from natural units to SI units
         detector_momentum = np.zeros(3)
         particle_momentum = self.get_particle_coord(
             altitude=0., magnitude=self.particle.momentum * KG_M_S_PER_GEVC)
-        # print(detector_momentum, particle_momentum)
-        (part_px, part_py, part_pz) = self.transform(detector_momentum,
-                                                     particle_momentum)
 
-        # print(part_px, part_py, part_pz)
+        transformed_cart_mmtm = self.transform(detector_momentum,
+                                               particle_momentum)
 
         # create new trajectory point and set the new coordinate and momentum
-        # convert from natural units to SI units
-        particle_tp = TrajectoryPoint()
-        particle_tp.set_cartesian_coord(part_x, part_y, part_z)
-        particle_tp.set_cartesian_momentum(part_px, part_py, part_pz)
-        # particle_tp.set_spherical_coord(part_r, part_theta, part_phi)
+        particle_sixvector = self.cartesian_to_spherical(
+            transformed_cart_coord, transformed_cart_mmtm)
 
-        # print(particle_tp)
-
-        return particle_tp
+        # return particle_tp
+        return particle_sixvector
 
     # convert between detector coordinates to geocentric coordinates
     def transform(self, detector_coord, particle_coord):
@@ -333,9 +314,9 @@ class Trajectory:
 
     # get the detector coordinates (in Cartesian) from zenith and azimuthal angles
     def get_particle_coord(self, altitude, magnitude):
-        xi = self.zenith_angle * DEG_PER_RAD
-        alpha = self.azimuth_angle * DEG_PER_RAD
-        # alpha = (self.azimuth_angle + 90.) * DEG_TO_RAD
+        xi = self.zangle * RAD_PER_DEG
+        alpha = self.azangle * RAD_PER_DEG
+        # alpha = (self.azangle + 90.) * DEG_TO_RAD
 
         # xt and yt are flipped from usual conversions from spherical coordinates
         # to allow azimuth = 0 to point to the geographic north pole
@@ -357,8 +338,8 @@ class Trajectory:
         '''
         Returns the transformation matrix for transforming between coordinates in the local tangent plane (detector coordinates) and geocentric coordinates.
         '''
-        lmbda = self.latitude * DEG_PER_RAD
-        eta = self.longitude * DEG_PER_RAD
+        lmbda = self.lat * RAD_PER_DEG
+        eta = self.lng * RAD_PER_DEG
 
         # print(lmbda, eta)
 
@@ -373,3 +354,69 @@ class Trajectory:
         row3 = np.array([0., np.cos(lmbda), np.sin(lmbda)])
 
         return np.array([row1, row2, row3])
+
+    def geodesic_to_cartesian(self):
+        '''
+        Transforms vectors in geodesic coordinates into Cartesian components
+
+        Returns
+        -------
+
+        - cart_vals : np.array(float), size 3
+            the coordinate vector in cartesian coordinates (Earth-centered, Earth-fixed coordinates)
+        '''
+        r = EARTH_RADIUS + self.dalt
+        theta = (90. - self.lat) * RAD_PER_DEG
+        phi = self.lng * RAD_PER_DEG
+
+        cart_vals = np.array([
+            r * np.sin(theta) * np.cos(phi),
+            r * np.sin(theta) * np.sin(phi),
+            r * np.cos(theta)
+        ])
+
+        return cart_vals
+
+    def cartesian_to_spherical(self, cart_coord, cart_mmtm):
+        '''
+        Transforms coordinate and momentum vectors from Cartesian coordinates to Spherical coordinates.
+
+        Parameters
+        -----------
+
+        - cart_coord : np.array(float), size 3
+            the coordinate vector in cartesian coordinates
+        - cart_mmtm : np.arrray(float), size 3
+            the momentum vector in cartesian coordianates
+
+        Returns
+        -------
+
+        - sph_sixvector : np.array(float), size 6
+            the six-vector (coordinate and momentum) in spherical coordinates 
+        '''
+        # first set x, y, z for readability
+        x, y, z = cart_coord
+
+        # convert coordinates to spherical
+        r = np.sqrt(x**2. + y**2. + z**2.)
+        theta = np.arccos(z / r)
+        phi = np.arctan2(y, x)
+
+        # define transformation matrix for momentum
+        tfmat_cart_to_sph = np.array([
+            [np.sin(theta) * np.cos(phi), np.sin(theta)
+             * np.sin(phi), np.cos(theta)],
+            [np.cos(theta) * np.cos(phi), np.cos(theta)
+             * np.sin(phi), -np.sin(theta)],
+            [-np.sin(phi), np.cos(phi), 0.]
+        ])
+
+        # # get spherical momentum
+        sph_mmtm = np.dot(tfmat_cart_to_sph, cart_mmtm)
+
+        # store both results into an array
+        sph_sixvector = np.hstack(
+            (np.array([r, theta, phi]), sph_mmtm))
+
+        return sph_sixvector
