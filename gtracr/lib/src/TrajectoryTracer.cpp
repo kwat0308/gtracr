@@ -235,8 +235,8 @@ TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
        the ordinary differential equation for the six vector based on the
   Lorentz force equation
 */
-std::array<double, 6> TrajectoryTracer::ode_lrz(
-    const double t, const std::array<double, 6> &vec) {
+std::array<double, 6> &TrajectoryTracer::ode_lrz(
+    const double t,  std::array<double, 6> &vec) {
   // unpack array for readability
   double r = vec[0];
   double theta = vec[1];
@@ -246,20 +246,10 @@ std::array<double, 6> TrajectoryTracer::ode_lrz(
   double pphi = vec[5];
 
   // get the lorentz factor
-  // momentum magnitude
-  double pmag = sqrt((pr * pr) + (ptheta * ptheta) + (pphi * pphi));
-  // ||p|| / (m*c)
-  double pm_ratio = pmag / (mass_ * constants::SPEED_OF_LIGHT);
-  // Lorentz factor
-  double gamma = sqrt(1. + (pm_ratio * pm_ratio));
-  // std::cout << gamma << std::endl;
-  double rel_mass = mass_ * gamma;
+  double gmma = lorentz_factor(pr, ptheta, pphi);
 
   // evaluate B-field
-  // double bf_r = bfield_.Br(r, theta, phi);
-  // double bf_theta = bfield_.Btheta(r, theta, phi);
-  // double bf_phi = bfield_.Bphi(r, theta, phi);
-  std::array<double, 3> bf_values = bfield_.values(r, theta, phi);
+  std::array<double, 3> &bf_values = bfield_.values(r, theta, phi);
   double bf_r = bf_values[0];
   double bf_theta = bf_values[1];
   double bf_phi = bf_values[2];
@@ -300,7 +290,7 @@ std::array<double, 6> TrajectoryTracer::ode_lrz(
   std::array<double, 6> ode_lrz = {
       pr, (ptheta / r), (pphi / (r * sin(theta))), dprdt, dpthetadt, dpphidt};
 
-  return (1. / rel_mass) * ode_lrz;
+  return (1. / (mass_ * gmma)) * ode_lrz;
 }
 /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
 algorithm.
@@ -317,26 +307,26 @@ Returns
 None
 
 */
-void TrajectoryTracer::evaluate(double &t0, std::array<double, 6> &vec0) {
+void TrajectoryTracer::evaluate(const double &t0, std::array<double, 6> &vec0) {
   double h = stepsize_;  // step size in shorter notation
 
   // set the initial conditions
   double t = t0;
-  std::array<double, 6> vec = vec0;
+  std::array<double, 6> &vec = vec0;
   // TODO: make arrays into references for no copying
 
   // start the loop
   for (int i = 0; i < max_iter_; ++i) {
     // evaluate the k-coefficients
 
-    std::array<double, 6> k1_vec = h * ode_lrz(t, vec);
-    std::array<double, 6> k2_vec =
+    std::array<double, 6> &k1_vec = h * ode_lrz(t, vec);
+    std::array<double, 6> &k2_vec =
         h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec));
-    std::array<double, 6> k3_vec =
+    std::array<double, 6> &k3_vec =
         h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec));
-    std::array<double, 6> k4_vec = h * ode_lrz(t + h, vec + k3_vec);
+    std::array<double, 6> &k4_vec = h * ode_lrz(t + h, vec + k3_vec);
 
-    std::array<double, 6> k_vec =
+    std::array<double, 6> &k_vec =
         (1. / 6.) * (k1_vec + (2. * k2_vec) + (2. * k3_vec) + k4_vec);
 
     // increment by weighted sum
@@ -476,3 +466,30 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
 
   return trajectory_data;
 } // evaluate_and_get_trajectory
+
+/*
+Returns the lorentz factor, evaluated from the momentum
+
+Parameters
+----------
+- pr (const double &) :
+      the momentum in the radial component
+- ptheta (const double &) :
+      the momentum in the polar direction
+- pphi (const double &) :
+      the momentum in the azimuthal direction
+
+Returns
+-------
+- gamma (const double) :
+      The lorentz factor for the particular momentum
+*/
+inline double &TrajectoryTracer::lorentz_factor(const double& pr, const double& ptheta, const double& pphi) {
+      // momentum magnitude
+  double pmag = sqrt((pr * pr) + (ptheta * ptheta) + (pphi * pphi));
+  // ||p|| / (m*c)
+  double pm_ratio = pmag / (mass_ * constants::SPEED_OF_LIGHT);
+  // Lorentz factor
+  double gamma = sqrt(1. + (pm_ratio * pm_ratio));
+  return gamma;
+};  // lorentz_factor

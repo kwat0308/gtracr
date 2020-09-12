@@ -77,8 +77,8 @@ Class Members
        the ordinary differential equation for the six vector based on the
   Lorentz force equation
   */
-  std::array<double, 6> ode_lrz(const double t,
-                                const std::array<double, 6> &vec);
+  std::array<double, 6> &ode_lrz(const double t,
+                                std::array<double, 6> &vec);
 
  public:
   /* Default Constructor for TrajectoryTracer class
@@ -166,9 +166,23 @@ Class Members
   */
 
   /*
-  The lorentz factor
+  Returns the lorentz factor, evaluated from the momentum
+  
+  Parameters
+  ----------
+  - pr (const double &) :
+        the momentum in the radial component
+  - ptheta (const double &) :
+        the momentum in the polar direction
+  - pphi (const double &) :
+        the momentum in the azimuthal direction
+  
+  Returns
+  -------
+  - gamma (const double) :
+        The lorentz factor for the particular momentum
   */
-
+ inline double &lorentz_factor(const double& pr, const double& ptheta, const double& pphi);
   /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
   algorithm.
 
@@ -184,7 +198,7 @@ Class Members
   None
 
   */
-  void evaluate(double &t0, std::array<double, 6> &vec0);
+  void evaluate(const double &t0, std::array<double, 6> &vec0);
 
   /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
   algorithm and return a map that contains the information of the particle
