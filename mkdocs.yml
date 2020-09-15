@@ -1,5 +1,5 @@
 site_name: gtracr Documentation
-site_url : gtracr.readthedocs.io
+site_url : https://gtracr.readthedocs.io
 site_author : Keito Watanabe
 repo_url : https://github.com/kwat0308/gtracr
 nav:
