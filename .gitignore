@@ -7,4 +7,4 @@ gtracr.egg-info/
 build/
 *.pyd
 *.so
-venv/
+site/
