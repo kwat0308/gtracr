@@ -9,7 +9,7 @@
   <meta name="author" content="Keito Watanabe">
   <link rel="canonical" href="https://gtracr.readthedocs.io/">
   <link rel="shortcut icon" href="img/favicon.ico">
-  <title>gtracr Documentation</title>
+  <title>gtracr - GPU-accelerated Tracking simulation for Cosmic Ray Trajectories</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
 
   <link rel="stylesheet" href="css/theme.css" />
@@ -40,7 +40,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-        <a href="." class="icon icon-home"> gtracr Documentation</a>
+        <a href="." class="icon icon-home"> gtracr - GPU-accelerated Tracking simulation for Cosmic Ray Trajectories</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
@@ -55,6 +55,12 @@
     <li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#optional-requirements">Optional requirements</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#quickstart">Quickstart</a>
         <ul>
@@ -94,7 +100,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href=".">gtracr Documentation</a>
+        <a href=".">gtracr - GPU-accelerated Tracking simulation for Cosmic Ray Trajectories</a>
       </nav>
 
       
@@ -120,7 +126,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="index">Index</h1>
+                <h1 id="gtracr-a-gpu-accelerated-tracking-simulation-for-cosmic-ray-trajectories">gtracr - A GPU-accelerated Tracking Simulation for Cosmic Ray Trajectories</h1>
 <h2 id="introduction">Introduction</h2>
 <p>This package is a high-performance 3-D tracking simulation of cosmic ray trajectories for different locations around the globe. The code can simulate cosmic ray trajectories that are detected at a certain altitude from some detector location, be it at Super-K in Kamioka, Japan or IceCube at the South Pole. The code utilizes the <a href="https://www.ngdc.noaa.gov/IAGA/vmod/igrf.html">International Geomagnetic Reference Field (IGRF) model</a> to represent the main magnetic field from Earth's outer core.</p>
 <p>The cosmic ray trajectories are described by a set of coupled ordinary differential equations based on the Lorentz force ($F_L = q(\vec{v} \times \vec{B})$). The equations are expressed in spherical coordinates, the canonical coordinate system for performing calculations with spherical objects (i.e. the Earth).</p>
@@ -139,12 +145,25 @@
 
 <p><em>Note</em>: The <code>--user</code> flag is required for installing the package in this manner.</p>
 <p>The lastest (unstable) version can be obtained by cloning the repository from the <code>master</code> branch in <a href="https://github.com/kwat0308/gtracr">GitHub</a>.</p>
+<h2 id="dependencies">Dependencies</h2>
+<ul>
+<li>Python 3 and above</li>
+<li>NumPy</li>
+<li>SciPy</li>
+<li>datetime (for obtaining the current date)</li>
+<li>tqdm</li>
+</ul>
+<p>All such dependencies will be installed with the package.</p>
+<h3 id="optional-requirements">Optional requirements</h3>
+<p>These packages are required to observe plots and test different trajectory cases:</p>
+<ul>
+<li><code>matplotlib, plotly</code> for plots</li>
+<li><code>pytest, pytest-benchmark</code> for testing</li>
+</ul>
 <h2 id="quickstart">Quickstart</h2>
 <h3 id="evaluating-a-single-trajectory">Evaluating a single trajectory</h3>
-<p>Here we present a simple example that can be run in a Python script (to run in Jupyter cell, set <code>jupyter=True</code> in <code>plot_3dtraj()</code>):</p>
+<p>Here we present a simple example that can be run in a Python script:</p>
 <pre><code>from gtracr.trajectory import Trajectory
-# matplotlib not required, just required for plotting purposes
-import matplotlib.pyplot as plt
 
 # initialize a cosmic ray trajectory that arrives at the horizon
 # from the West at 100km above sea level at the Kamioka site with
@@ -162,6 +181,7 @@ traj = Trajectory(
 trajectory_data = traj.get_trajectory(get_data=True)
 
 # plot the results
+# below module requires matplotlib and plotly to run
 from gtracr.plotting import plot_3dtraj
 
 plot_3dtraj(
@@ -227,5 +247,5 @@ plot_3dtraj(
 
 <!--
 MkDocs version : 1.1.2
-Build Date UTC : 2020-09-18 19:20:58.073889+00:00
+Build Date UTC : 2020-09-18 20:06:18.353189+00:00
 -->
