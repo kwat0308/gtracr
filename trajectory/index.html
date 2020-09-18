@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Keito Watanabe">
+  <link rel="canonical" href="https://gtracr.readthedocs.io/trajectory/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Evaluating a Single Trajectory - gtracr Documentation</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Evaluating a Single Trajectory";
+    var mkdocs_page_input_path = "trajectory.md";
+    var mkdocs_page_url = "/trajectory/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> gtracr Documentation</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../background/">Background</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Evaluating a Single Trajectory</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-initialize-a-trajectory-object">1. Initialize a Trajectory object.</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-evaluate-the-trajectory">2. Evaluate the trajectory</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#optional-steps">Optional steps</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#3-plot-the-results">3. Plot the results</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#example">Example</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../geomagnetic_cutoffs/">Geomagnetic Cutoff Rigidities</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../benchmarks/">Benchmarks</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../license/">License</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">gtracr Documentation</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Evaluating a Single Trajectory</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/kwat0308/gtracr/edit/master/docs/trajectory.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="evaluating-a-single-trajectory">Evaluating a Single Trajectory</h1>
+<p>Evaluating a single trajectory can be done seamlessly with a few steps.</p>
+<h2 id="1-initialize-a-trajectory-object">1. Initialize a Trajectory object.</h2>
+<p>The first thing to do is to initalize the Trajectory object, which is a container for the specifications and initial configurations of the cosmic ray trajectory.</p>
+<p>To get the relavant module for the initialization of the trajectory:</p>
+<pre><code>from gtracr.trajectory import Trajectory
+</code></pre>
+
+<p>The required parameters to initialize the trajectory are as follows:</p>
+<ul>
+<li><code>location_name (str)</code> : The name of the location in which we want to the detect the cosmic rays</li>
+<li><code>zenith_angle (float)</code> : the zenith angle relative to the detector location in degrees ([0, 180]). Angles &gt; 90 are for upwards-moving particles from the other end of the Earth.</li>
+<li><code>azimuth_angle (float)</code> : the azimuthal angle relative to the detector location in degrees ([0, 360]). An angle of 0 degrees points to the Geographic South Pole.</li>
+<li><code>particle_altitude (float)</code> : the altitude above sea level in which the cosmic ray arrives at in km</li>
+<li><code>rigidity (float)</code> : the momentum per charge of the cosmic ray at the arrival location in GV</li>
+</ul>
+<p>For example, assume we want to simulate a cosmic ray that arrives at the horizon (<code>zenith_angle=90</code>) from the West (<code>azimuth_angle=90</code>) at 100km above sea level (<code>particle_altitude=100</code>) at the Kamioka site (<code>location_name="Kamioka"</code>) with a rigidity of 30 GV (<code>rigidity=30</code>):</p>
+<pre><code>traj = Trajectory(
+        location_name=&quot;Kamioka&quot;,
+        zenith_angle=90,
+        azimuth_angle=90,
+        particle_altitude=100,
+        rigidity=30
+    )
+</code></pre>
+
+<p>There are other optional parameters that one can configure to initialize the Trajectory object.</p>
+<ul>
+<li><code>plabel (str)</code> : the type of particle of the cosmic ray (default=<code>"p+"</code>)</li>
+<li><code>energy (float)</code> : the kinetic energy of the cosmic ray, which can be used instead of the rigidity to set the momentum of the cosmic ray (default=<code>None</code>). Cannot be used concurrently with the rigidity.</li>
+<li><code>bfield_type (str)</code> : the type of magnetic field model that is being used (default=<code>igrf</code>). One can set this to <code>dipole</code> to use the dipole approximation of Earth's magnetic field instead.</li>
+<li><code>date (str)</code> : the date (yyyy/mm/dd) in which we want to simulate the cosmic ray trajectory (default is set to the current date). This will change the value of the Gauss coefficients associated with the IGRF model.</li>
+</ul>
+<h2 id="2-evaluate-the-trajectory">2. Evaluate the trajectory</h2>
+<p>The next step is to evaluate the cosmic ray trajectory by using the numerical integrator.</p>
+<p>There are a few parameters that can be set to modify the integration:</p>
+<ul>
+<li><code>dt</code> : the step size of the integration, i.e. the time difference between each point in the trajectory (default : 1e-5s)</li>
+<li><code>max_time</code> : the maximum time in which the integration occurs. No trajectory will be evaluated longer than this time (default : 1s).</li>
+</ul>
+<p>Additionally, one can choose either to obtain the data of the trajectory in a dictionary format by setting the option <code>get_data=True</code>. This dictionary will return the trajectory data of the six-vector in spherical coordinates as well as the time as an array.</p>
+<p>The keys of the dictionary are as follows: <code>["t", "r", "theta", "phi", "pr", "ptheta", "pphi"]</code></p>
+<p>The evaluation is performed simply by one function call:</p>
+<pre><code>traj.get_trajectory()  # without trajectory data
+trajectory_data = traj.get_trajectory(get_data=True) # with data
+</code></pre>
+
+<h2 id="optional-steps">Optional steps</h2>
+<p>The following step are performed one desires to visualize the trajectory as a plot.</p>
+<h3 id="3-plot-the-results">3. Plot the results</h3>
+<p>We can now plot the trajectory. We can either plot this using <code>matplotlib</code>, a standard Python module for plotting, or <code>PlotLy</code>, a HTML interface for interactive plots. The desired method is using <code>PlotLy</code>, which allows for plots obtained from both Python scripts and Jupyter cells to produce an interactive plot.</p>
+<p>This can be done by the following script:</p>
+<pre><code>from gtracr.plotting import plot_3dtraj
+
+plot_3dtraj(
+        trajectory_data,
+        file_name = &quot;plot.png&quot;,
+        mpl=False,
+        plot_path=&quot;../gtracr_plots&quot;,
+        title_name=&quot;Particle Trajectory&quot;
+    )
+</code></pre>
+
+<p>There are several options available when visualizing the plot:</p>
+<ul>
+<li><code>file_name</code> : the name of the file in which we save the plot to. This needs only to be the relative path within the directory in which the plot is saved in. This should have extensions in <code>.html</code> format for PlotLy plots, and some image format (<code>.png</code>, <code>.jpg</code> etc) for matplotlib plots.</li>
+<li><code>mpl</code> : choose whether to plot the trajectory using the <code>matplotlib</code> module with <code>plt.axes(projection="3d")</code> (default : False).</li>
+<li><code>plot_dir</code> : the path to the directory in which we store the plots. The default is set to "gtracr_plots", placed in parallel with the parent directory.</li>
+<li><code>title_name</code> : the title of the plot. This should be changed to appropriately describe the trajectory plot.</li>
+</ul>
+<p>The plotter also implicitly converts the data (which is in spherical coordinates) into Cartesian coordinates.</p>
+<p><em>Note</em> : To run this in JupyterLab, additional modeles are required to allow PlotLy to work. Check the <a href="https://plotly.com/python/getting-started/">PlotLy Installation Guide</a> for more details. Running PlotLy on Jupyter Notebook still works without any additional requirements.</p>
+<h2 id="example">Example</h2>
+<p>Here we present a simple example that can be run in a Python script or a Jupyter Cell:</p>
+<pre><code>from gtracr.trajectory import Trajectory
+# matplotlib not required, just required for plotting purposes
+import matplotlib.pyplot as plt
+
+# initialize a cosmic ray trajectory that arrives at the horizon
+# from the West at 100km above sea level at the Kamioka site with
+# a rigidity of 30 GV:
+
+traj = Trajectory(
+        location_name=&quot;Kamioka&quot;,
+        zenith_angle=90.,
+        azimuth_angle=90.,
+        particle_altitude=100.,
+        rigidity=30.
+    )
+
+# evaluate the trajectory and get the trajectory data
+trajectory_data = traj.get_trajectory(get_data=True)
+
+# plot the results
+from gtracr.plotting import plot_3dtraj
+
+plot_3dtraj(
+        trajectory_data,
+        file_name = &quot;plot.html&quot;,
+        plot_path=&quot;../gtracr_plots&quot;
+    )
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../geomagnetic_cutoffs/" class="btn btn-neutral float-right" title="Geomagnetic Cutoff Rigidities">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../background/" class="btn btn-neutral" title="Background"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/kwat0308/gtracr/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../background/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../geomagnetic_cutoffs/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
