@@ -1,4 +1,4 @@
-# Index
+# gtracr - A GPU-accelerated Tracking Simulation for Cosmic Ray Trajectories
 
 ## Introduction
 
@@ -32,16 +32,31 @@ _Note_: The `--user` flag is required for installing the package in this manner.
 
 The lastest (unstable) version can be obtained by cloning the repository from the `master` branch in [GitHub](https://github.com/kwat0308/gtracr).
 
+## Dependencies
+
+- Python 3 and above
+- NumPy
+- SciPy
+- datetime (for obtaining the current date)
+- tqdm
+
+All such dependencies will be installed with the package.
+
+### Optional requirements
+
+These packages are required to observe plots and test different trajectory cases:
+
+- `matplotlib, plotly` for plots
+- `pytest, pytest-benchmark` for testing
+
 ## Quickstart
 
 ### Evaluating a single trajectory
 
-Here we present a simple example that can be run in a Python script (to run in Jupyter cell, set `jupyter=True` in `plot_3dtraj()`):
+Here we present a simple example that can be run in a Python script:
 
 ```
 from gtracr.trajectory import Trajectory
-# matplotlib not required, just required for plotting purposes
-import matplotlib.pyplot as plt
 
 # initialize a cosmic ray trajectory that arrives at the horizon
 # from the West at 100km above sea level at the Kamioka site with
@@ -59,6 +74,7 @@ traj = Trajectory(
 trajectory_data = traj.get_trajectory(get_data=True)
 
 # plot the results
+# below module requires matplotlib and plotly to run
 from gtracr.plotting import plot_3dtraj
 
 plot_3dtraj(

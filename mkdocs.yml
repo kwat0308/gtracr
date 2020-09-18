@@ -1,4 +1,4 @@
-site_name: gtracr Documentation
+site_name: gtracr - GPU-accelerated Tracking simulation for Cosmic Ray Trajectories 
 site_url : https://gtracr.readthedocs.io
 site_author : Keito Watanabe
 repo_url : https://github.com/kwat0308/gtracr

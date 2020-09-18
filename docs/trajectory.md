@@ -98,8 +98,6 @@ Here we present a simple example that can be run in a Python script or a Jupyter
 
 ```
 from gtracr.trajectory import Trajectory
-# matplotlib not required, just required for plotting purposes
-import matplotlib.pyplot as plt
 
 # initialize a cosmic ray trajectory that arrives at the horizon
 # from the West at 100km above sea level at the Kamioka site with
