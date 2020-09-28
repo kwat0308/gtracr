@@ -24,21 +24,12 @@ These packages are required to observe plots and test different trajectory cases
 
 - `matplotlib, plotly` for plots
 - `pytest, pytest-benchmark` for testing
-<!--
-
-## Installation
-
-The package can be installed by using **pip**:
-
-````
-pip install gtracr
-``` -->
 
 ## Documentation
 
-Check out the [documentation](https://gtracr.readthedocs.io) for more details on installing the package as well as instructions to start using this package with detailed examples.
+Check out the [documentation](https://kwat0308.github.io/gtracr/) for more details on installing the package as well as instructions to start using this package with detailed examples.
 
 ## Copyright and License
 
 This project is under the BSD 3-Clause License. See [LICENSE](LICENSE) for more details.
-````
+
