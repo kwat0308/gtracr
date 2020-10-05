@@ -73,7 +73,7 @@ This can be done by the following script:
 from gtracr.plotting import plot_3dtraj
 
 plot_3dtraj(
-		trajectory_data,
+		[trajectory_data],
         file_name = "plot.png",
 		mpl=False,
         plot_path="../gtracr_plots",
@@ -118,7 +118,7 @@ trajectory_data = traj.get_trajectory(get_data=True)
 from gtracr.plotting import plot_3dtraj
 
 plot_3dtraj(
-		trajectory_data,
+		[trajectory_data],
         file_name = "plot.html",
         plot_path="../gtracr_plots"
     )

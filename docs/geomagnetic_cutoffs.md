@@ -19,7 +19,7 @@ We first have to initialize the container that performs the evaluation of the ge
 We first import the module as such:
 
 ```
-from gtracr.geomagnetic_cutoffs import GMCutoffEvaluator
+from gtracr.geomagnetic_cutoffs import GMRC
 ```
 
 The container can then be initialized by providing the name of the location.
@@ -27,10 +27,14 @@ The container can then be initialized by providing the name of the location.
 For example, if we want to initialize the evaluator to determine the cutoff rigidities for the Kamioka site, we write the following code block:
 
 ```
-gmcutoff_evaluator = GMCutoffEvaluator("Kamioka")
+gmrc = GMRC("Kamioka")
 ```
 
 One can additionally add some optional arguments for the evaluator:
+
+- `iter_num (int)` : number of iterations for Monte Carlo sampling (default:10000)
+- `particle_altitude (float)` : altitude in which cosmic ray collides with atmosphere (default:100)
+- `bfield_type (str)` : type of magnetic field model to use (default: igrf)
 
 Note that only the name of the location is required to initialize the evaluator.
 
@@ -39,10 +43,13 @@ Note that only the name of the location is required to initialize the evaluator.
 We then evaluate the geomagnetic cutoffs by using a Monte-Carlo sampling scheme. This can be done by using the following code:
 
 ```
-gmcutoff_evaluator.evaluate()
+gmrc.evaluate()
 ```
 
 Some additional configurations can be set as follows:
+
+- `dt` : the step size of the integration, i.e. the time difference between each point in the trajectory (default : 1e-5s)
+- `max_time` : the maximum time in which the integration occurs. No trajectory will be evaluated longer than this time (default : 1s).
 
 ### 3. Plot the results
 
@@ -51,20 +58,43 @@ We can then plot the results as a heatmap using the in-built heatmap plotting fu
 We can perform this as such:
 
 ```
-gmcutoff_evaluator.interpolate_results()
+interpd_gmrc_data = gmrc.interpolate_results()
 ```
 
 We can then plot our results on the heatmap:
 
 ```
-from gtracr.lib.plotting import plot_gmcutoffs_heatmap
+from gtracr.plotting import plot_gmrc_heatmap
 
-plot_gmcutoff_heatmap(interpd_gmcutoff_data,
-                        gmcutoff_evaluator.rigidity_list,
-                        locname=gmcutoff_evaluator.location,
+plot_gmrc_heatmap(interpd_gmrc_data,
+                        gmrc.rigidity_list,
+                        locname=gmrc.location,
                         plabel=plabel)
 ```
 
 ### Example
 
-Coming soon!
+The following example evaluates the geomagnetic cutoff rigidities and returns a 2-D heatmap of
+the interpolated results.
+
+```
+from gtracr.geomagnetic_cutoffs import GMRC
+
+# initialize geomagnetic rigidity cutoff evaluator at Kamioka
+# with 10000 iterations
+gmrc = GMRC("Kamioka")
+
+# evaluate with default stepsize and max_time
+gmrc.evaluate()
+
+# interpolate results
+interpd_gmrc_data = gmrc.interpolate_results()
+
+# create heatmap and save as png
+from gtracr.plotting import plot_gmrc_heatmap
+
+plot_gmrc_heatmap(interpd_gmrc_data,
+                        gmrc.rigidity_list,
+                        locname=gmrc.location,
+                        plabel=plabel)
+```

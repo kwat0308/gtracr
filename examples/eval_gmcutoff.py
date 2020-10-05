@@ -4,9 +4,9 @@ import numpy as np
 import pickle
 import argparse
 
-from gtracr.geomagnetic_cutoffs import GMCutoffEvaluator
+from gtracr.geomagnetic_cutoffs import GMRC
 from gtracr.utils import location_dict
-from gtracr.lib.plotting import plot_gmcutoff_scatter, plot_gmcutoff_heatmap
+from gtracr.plotting import plot_gmrc_scatter, plot_gmrc_heatmap
 
 # add filepath of gtracr to sys.path
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -23,7 +23,7 @@ def export_as_pkl(fpath, ds):
         pickle.dump(ds, f, protocol=-1)
 
 
-def eval_gmcutoff(args):
+def eval_gmrc(args):
     # create particle trajectory with desired particle and energy
     plabel = "p+"
     particle_altitude = 100.
@@ -41,63 +41,68 @@ def eval_gmcutoff(args):
         for locname in list(location_dict.keys()):
             # evaluate rigidity cutoffs at the location for
             # the specified particle
-            gmcutoff_evaluator = GMCutoffEvaluator(location=locname,
-                                                   iter_num=args.iter_num,
-                                                   particle_altitude=particle_altitude,
-                                                   bfield_type=args.bfield_type,
-                                                   particle_type=plabel)
+            gmrc = GMRC(location=locname,
+                        iter_num=args.iter_num,
+                        particle_altitude=particle_altitude,
+                        bfield_type=args.bfield_type,
+                        particle_type=plabel)
 
-            gmcutoff_evaluator.evaluate()
+            gmrc.evaluate()
 
             # create a debugger / checker as a scatter plot
             # of the dataset
             if args.debug_mode:
-                plot_gmcutoff_scatter(gmcutoff_evaluator.data_dict,
-                                      locname,
-                                      plabel,
-                                      show_plot=args.show_plot)
-
-            interpd_gmcutoff_data = gmcutoff_evaluator.interpolate_results(ngrid_azimuth=ngrid_azimuth,
-                                                                           ngrid_zenith=ngrid_zenith,)
-
-            plot_gmcutoff_heatmap(interpd_gmcutoff_data,
-                                  gmcutoff_evaluator.rigidity_list,
-                                  locname=locname,
-                                  plabel=plabel,
+                plot_gmrc_scatter(gmrc.data_dict,
+                                  locname,
+                                  plabel,
                                   show_plot=args.show_plot)
+
+            interpd_gmrc_data = gmrc.interpolate_results(
+                ngrid_azimuth=ngrid_azimuth,
+                ngrid_zenith=ngrid_zenith,
+            )
+
+            plot_gmrc_heatmap(interpd_gmrc_data,
+                              gmrc.rigidity_list,
+                              locname=locname,
+                              plabel=plabel,
+                              show_plot=args.show_plot)
 
     else:
         # evaluate rigidity cutoffs at the location for
         # the specified particle
-        gmcutoff_evaluator = GMCutoffEvaluator(location=args.locname,
-                                               iter_num=args.iter_num,
-                                               particle_altitude=particle_altitude,
-                                               bfield_type=args.bfield_type,
-                                               particle_type=plabel)
+        gmrc = GMRC(location=args.locname,
+                    iter_num=args.iter_num,
+                    particle_altitude=particle_altitude,
+                    bfield_type=args.bfield_type,
+                    particle_type=plabel)
 
-        gmcutoff_evaluator.evaluate()
+        gmrc.evaluate()
 
         # create a debugger / checker as a scatter plot
         # of the dataset
         if args.debug_mode:
-            plot_gmcutoff_scatter(gmcutoff_evaluator.data_dict,
-                                  args.locname,
-                                  plabel,
-                                  show_plot=args.show_plot)
-
-        interpd_gmcutoff_data = gmcutoff_evaluator.interpolate_results(ngrid_azimuth=ngrid_azimuth,
-                                                                       ngrid_zenith=ngrid_zenith,)
-
-        plot_gmcutoff_heatmap(interpd_gmcutoff_data,
-                              gmcutoff_evaluator.rigidity_list,
-                              locname=args.locname,
-                              plabel=plabel,
+            plot_gmrc_scatter(gmrc.data_dict,
+                              args.locname,
+                              plabel,
                               show_plot=args.show_plot)
+
+        interpd_gmrc_data = gmrc.interpolate_results(
+            ngrid_azimuth=ngrid_azimuth,
+            ngrid_zenith=ngrid_zenith,
+        )
+
+        plot_gmrc_heatmap(interpd_gmrc_data,
+                          gmrc.rigidity_list,
+                          locname=args.locname,
+                          plabel=plabel,
+                          show_plot=args.show_plot)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Evaluates the geomagnetic cutoff rigidities of some location for N iterations using a Monte-Carlo scheme, and produces a heatmap for such geomagnetic cutoff rigidities.'
+        description=
+        'Evaluates the geomagnetic cutoff rigidities of some location for N iterations using a Monte-Carlo scheme, and produces a heatmap for such geomagnetic cutoff rigidities.'
     )
     parser.add_argument(
         '-ln',
@@ -144,4 +149,4 @@ if __name__ == "__main__":
                         help='Clean the dataset. ')
 
     args = parser.parse_args()
-    eval_gmcutoff(args)
+    eval_gmrc(args)

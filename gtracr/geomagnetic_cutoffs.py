@@ -11,7 +11,7 @@ CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 
 
-class GMCutoffEvaluator():
+class GMRC():
     '''
     Evaluates the geomagnetic cutoff rigidities associated to a specific location on the globe for each zenith and azimuthal angle (a zenith angle > 90 degrees are for upward-moving particles, that is, for cosmic rays coming from the other side of Earth).
 

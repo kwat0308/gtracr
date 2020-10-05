@@ -59,7 +59,6 @@ class pTrajectoryTracer:
     the TrajectoryTracer class in Python vs C++, and the Python version is mainly used as a 
     tester for the C++ version.
     '''
-
     def __init__(self,
                  charge,
                  mass,
@@ -156,8 +155,8 @@ class pTrajectoryTracer:
         # divide each ODE by relativistic mass to account for using momentum
         # instead of velocity
         ode_lrz = np.array([
-            pr, (ptheta / r),
-            (pphi / (r * np.sin(theta))), dprdt, dpthetadt, dpphidt
+            pr,
+            (ptheta / r), pphi / (r * np.sin(theta)), dprdt, dpthetadt, dpphidt
         ]) / rel_mass
 
         return ode_lrz
@@ -280,8 +279,8 @@ class pTrajectoryTracer:
         self.final_sixvector = vec
 
         # get corresponding arrays using zip
-        (r_arr, theta_arr, phi_arr, pr_arr,
-         ptheta_arr, pphi_arr) = np.array(vec_arr).T
+        (r_arr, theta_arr, phi_arr, pr_arr, ptheta_arr,
+         pphi_arr) = np.array(vec_arr).T
 
         # create the dictionary that contains the trajectory data
         trajectory_data = {
