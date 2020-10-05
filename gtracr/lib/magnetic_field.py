@@ -1,5 +1,5 @@
 import gtracr.lib.igrf_utils as iuf
-from gtracr.lib.constants import EARTH_RADIUS, G10
+from gtracr.lib.constants import EARTH_RADIUS, G10, DEG_PER_RAD
 '''
 Library that controls the equation for the Earth's magnetic field.
 '''
@@ -30,7 +30,6 @@ class MagneticField:
     no external currents, i.e. curl(B) = 0
 
     '''
-
     def __init__(self):
         pass
 
@@ -54,8 +53,8 @@ class MagneticField:
             The spherical components of the magnetic field
         '''
 
-        Br = 2. * (EARTH_RADIUS / r)**3. * G10 * np.cos(theta)
-        Btheta = (EARTH_RADIUS / r)**3. * G10 * np.sin(theta)
+        Br = -2. * (EARTH_RADIUS / r)**3. * G10 * np.cos(theta)
+        Btheta = -(EARTH_RADIUS / r)**3. * G10 * np.sin(theta)
         Bphi = 0.
 
         return np.array([Br, Btheta, Bphi])
@@ -97,7 +96,6 @@ class IGRF13(MagneticField):
         the .shc file.
 
     '''
-
     def __init__(self, curr_year, nmax=None):
         # override MagneticField __init__ function
         # not necessary, but for decorative sake
@@ -131,6 +129,19 @@ class IGRF13(MagneticField):
         self.igrf_coeffs = interp_coeffs(self.curr_year).T
 
     def values(self, r, theta, phi):
+        # transform theta, phi to degrees and r into kilometers
+        r *= 1e-3
+        theta *= DEG_PER_RAD
+        phi *= DEG_PER_RAD
+
+        # check if theta / phi is > 180 or > 360 respectively
+        # this is to prevent errors to be raised by the igrf evaluator
+        if theta > 180.:
+            theta = (theta % 180.)  # normalize by nearest remainder from 180
+
+        if phi > 360.:
+            phi = (phi % 360.)  # normalize by nearest remainder from 360
+
         # obtaining the values can easily be done by using
         # the function synth_values from igrf_utils.py
         Br, Btheta, Bphi = iuf.synth_values(self.igrf_coeffs,
@@ -139,4 +150,6 @@ class IGRF13(MagneticField):
                                             phi,
                                             nmax=self.nmax)
 
-        return np.array([Br, Btheta, Bphi])
+        # take first index since synth_values return arrays, not scalars
+        return np.array([Br[0], Btheta[0], Bphi[0]]) \
+                                            * (1e-9)  # convert to teslas

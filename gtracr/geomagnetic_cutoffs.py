@@ -41,7 +41,6 @@ class GMRC():
     - delta_rigidity : float
         The spacing between each rigidity (default = 5 GV). Sets the coarseness of the rigidity sample space.
     '''
-
     def __init__(self,
                  location="Kamioka",
                  particle_altitude=100,
@@ -51,10 +50,9 @@ class GMRC():
                  date=str(date.today()),
                  min_rigidity=5.,
                  max_rigidity=55.,
-                 delta_rigidity=5.
-                 ):
+                 delta_rigidity=5.):
         # set class attributes
-        self.locname = location
+        self.location = location
         self.palt = particle_altitude
         self.iter_num = iter_num
         self.bfield_type = bfield_type
@@ -109,16 +107,14 @@ class GMRC():
             # when particle is able to escape earth
             for rigidity in self.rigidity_list:
 
-                traj = Trajectory(
-                    plabel=self.plabel,
-                    location_name=self.locname,
-                    zenith_angle=zenith,
-                    azimuth_angle=azimuth,
-                    particle_altitude=100.,
-                    rigidity=rigidity,
-                    bfield_type=self.bfield_type,
-                    date=self.date
-                )
+                traj = Trajectory(plabel=self.plabel,
+                                  location_name=self.location,
+                                  zenith_angle=zenith,
+                                  azimuth_angle=azimuth,
+                                  particle_altitude=100.,
+                                  rigidity=rigidity,
+                                  bfield_type=self.bfield_type,
+                                  date=self.date)
 
                 traj.get_trajectory(dt=dt, max_time=max_time)
                 # break loop and append direction and current rigidity if particle has escaped
@@ -136,8 +132,7 @@ class GMRC():
     def interpolate_results(self,
                             method="linear",
                             ngrid_azimuth=70,
-                            ngrid_zenith=70
-                            ):
+                            ngrid_zenith=70):
         '''
         Interpolate the rigidity cutoffs using `scipy.interpolate.griddata`
 
@@ -161,23 +156,18 @@ class GMRC():
             The interpolated geomagnetic cutoff rigidities.
         '''
 
-        azimuth_grid = np.linspace(
-            np.min(self.data_dict["azimuth"]),
-            np.max(self.data_dict["azimuth"]),
-            ngrid_azimuth
-        )
-        zenith_grid = np.linspace(
-            np.max(self.data_dict["zenith"]),
-            np.min(self.data_dict["zenith"]),
-            ngrid_zenith
-        )
+        azimuth_grid = np.linspace(np.min(self.data_dict["azimuth"]),
+                                   np.max(self.data_dict["azimuth"]),
+                                   ngrid_azimuth)
+        zenith_grid = np.linspace(np.max(self.data_dict["zenith"]),
+                                  np.min(self.data_dict["zenith"]),
+                                  ngrid_zenith)
 
-        rcutoff_grid = griddata(
-            points=(self.data_dict["azimuth"],
-                    self.data_dict["zenith"]),
-            values=self.data_dict["rcutoff"],
-            xi=(azimuth_grid[None, :], zenith_grid[:, None]),
-            method=method
-        )
+        rcutoff_grid = griddata(points=(self.data_dict["azimuth"],
+                                        self.data_dict["zenith"]),
+                                values=self.data_dict["rcutoff"],
+                                xi=(azimuth_grid[None, :], zenith_grid[:,
+                                                                       None]),
+                                method=method)
 
         return (azimuth_grid, zenith_grid, rcutoff_grid)

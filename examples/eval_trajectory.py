@@ -12,7 +12,7 @@ import argparse
 
 from gtracr.utils import dec_to_dms
 from gtracr.lib.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
-from gtracr.lib.plotting import plot_3dtraj, plot_2dtraj, plot_trajmomentum
+from gtracr.plotting import plot_3dtraj, plot_2dtraj, plot_trajmomentum
 from gtracr.trajectory import Trajectory
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -38,18 +38,11 @@ def plot_trajectory(traj_datadict, title, check_3dtraj=False, show_plot=False):
     convert_to_cartesian(traj_datadict)
 
     # plot the projections
-    plot_2dtraj(
-        traj_datadict,
-        plotdir_path=PLOT_DIR
-    )
+    plot_2dtraj([traj_datadict], plotdir_path=PLOT_DIR)
 
     # plot the 3-d trajectory with wireframe sphere as the earth
     if check_3dtraj:
-        plot_3dtraj(
-            traj_datadict,
-            title_name=title,
-            plotdir_path=PLOT_DIR
-        )
+        plot_3dtraj([traj_datadict], title_name=title, plotdir_path=PLOT_DIR)
 
 
 def get_trajectory():
@@ -89,17 +82,15 @@ def get_trajectory():
         os.mkdir(PLOT_DIR)
 
     # initialize trajectory
-    traj = Trajectory(
-        plabel=plabel,
-        zenith_angle=zenith,
-        azimuth_angle=azimuth,
-        particle_altitude=particle_alt,
-        latitude=lat,
-        longitude=lng,
-        detector_altitude=detector_alt,
-        rigidity=rigidity,
-        bfield_type="igrf"
-    )
+    traj = Trajectory(plabel=plabel,
+                      zenith_angle=zenith,
+                      azimuth_angle=azimuth,
+                      particle_altitude=particle_alt,
+                      latitude=lat,
+                      longitude=lng,
+                      detector_altitude=detector_alt,
+                      rigidity=rigidity,
+                      bfield_type="igrf")
 
     # obtain the trajectory result
     traj_datadict = traj.get_trajectory(dt=dt,
