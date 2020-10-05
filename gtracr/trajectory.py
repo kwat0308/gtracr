@@ -8,7 +8,6 @@ from gtracr.lib.trajectory_tracer import pTrajectoryTracer
 from gtracr.utils import particle_dict, location_dict, ymd_to_dec
 from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
 
-
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(CURRENT_DIR, "data")
 
@@ -49,7 +48,6 @@ class Trajectory:
     - escape_altitude : float
         the altitude in which the particle has "escaped" Earth (default = 10 * RE)
     '''
-
     def __init__(self,
                  zenith_angle,
                  azimuth_angle,
@@ -63,8 +61,7 @@ class Trajectory:
                  bfield_type="igrf",
                  date=str(date.today()),
                  plabel="p+",
-                 escape_altitude=10. * EARTH_RADIUS
-                 ):
+                 escape_altitude=10. * EARTH_RADIUS):
         '''
         Cosmic ray direction configurations
         '''
@@ -110,7 +107,6 @@ class Trajectory:
         else:
             raise Exception(
                 "Provide either energy or rigidity as input, not both!")
-
         '''
         Magnetic Field Model configuration
         '''
@@ -194,21 +190,21 @@ class Trajectory:
         if use_python:
             # the python trajectory tracer version
             traj_tracer = pTrajectoryTracer(self.particle.charge,
-                                            self.particle.mass,
-                                            self.esc_alt, dt, max_step,
-                                            self.bfield_type, self.igrf_params)
+                                            self.particle.mass, self.esc_alt,
+                                            dt, max_step, self.bfield_type,
+                                            self.igrf_params)
         elif use_unvectorized:
             # the unvectorized trajectory tracer version
             traj_tracer = uTrajectoryTracer(self.particle.charge,
-                                            self.particle.mass,
-                                            self.esc_alt, dt, max_step,
-                                            self.bfield_type, self.igrf_params)
+                                            self.particle.mass, self.esc_alt,
+                                            dt, max_step, self.bfield_type,
+                                            self.igrf_params)
         else:
             # the vectorized trajectory tracer version
             traj_tracer = TrajectoryTracer(self.particle.charge,
-                                           self.particle.mass,
-                                           self.esc_alt, dt, max_step,
-                                           self.bfield_type, self.igrf_params)
+                                           self.particle.mass, self.esc_alt,
+                                           dt, max_step, self.bfield_type,
+                                           self.igrf_params)
 
         # set initial values
         particle_t0 = 0.
@@ -224,6 +220,10 @@ class Trajectory:
             # this should be done within C++ in future versions
             for key, arr in list(trajectory_datadict.items()):
                 trajectory_datadict[key] = np.array(arr)
+
+            # add the Cartesian components to the dictionary
+            # for plotting purposes
+            self.convert_to_cartesian(trajectory_datadict)
 
             # lastly get the boolean of if the particle has escaped or not
             # in binary format
@@ -251,6 +251,17 @@ class Trajectory:
             self.final_sixvector = np.array(traj_tracer.final_sixvector)
 
             return None
+
+    def convert_to_cartesian(self, trajectory_data):
+
+        r_arr = trajectory_data["r"] / EARTH_RADIUS
+        theta_arr = trajectory_data["theta"]
+        phi_arr = trajectory_data["phi"]
+
+        # convert to cartesian & add to dict
+        trajectory_data["x"] = r_arr * np.sin(theta_arr) * np.cos(phi_arr)
+        trajectory_data["y"] = r_arr * np.sin(theta_arr) * np.sin(phi_arr)
+        trajectory_data["z"] = r_arr * np.cos(theta_arr)
 
     # get the initial trajectory points based on the latitude, longitude, altitude, zenith, and azimuth
     # returns tuple of 2 trajectory points (the initial one and the first one relating to that of the zenith and azimuth one)
@@ -284,13 +295,12 @@ class Trajectory:
                 np.cos(self.zangle * RAD_PER_DEG))
 
         elif self.zangle <= 90.:
-            particle_coord = self.get_particle_coord(
-                altitude=self.palt, magnitude=1e-10)
+            particle_coord = self.get_particle_coord(altitude=self.palt,
+                                                     magnitude=1e-10)
 
         # print(detector_coord, particle_coord)
         # print(self.tf_matrix())
-        transformed_cart_coord = self.transform(detector_coord,
-                                                particle_coord)
+        transformed_cart_coord = self.transform(detector_coord, particle_coord)
 
         # transformation for momentum
         # need to convert from natural units to SI units
@@ -370,8 +380,7 @@ class Trajectory:
         phi = self.lng * RAD_PER_DEG
 
         cart_vals = np.array([
-            r * np.sin(theta) * np.cos(phi),
-            r * np.sin(theta) * np.sin(phi),
+            r * np.sin(theta) * np.cos(phi), r * np.sin(theta) * np.sin(phi),
             r * np.cos(theta)
         ])
 
@@ -404,19 +413,22 @@ class Trajectory:
         phi = np.arctan2(y, x)
 
         # define transformation matrix for momentum
-        tfmat_cart_to_sph = np.array([
-            [np.sin(theta) * np.cos(phi), np.sin(theta)
-             * np.sin(phi), np.cos(theta)],
-            [np.cos(theta) * np.cos(phi), np.cos(theta)
-             * np.sin(phi), -np.sin(theta)],
-            [-np.sin(phi), np.cos(phi), 0.]
-        ])
+        tfmat_cart_to_sph = np.array([[
+            np.sin(theta) * np.cos(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(theta)
+        ],
+                                      [
+                                          np.cos(theta) * np.cos(phi),
+                                          np.cos(theta) * np.sin(phi),
+                                          -np.sin(theta)
+                                      ], [-np.sin(phi),
+                                          np.cos(phi), 0.]])
 
         # # get spherical momentum
         sph_mmtm = np.dot(tfmat_cart_to_sph, cart_mmtm)
 
         # store both results into an array
-        sph_sixvector = np.hstack(
-            (np.array([r, theta, phi]), sph_mmtm))
+        sph_sixvector = np.hstack((np.array([r, theta, phi]), sph_mmtm))
 
         return sph_sixvector

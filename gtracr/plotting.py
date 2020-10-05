@@ -11,14 +11,15 @@ from gtracr.lib.constants import KG_M_S_PER_GEVC
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(CURRENT_DIR))
-PLOT_DIR = os.path.join(ROOT_DIR, "..", "gtracr_plots")
+PLOT_DIR = os.path.join(ROOT_DIR, "gtracr_plots")
 
 
 def plot_3dtraj(trajectory_datalist,
                 title_name="Particle Trajectory",
                 file_name="test_trajectory_3d.html",
                 mpl=False,
-                plotdir_path=PLOT_DIR):
+                plotdir_path=PLOT_DIR,
+                show_plot=False):
     '''
     Plots trajectories using a 3-dimensional plot using PlotLy, an interactive HTML plotting module. Options are available to plot in usual matplotlib as well.
 
@@ -35,18 +36,27 @@ def plot_3dtraj(trajectory_datalist,
         Enables plotting with matplotlib instead of PlotLy (default = False).
     - plotdir_path : str
         The path to the directory in which the plots are stored in. Default is set to a directory `gtracr_plots` placed in parallel with the root directory.
+    - show_plot : bool
+        Boolean whether to show the plot or not
     '''
 
     # unpack dictionary
     data_list = []
+    tarrlen_list = []
     tarr_list = []
+
     for trajectory_data in trajectory_datalist:
         data_list.append(
             (trajectory_data["x"], trajectory_data["y"], trajectory_data["z"]))
+        tarrlen_list.append(len(trajectory_data["t"]))
         tarr_list.append(trajectory_data["t"])
 
-    # get maximal time for plotting purposes
-    t_arr = np.max(np.array(tarr_list))
+    # get maximal array of time for plotting purposes
+    tarr_index = np.argmax(np.array(tarrlen_list))
+    t_arr = tarr_list[tarr_index]
+
+    print("Maximal and minimal time values: {:.3e}, {:.3e}".format(
+        np.max(t_arr), np.min(t_arr)))
 
     # set the earth wireframe
     u, v = np.mgrid[0:2 * np.pi:100j,
@@ -90,6 +100,9 @@ def plot_3dtraj(trajectory_datalist,
 
         # mpld3.save_html(fig_3d, os.path.join(PLOT_DIR, "test_trajectory_3d.html"))
         plt.savefig(os.path.join(plotdir_path, file_name))
+
+        if show_plot:
+            plt.show()
 
     # plot using PlotLy
     else:
@@ -141,6 +154,9 @@ def plot_3dtraj(trajectory_datalist,
         # make file extension to html if it is not html
         if file_name.find("html") < 0:
             file_name = file_name.split(".")[0] + ".html"
+
+        if show_plot:
+            fig.show()
 
         # write to html
         fig.write_html(os.path.join(plotdir_path, file_name))

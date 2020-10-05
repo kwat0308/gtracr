@@ -119,7 +119,6 @@ from gtracr.plotting import plot_3dtraj
 
 plot_3dtraj(
 		[trajectory_data],
-        file_name = "plot.html",
-        plot_path="../gtracr_plots"
+        file_name = "plot.html"
     )
 ```

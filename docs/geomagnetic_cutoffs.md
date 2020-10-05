@@ -69,7 +69,7 @@ from gtracr.plotting import plot_gmrc_heatmap
 plot_gmrc_heatmap(interpd_gmrc_data,
                         gmrc.rigidity_list,
                         locname=gmrc.location,
-                        plabel=plabel)
+                        plabel=gmrc.plabel)
 ```
 
 ### Example
@@ -96,5 +96,5 @@ from gtracr.plotting import plot_gmrc_heatmap
 plot_gmrc_heatmap(interpd_gmrc_data,
                         gmrc.rigidity_list,
                         locname=gmrc.location,
-                        plabel=plabel)
+                        plabel=gmrc.plabel)
 ```
