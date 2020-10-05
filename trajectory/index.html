@@ -177,7 +177,7 @@ trajectory_data = traj.get_trajectory(get_data=True) # with data
 <pre><code>from gtracr.plotting import plot_3dtraj
 
 plot_3dtraj(
-        trajectory_data,
+        [trajectory_data],
         file_name = &quot;plot.png&quot;,
         mpl=False,
         plot_path=&quot;../gtracr_plots&quot;,
@@ -217,9 +217,8 @@ trajectory_data = traj.get_trajectory(get_data=True)
 from gtracr.plotting import plot_3dtraj
 
 plot_3dtraj(
-        trajectory_data,
-        file_name = &quot;plot.html&quot;,
-        plot_path=&quot;../gtracr_plots&quot;
+        [trajectory_data],
+        file_name = &quot;plot.html&quot;
     )
 </code></pre>
               

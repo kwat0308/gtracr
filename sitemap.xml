@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
      <loc>https://gtracr.readthedocs.io/</loc>
-     <lastmod>2020-09-28</lastmod>
+     <lastmod>2020-10-05</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://gtracr.readthedocs.io/trajectory/</loc>
-     <lastmod>2020-09-28</lastmod>
+     <lastmod>2020-10-05</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://gtracr.readthedocs.io/geomagnetic_cutoffs/</loc>
-     <lastmod>2020-09-28</lastmod>
+     <lastmod>2020-10-05</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://gtracr.readthedocs.io/benchmarks/</loc>
-     <lastmod>2020-09-28</lastmod>
+     <lastmod>2020-10-05</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://gtracr.readthedocs.io/license/</loc>
-     <lastmod>2020-09-28</lastmod>
+     <lastmod>2020-10-05</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>
