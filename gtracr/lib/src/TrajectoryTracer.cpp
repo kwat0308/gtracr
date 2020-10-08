@@ -28,7 +28,7 @@ the TrajectoryTracer class.
   - vec_sum (vec2) (std::array<double, 6>) :
       the element-wise sum of vec1 and vec2
 */
-inline std::array<double, 6> operator+(std::array<double, 6> lh_vec,
+inline std::array<double, 6> &operator+(std::array<double, 6> lh_vec,
                                        std::array<double, 6> rh_vec) {
   std::transform(lh_vec.begin(), lh_vec.end(), rh_vec.begin(), lh_vec.begin(),
                  std::plus<double>());
@@ -52,7 +52,7 @@ inline std::array<double, 6> operator+(std::array<double, 6> lh_vec,
   - vec_mult (vec2) (std::array<double, 6>) :
       the element-wise multiplication of vec1 and vec2
 */
-inline std::array<double, 6> operator*(std::array<double, 6> lh_vec,
+inline std::array<double, 6> &operator*(std::array<double, 6> lh_vec,
                                        std::array<double, 6> rh_vec) {
   std::transform(lh_vec.begin(), lh_vec.end(), rh_vec.begin(), lh_vec.begin(),
                  std::multiplies<double>());
@@ -76,13 +76,14 @@ inline std::array<double, 6> operator*(std::array<double, 6> lh_vec,
   - vec_smult (std::array<double, 6>) :
       the scalar multiplication of val and vec
 */
-inline std::array<double, 6> operator*(const double lh_val,
+inline std::array<double, 6> &operator*(const double lh_val,
                                        std::array<double, 6> rh_vec) {
   std::transform(
       rh_vec.cbegin(), rh_vec.cend(), rh_vec.begin(),
       std::bind(std::multiplies<double>(), std::placeholders::_1, lh_val));
   return rh_vec;
 }
+
 
 // TrajectoryTracer class
 
@@ -313,21 +314,21 @@ void TrajectoryTracer::evaluate(const double &t0, std::array<double, 6> &vec0) {
 
   // set the initial conditions
   double t = t0;
-  std::array<double, 6> vec = vec0;
+  std::array<double, 6> &vec = vec0;
   // TODO: make arrays into references for no copying
 
   // start the loop
   for (int i = 0; i < max_iter_; ++i) {
     // evaluate the k-coefficients
 
-    std::array<double, 6> k1_vec = h * ode_lrz(t, vec);
-    std::array<double, 6> k2_vec =
+    std::array<double, 6> &k1_vec = h * ode_lrz(t, vec);
+    std::array<double, 6> &k2_vec =
         h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec));
-    std::array<double, 6> k3_vec =
+    std::array<double, 6> &k3_vec =
         h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec));
-    std::array<double, 6> k4_vec = h * ode_lrz(t + h, vec + k3_vec);
+    std::array<double, 6> &k4_vec = h * ode_lrz(t + h, vec + k3_vec);
 
-    std::array<double, 6> k_vec =
+    std::array<double, 6> &k_vec =
         (1. / 6.) * (k1_vec + (2. * k2_vec) + (2. * k3_vec) + k4_vec);
 
     // increment by weighted sum
