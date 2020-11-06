@@ -46,7 +46,7 @@ class Trajectory:
     - plabel : str
          the label of the particle defined in particle_dict (default = "p+"). Available options are "p+", "p-", "e+", "e-".
     - escape_altitude : float
-        the altitude in which the particle has "escaped" Earth (default = 10 * RE)
+        the altitude in which the particle has "escaped" Earth in meters (default = 10 * RE)
     '''
     def __init__(self,
                  zenith_angle,
@@ -90,6 +90,8 @@ class Trajectory:
         self.lat = latitude
         self.lng = longitude
         self.dalt = detector_altitude * (1e3)  # convert to meters
+
+        self.start_alt = self.dalt + self.palt
         '''
         Cosmic ray energy / rigidity / momentum configuration
         '''
@@ -190,21 +192,21 @@ class Trajectory:
         if use_python:
             # the python trajectory tracer version
             traj_tracer = pTrajectoryTracer(self.particle.charge,
-                                            self.particle.mass, self.esc_alt,
-                                            dt, max_step, self.bfield_type,
-                                            self.igrf_params)
+                                            self.particle.mass, self.start_alt,
+                                            self.esc_alt, dt, max_step,
+                                            self.bfield_type, self.igrf_params)
         elif use_unvectorized:
             # the unvectorized trajectory tracer version
             traj_tracer = uTrajectoryTracer(self.particle.charge,
-                                            self.particle.mass, self.esc_alt,
-                                            dt, max_step, self.bfield_type,
-                                            self.igrf_params)
+                                            self.particle.mass, self.start_alt,
+                                            self.esc_alt, dt, max_step,
+                                            self.bfield_type, self.igrf_params)
         else:
             # the vectorized trajectory tracer version
             traj_tracer = TrajectoryTracer(self.particle.charge,
-                                           self.particle.mass, self.esc_alt,
-                                           dt, max_step, self.bfield_type,
-                                           self.igrf_params)
+                                           self.particle.mass, self.start_alt,
+                                           self.esc_alt, dt, max_step,
+                                           self.bfield_type, self.igrf_params)
 
         # set initial values
         particle_t0 = 0.
@@ -288,6 +290,9 @@ class Trajectory:
         if self.zangle > 90.:
             # here we count both altitude and magnitude as a whole
             # for ease of computation
+
+            self.start_alt = self.start_alt * np.cos(
+                self.zangle * RAD_PER_DEG) * np.cos(self.zangle * RAD_PER_DEG)
 
             particle_coord = self.get_particle_coord(
                 altitude=0.,

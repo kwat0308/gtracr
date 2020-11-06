@@ -13,6 +13,8 @@ CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(CURRENT_DIR))
 PLOT_DIR = os.path.join(ROOT_DIR, "gtracr_plots")
 
+COLOR_LIST = ["b", "r", "c", "m", "y", "g", "k"]
+
 
 def plot_3dtraj(trajectory_datalist,
                 title_name="Particle Trajectory",
@@ -68,7 +70,7 @@ def plot_3dtraj(trajectory_datalist,
     # plot using matplotlib
     if mpl:
         # set the figure and axes
-        fig_3d = plt.figure(figsize=(12, 9))
+        fig_3d = plt.figure(figsize=(12, 6))
         ax_3d = fig_3d.add_subplot(111, projection="3d")
 
         # plot the sphere
@@ -186,14 +188,18 @@ def plot_2dtraj(trajectory_datalist,
     '''
     # unpack dictionary
     data_list = []
+    tarrlen_list = []
     tarr_list = []
+
     for trajectory_data in trajectory_datalist:
         data_list.append(
             (trajectory_data["x"], trajectory_data["y"], trajectory_data["z"]))
+        tarrlen_list.append(len(trajectory_data["t"]))
         tarr_list.append(trajectory_data["t"])
 
-    # get maximal time for plotting purposes
-    t_arr = np.max(np.array(tarr_list))
+    # get maximal array of time for plotting purposes
+    tarr_index = np.argmax(np.array(tarrlen_list))
+    t_arr = tarr_list[tarr_index]
 
     # figures for the projections
     fig_proj, ax_proj = plt.subplots(ncols=2,
@@ -217,12 +223,12 @@ def plot_2dtraj(trajectory_datalist,
         # projection onto yz plane
         plot_traj_projection(y_arr, z_arr, t_arr, fig_proj, ax_yz, "y", "z")
 
-        mag_arr = np.linalg.norm(np.array(x_arr, y_arr, z_arr), axis=0)
+        mag_arr = np.linalg.norm(np.array([x_arr, y_arr, z_arr]), axis=0)
 
         # magnitude vs time
         ax_mag.plot(t_arr, mag_arr)
         ax_mag.set_xlabel("Time [s]")
-        ax_mag.set_ylabel(r"$\| \vec{r} \| [$R_E$]$")
+        ax_mag.set_ylabel(r"$\| \vec{r} \| [R_E]$")
         ax_mag.set_title("Time Evolution of the Magnitude of the Trajectory")
 
     fig_proj.suptitle(title_name, fontsize=16)
@@ -297,11 +303,11 @@ def plot_traj_momentum(trajectory_data, p0, show_plot=False):
 
     # figure for momentum vs steps
     # for physics checking
-    fig_pmag, ax_pmag = plt.subplots(figsize=(12, 9), constrained_layout=True)
+    fig_pmag, ax_pmag = plt.subplots(figsize=(12, 6), constrained_layout=True)
 
     # momentum ratio vs steps
     ax_pmag.plot(t_arr, p_ratio, color="b", marker="o", ms=3.0)
-    ax_pmag.set_ylim([0.5, 1.5])
+    # ax_pmag.set_ylim([0.5, 1.5])
     # ax_pmag.set_ylim([-3, 3])
     ax_pmag.set_xlabel(r"Time [s]", fontsize=14)
     ax_pmag.set_ylabel(r"$p/p_0$", fontsize=14)
@@ -317,6 +323,8 @@ def plot_traj_momentum(trajectory_data, p0, show_plot=False):
 def plot_gmrc_scatter(gmrc_data,
                       locname,
                       plabel,
+                      bfield_type,
+                      iter_num,
                       show_plot=False,
                       plotdir_path=PLOT_DIR):
     '''
@@ -346,12 +354,13 @@ def plot_gmrc_scatter(gmrc_data,
     zenith_arr = gmrc_data["zenith"]
     rcutoff_arr = gmrc_data["rcutoff"]
 
-    fig, ax = plt.subplots()
-    sc = ax.scatter(azimuth_arr, zenith_arr, c=rcutoff_arr, s=2.0)
+    fig, ax = plt.subplots(figsize=(12, 6), constrained_layout=True)
+    sc = ax.scatter(azimuth_arr, zenith_arr, c=rcutoff_arr, s=3.0)
     ax.set_xlabel("Azimuthal Angle [Degrees]")
     ax.set_ylabel("Zenith Angle [Degrees]")
-    ax.set_title("Geomagnetic Rigidity Cutoffs at {0} for {1}".format(
-        locname, plabel))
+    ax.set_title(
+        "Geomagnetic Rigidity Cutoffs at {0} for {1} with N = {2}".format(
+            locname, plabel, iter_num))
 
     cbar = fig.colorbar(sc, ax=ax)
     cbar.ax.set_ylabel("Rigidity [GV]")
@@ -359,9 +368,9 @@ def plot_gmrc_scatter(gmrc_data,
     ax.set_xlim([0., 360.])
     ax.set_ylim([180., 0.])
 
-    plt.savefig(os.path.join(plotdir_path,
-                             "{0}_{1}_scatterplot.png".format(locname,
-                                                              plabel)),
+    plt.savefig(os.path.join(
+        plotdir_path,
+        "{0}_{1}_{2}_scatterplot.png".format(locname, plabel, bfield_type)),
                 dpi=800)
 
     if show_plot:
@@ -372,6 +381,7 @@ def plot_gmrc_heatmap(gmrc_grids,
                       rigidity_list,
                       locname,
                       plabel,
+                      bfield_type,
                       show_plot=False,
                       plotdir_path=PLOT_DIR):
     '''
@@ -404,7 +414,7 @@ def plot_gmrc_heatmap(gmrc_grids,
     # plot the contour plot
     # we use imshow to create a mock filled contour plot
     # and plot contour lines over the imshow plot
-    fig, ax = plt.subplots(figsize=(12, 9), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(12, 6), constrained_layout=True)
 
     image = ax.imshow(rcutoff_grid,
                       extent=[-2.5, 362.5, -2.5, 182.5],
@@ -445,5 +455,6 @@ def plot_gmrc_heatmap(gmrc_grids,
         plt.show()
 
     plt.savefig(
-        os.path.join(plotdir_path,
-                     "{0}_{1}_cutoffplot.png".format(locname, plabel)))
+        os.path.join(
+            plotdir_path,
+            "{0}_{1}_{2}_cutoffplot.png".format(locname, plabel, bfield_type)))

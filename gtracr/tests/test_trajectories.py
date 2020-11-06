@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 from gtracr.trajectory import Trajectory
-from gtracr.lib.trajectorypoint import TrajectoryPoint
 
 # in the form :
 # (plabel, zenith, azimuth, particle_altitude,
@@ -36,19 +35,10 @@ def test_trajectories_dipole():
     '''
 
     expected_times = [
-        0.004199999999999997,
-        0.29988000000015913,
-        0.19221000000005145,
-        0.20288000000006212,
-        0.21143000000007067,
-        0.2024600000000617,
-        0.19868000000005792,
-        0.2169700000000762,
-        0.19499000000005423,
-        0.23232000000009156,
-        0.0076999999999998545,
-        0.019769999999999364,
-        0.19331000000005255
+        1e-05, 0.29988000000015913, 0.19221000000005145, 0.20288000000006212,
+        0.21143000000007067, 0.2024600000000617, 0.19868000000005792,
+        0.2169700000000762, 0.19499000000005423, 0.23232000000009156,
+        0.007339999999999869, 0.01939999999999938, 0.19331000000005255
     ]
 
     dt = 1e-5
@@ -56,20 +46,19 @@ def test_trajectories_dipole():
 
     for iexp, initial_variables in enumerate(initial_variable_list):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = initial_variables
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig,
+         en) = initial_variables
 
-        traj = Trajectory(
-            plabel=plabel,
-            zenith_angle=zenith,
-            azimuth_angle=azimuth,
-            particle_altitude=palt,
-            latitude=lat,
-            longitude=lng,
-            detector_altitude=dalt,
-            rigidity=rig,
-            energy=en,
-            bfield_type="dipole"
-        )
+        traj = Trajectory(plabel=plabel,
+                          zenith_angle=zenith,
+                          azimuth_angle=azimuth,
+                          particle_altitude=palt,
+                          latitude=lat,
+                          longitude=lng,
+                          detector_altitude=dalt,
+                          rigidity=rig,
+                          energy=en,
+                          bfield_type="dipole")
 
         traj.get_trajectory(dt=dt, max_time=max_time)
 
@@ -82,19 +71,10 @@ def test_trajectories_igrf():
     '''
 
     expected_times = [
-        0.004199999999999997,
-        0.29988000000015913,
-        0.19221000000005145,
-        0.20288000000006212,
-        0.21143000000007067,
-        0.2024600000000617,
-        0.19868000000005792,
-        0.2169700000000762,
-        0.19499000000005423,
-        0.23232000000009156,
-        0.0076999999999998545,
-        0.019769999999999364,
-        0.19331000000005255
+        1e-05, 0.29988000000015913, 0.19221000000005145, 0.20288000000006212,
+        0.21143000000007067, 0.2024600000000617, 0.19868000000005792,
+        0.2169700000000762, 0.19499000000005423, 0.23232000000009156,
+        0.007339999999999869, 0.01939999999999938, 0.19331000000005255
     ]
 
     dt = 1e-5
@@ -102,20 +82,19 @@ def test_trajectories_igrf():
 
     for iexp, initial_variables in enumerate(initial_variable_list):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = initial_variables
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig,
+         en) = initial_variables
 
-        traj = Trajectory(
-            plabel=plabel,
-            zenith_angle=zenith,
-            azimuth_angle=azimuth,
-            particle_altitude=palt,
-            latitude=lat,
-            longitude=lng,
-            detector_altitude=dalt,
-            rigidity=rig,
-            energy=en,
-            bfield_type="igrf"
-        )
+        traj = Trajectory(plabel=plabel,
+                          zenith_angle=zenith,
+                          azimuth_angle=azimuth,
+                          particle_altitude=palt,
+                          latitude=lat,
+                          longitude=lng,
+                          detector_altitude=dalt,
+                          rigidity=rig,
+                          energy=en,
+                          bfield_type="igrf")
 
         traj.get_trajectory(dt=dt, max_time=max_time)
 
@@ -129,36 +108,29 @@ def test_trajectories_stepsize():
     '''
 
     expected_times = [
-        0.22073792992447885,
-        0.22073800000531751,
-        0.22073800000020008,
-        0.22074000000007998,
-        0.220799999999992,
-        0.22100000000000017,
-        0.23000000000000007,
-        0.30000000000000004
+        0.22073792992447885, 0.22073800000531751, 0.22073800000020008,
+        0.22074000000007998, 0.220799999999992, 0.22100000000000017,
+        0.23000000000000007, 0.30000000000000004
     ]
 
     dt_arr = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
     max_time = 1.
 
+    (plabel, zenith, azimuth, palt, lat, lng, dalt, rig,
+     en) = ("p+", 90., 0., 100., 0., 0., 0., 50., None)
+
     for iexp, dt in enumerate(dt_arr):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = (
-            "p+", 90., 0., 100., 0., 0., 0., 50., None)
-
-        traj = Trajectory(
-            plabel=plabel,
-            zenith_angle=zenith,
-            azimuth_angle=azimuth,
-            particle_altitude=palt,
-            latitude=lat,
-            longitude=lng,
-            detector_altitude=dalt,
-            rigidity=rig,
-            energy=en,
-            bfield_type="igrf"
-        )
+        traj = Trajectory(plabel=plabel,
+                          zenith_angle=zenith,
+                          azimuth_angle=azimuth,
+                          particle_altitude=palt,
+                          latitude=lat,
+                          longitude=lng,
+                          detector_altitude=dalt,
+                          rigidity=rig,
+                          energy=en,
+                          bfield_type="igrf")
 
         traj.get_trajectory(dt=dt, max_time=max_time)
 
@@ -172,15 +144,9 @@ def test_trajectories_maxtimes():
     '''
 
     expected_times = [
-        0.00999999999999976,
-        0.027829999999999036,
-        0.07743000000000268,
-        0.2154500000000747,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
+        0.00999999999999976, 0.027829999999999036, 0.07743000000000268,
+        0.2154500000000747, 0.22074000000007998, 0.22074000000007998,
+        0.22074000000007998, 0.22074000000007998, 0.22074000000007998,
         0.22074000000007998
     ]
 
@@ -189,21 +155,19 @@ def test_trajectories_maxtimes():
 
     for iexp, max_time in enumerate(max_times):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = (
-            "p+", 90., 0., 100., 0., 0., 0., 50., None)
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig,
+         en) = ("p+", 90., 0., 100., 0., 0., 0., 50., None)
 
-        traj = Trajectory(
-            plabel=plabel,
-            zenith_angle=zenith,
-            azimuth_angle=azimuth,
-            particle_altitude=palt,
-            latitude=lat,
-            longitude=lng,
-            detector_altitude=dalt,
-            rigidity=rig,
-            energy=en,
-            bfield_type="igrf"
-        )
+        traj = Trajectory(plabel=plabel,
+                          zenith_angle=zenith,
+                          azimuth_angle=azimuth,
+                          particle_altitude=palt,
+                          latitude=lat,
+                          longitude=lng,
+                          detector_altitude=dalt,
+                          rigidity=rig,
+                          energy=en,
+                          bfield_type="igrf")
 
         traj.get_trajectory(dt=dt, max_time=max_time)
 
@@ -217,19 +181,10 @@ def test_trajectories_unvectorized():
     '''
 
     expected_times = [
-        0.004199999999999997,
-        0.2999300000001592,
-        0.19221000000005145,
-        0.20289000000006213,
-        0.21144000000007068,
-        0.2024600000000617,
-        0.19869000000005793,
-        0.2169600000000762,
-        0.19499000000005423,
-        0.23231000000009155,
-        0.007719999999999854,
-        0.019809999999999363,
-        0.19331000000005255
+        2e-05, 0.2999300000001592, 0.19221000000005145, 0.20289000000006213,
+        0.21144000000007068, 0.2024600000000617, 0.19869000000005793,
+        0.2169600000000762, 0.19499000000005423, 0.23231000000009155,
+        0.007359999999999868, 0.019439999999999378, 0.19331000000005255
     ]
 
     dt = 1e-5
@@ -237,20 +192,19 @@ def test_trajectories_unvectorized():
 
     for iexp, initial_variables in enumerate(initial_variable_list):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = initial_variables
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig,
+         en) = initial_variables
 
-        traj = Trajectory(
-            plabel=plabel,
-            zenith_angle=zenith,
-            azimuth_angle=azimuth,
-            particle_altitude=palt,
-            latitude=lat,
-            longitude=lng,
-            detector_altitude=dalt,
-            rigidity=rig,
-            energy=en,
-            bfield_type="igrf"
-        )
+        traj = Trajectory(plabel=plabel,
+                          zenith_angle=zenith,
+                          azimuth_angle=azimuth,
+                          particle_altitude=palt,
+                          latitude=lat,
+                          longitude=lng,
+                          detector_altitude=dalt,
+                          rigidity=rig,
+                          energy=en,
+                          bfield_type="igrf")
 
         traj.get_trajectory(dt=dt, max_time=max_time, use_unvectorized=True)
 
@@ -264,45 +218,40 @@ def test_trajectories_dates():
     '''
 
     expected_times = [
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
-        0.22074000000007998,
+        0.22074000000007998, 0.22074000000007998, 0.22074000000007998,
+        0.22074000000007998, 0.22074000000007998, 0.22074000000007998,
+        0.22074000000007998, 0.22074000000007998, 0.22074000000007998,
         0.22074000000007998
     ]
 
     dt = 1e-5
     max_time = 1.
 
-    dates = ["1900-01-01", "1909-01-01", "1900-10-31", "2020-09-12", "2004-03-08",
-             "2000-02-28", "1970-03-26", "1952-04-31", "1999-03-08", "2024-03-09"]
+    dates = [
+        "1900-01-01", "1909-01-01", "1900-10-31", "2020-09-12", "2004-03-08",
+        "2000-02-28", "1970-03-26", "1952-04-31", "1999-03-08", "2024-03-09"
+    ]
     for iexp, date in enumerate(dates):
 
-        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig, en) = (
-            "p+", 90., 0., 100., 0., 0., 0., 50., None)
+        (plabel, zenith, azimuth, palt, lat, lng, dalt, rig,
+         en) = ("p+", 90., 0., 100., 0., 0., 0., 50., None)
 
-        traj = Trajectory(
-            plabel=plabel,
-            zenith_angle=zenith,
-            azimuth_angle=azimuth,
-            particle_altitude=palt,
-            latitude=lat,
-            longitude=lng,
-            detector_altitude=dalt,
-            rigidity=rig,
-            energy=en,
-            bfield_type="igrf",
-            date=date
-        )
+        traj = Trajectory(plabel=plabel,
+                          zenith_angle=zenith,
+                          azimuth_angle=azimuth,
+                          particle_altitude=palt,
+                          latitude=lat,
+                          longitude=lng,
+                          detector_altitude=dalt,
+                          rigidity=rig,
+                          energy=en,
+                          bfield_type="igrf",
+                          date=date)
 
         traj.get_trajectory(dt=dt, max_time=max_time)
 
         assert np.allclose(traj.final_time, expected_times[iexp])
+
 
 # def test_dipole_sixvec():
 

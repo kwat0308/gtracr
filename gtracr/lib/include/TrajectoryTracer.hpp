@@ -51,6 +51,7 @@ Class Members
   MagneticField bfield_;  // the magnetic field
   double charge_;         // charge of the particle in coulumbs
   double mass_;           // mass of the particle in kg
+  double start_altitude_;   // starting altitude of particle
   double escape_radius_;  // radius in which we set for particle to escape
   double stepsize_;       // step size
   int max_iter_;          // maximum step size
@@ -110,6 +111,9 @@ Lorentz force equation
 
   Optional Parameters
   -------------------
+  - start_altitude (double) :
+        The starting altitude of the particle, i.e. the altitude in which
+        the cosmic ray has collided with the atmosphere (default 100km)
   - escape_radius (double) :
         The radius in which the particle has "escaped" relative to
         Earth's center in units of km (default 10*RE)
@@ -129,9 +133,10 @@ Lorentz force equation
         in decimal date (default 2020.).
  */
   TrajectoryTracer(const int charge, const double &mass,
+                  const double &start_altitude = 100. * (1e3),
                    const double &escape_radius = 10. * constants::RE,
                    const double &stepsize = 1e-5, const int max_iter = 10000,
-                   const char bfield_type = 'd',
+                   const char bfield_type = 'i',
                    const std::pair<std::string, double> &igrf_params = {
                        "/home/keito/devel/gtracr/data", 2020.});
 
@@ -140,6 +145,8 @@ Lorentz force equation
   const double &charge() { return charge_ / constants::ELEMENTARY_CHARGE; }
   // the mass of the particle associated with the Runge-Kutta integrator
   const double &mass() { return mass_ / constants::KG_PER_GEVC2; }
+  // starting altitude of the particle
+  const double &start_altitude() { return start_altitude_; }
   // the escape radius of the tracer
   const double &escape_radius() { return escape_radius_; }
   // the step size of the Runge-Kutta integrator

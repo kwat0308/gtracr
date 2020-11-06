@@ -12,7 +12,7 @@ import argparse
 
 from gtracr.utils import dec_to_dms
 from gtracr.lib.constants import EARTH_RADIUS, KG_M_S_PER_GEVC
-from gtracr.plotting import plot_3dtraj, plot_2dtraj, plot_trajmomentum
+from gtracr.plotting import plot_3dtraj, plot_2dtraj, plot_traj_momentum
 from gtracr.trajectory import Trajectory
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -109,7 +109,7 @@ def get_trajectory():
 
     # get momentum only if check_pmag is true
     if check_pmag:
-        plot_trajmomentum(traj_datadict, p0, show_plot)
+        plot_traj_momentum(traj_datadict, p0, show_plot)
 
     # plot the trajectory
     plot_trajectory(traj_datadict, title, check_3dtraj, show_plot)

@@ -32,6 +32,8 @@ class pTrajectoryTracer:
         the particle's charge in electrons
     - mass : float
         the particle's mass in GeV
+    - start_altitude: float
+        the particle arrival altitude in km
     - escape_radius : float
         the radius in which the particle effectively escaped 
         (default = 10RE). Defined relative to Earth's center.
@@ -62,6 +64,7 @@ class pTrajectoryTracer:
     def __init__(self,
                  charge,
                  mass,
+                 start_altitude=100.,
                  escape_radius=10. * EARTH_RADIUS,
                  stepsize=1e-5,
                  max_step=10000,
@@ -69,6 +72,7 @@ class pTrajectoryTracer:
                  igrf_params=None):
         self.charge = charge * ELEMENTARY_CHARGE  # convert to coulombs
         self.mass = mass * KG_PER_GEVC2  # convert to kg
+        self.start_altitude = start_altitude
         self.escape_radius = escape_radius
         self.stepsize = stepsize
         self.max_step = max_step
@@ -206,7 +210,7 @@ class pTrajectoryTracer:
                 break
             # if particle has came back to earth
             # then trajectory is forbidden
-            if r < EARTH_RADIUS:
+            if r < self.start_altitude + EARTH_RADIUS:
                 break
 
         # set the final time / vector
@@ -271,7 +275,7 @@ class pTrajectoryTracer:
                 break
             # if particle has came back to earth
             # then trajectory is forbidden
-            if r < EARTH_RADIUS:
+            if r < self.start_altitude + EARTH_RADIUS:
                 break
 
         # set the final time / vector

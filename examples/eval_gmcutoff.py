@@ -51,11 +51,13 @@ def eval_gmrc(args):
 
             # create a debugger / checker as a scatter plot
             # of the dataset
-            if args.debug_mode:
-                plot_gmrc_scatter(gmrc.data_dict,
-                                  locname,
-                                  plabel,
-                                  show_plot=args.show_plot)
+            # if args.debug_mode:
+            plot_gmrc_scatter(gmrc.data_dict,
+                              locname,
+                              plabel,
+                              bfield_type=args.bfield_type,
+                              iter_num=args.iter_num,
+                              show_plot=args.show_plot)
 
             interpd_gmrc_data = gmrc.interpolate_results(
                 ngrid_azimuth=ngrid_azimuth,
@@ -66,6 +68,7 @@ def eval_gmrc(args):
                               gmrc.rigidity_list,
                               locname=locname,
                               plabel=plabel,
+                              bfield_type=args.bfield_type,
                               show_plot=args.show_plot)
 
     else:
@@ -81,11 +84,13 @@ def eval_gmrc(args):
 
         # create a debugger / checker as a scatter plot
         # of the dataset
-        if args.debug_mode:
-            plot_gmrc_scatter(gmrc.data_dict,
-                              args.locname,
-                              plabel,
-                              show_plot=args.show_plot)
+        # if args.debug_mode:
+        plot_gmrc_scatter(gmrc.data_dict,
+                          args.locname,
+                          plabel,
+                          bfield_type=args.bfield_type,
+                          iter_num=args.iter_num,
+                          show_plot=args.show_plot)
 
         interpd_gmrc_data = gmrc.interpolate_results(
             ngrid_azimuth=ngrid_azimuth,
@@ -96,6 +101,7 @@ def eval_gmrc(args):
                           gmrc.rigidity_list,
                           locname=args.locname,
                           plabel=plabel,
+                          bfield_type=args.bfield_type,
                           show_plot=args.show_plot)
 
 

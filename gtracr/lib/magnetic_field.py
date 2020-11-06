@@ -151,5 +151,5 @@ class IGRF13(MagneticField):
                                             nmax=self.nmax)
 
         # take first index since synth_values return arrays, not scalars
-        return np.array([Br[0], Btheta[0], Bphi[0]]) \
+        return np.array([Br, Btheta, Bphi]) \
                                             * (1e-9)  # convert to teslas

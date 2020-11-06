@@ -69,7 +69,7 @@ def get_evaltime(iter_num,
     dt = 1e-5  # step size in integration
     max_step = 10000  # max steps in integration
 
-    for i in tqdm(range(iter_num)):
+    for i in range(int(np.floor(iter_num))):
         # start counter
         # perf counter for more precise time evaluations
         start_time = time.perf_counter()
@@ -105,44 +105,58 @@ def get_evaltime_data(iternum_list):
     # initialize performance benchmark time arrays
 
     avg_evaltime_dict = {
-        "pydip": np.zeros(len(iternum_list)),
-        "pyigrf": np.zeros(len(iternum_list)),
-        "cppdip_novec": np.zeros(len(iternum_list)),
-        "cppigrf_novec": np.zeros(len(iternum_list)),
-        "cppdip_vec": np.zeros(len(iternum_list)),
-        "cppigrf_vec": np.zeros(len(iternum_list))
+        # "pydip": np.zeros(len(iternum_list)),
+        # "pyigrf": np.zeros(len(iternum_list)),
+        "cppdip_novec": {
+            "values": np.zeros(len(iternum_list)),
+            "label": "C++, Dipole (Scalar)"
+        },
+        "cppigrf_novec": {
+            "values": np.zeros(len(iternum_list)),
+            "label": "C++, IGRF (Scalar)"
+        },
+        "cppdip_vec": {
+            "values": np.zeros(len(iternum_list)),
+            "label": "C++, Dipole (Vector)"
+        },
+        "cppigrf_vec": {
+            "values": np.zeros(len(iternum_list)),
+            "label": "C++, IGRF (Vector)"
+        }
     }
 
     # evaluate average evaluation times for each iteration
     for i, iter_num in enumerate(iternum_list):
 
-        # python, dipole
-        avg_evaltime_dict["pydip"][i] = get_evaltime(iter_num,
-                                                     initial_variables,
-                                                     bfield_type="dipole",
-                                                     use_python=True)
+        # # python, dipole
+        # avg_evaltime_dict["pydip"][i] = get_evaltime(iter_num,
+        #                                              initial_variables,
+        #                                              bfield_type="dipole",
+        #                                              use_python=True)
+        # # python, igrf
+        # avg_evaltime_dict["pyigrf"]["values"][i] = get_evaltime(iter_num,
+        #                                                 initial_variables,
+        #                                                 bfield_type="igrf",
+        #                                                 use_python=True)
+
         # c++, dipole, scalar form
-        avg_evaltime_dict["cppdip_novec"][i] = get_evaltime(
+        avg_evaltime_dict["cppdip_vec"]["values"][i] = get_evaltime(
             iter_num, initial_variables, bfield_type="dipole", use_unvec=True)
-        # C++, dipole, vector form
-        avg_evaltime_dict["cppdip_vec"][i] = get_evaltime(iter_num,
-                                                          initial_variables,
-                                                          bfield_type="dipole")
-        if iter_num <= 100:
-            # python, igrf
-            avg_evaltime_dict["pyigrf"][i] = get_evaltime(iter_num,
-                                                          initial_variables,
-                                                          bfield_type="igrf",
-                                                          use_python=True)
 
         # C++, igrf, scalar form
-        avg_evaltime_dict["cppigrf_novec"][i] = get_evaltime(
+        avg_evaltime_dict["cppigrf_novec"]["values"][i] = get_evaltime(
             iter_num, initial_variables, bfield_type="igrf", use_unvec=True)
 
+        # C++, dipole, vector form
+        avg_evaltime_dict["cppdip_vec"]["values"][i] = get_evaltime(
+            iter_num, initial_variables, bfield_type="dipole")
+
         # C++, igrf, vector form
-        avg_evaltime_dict["cppigrf_vec"][i] = get_evaltime(iter_num,
-                                                           initial_variables,
-                                                           bfield_type="igrf")
+        avg_evaltime_dict["cppigrf_vec"]["values"][i] = get_evaltime(
+            iter_num, initial_variables, bfield_type="igrf")
+
+        print("Finished benchmarking with {0} iterations.".format(
+            int(np.floor(iter_num))))
 
     # return the data
     return avg_evaltime_dict
@@ -153,28 +167,18 @@ def plot_benchmarks(benchmark_data, iternum_list):
     Plot benchmark results for each maximal iteration
     '''
 
-    label_arr = [
-        "Python, Dipole (x1e-3)", "Python, IGRF (x1e-4)",
-        "C++, Dipole (Scalar)", "C++, IGRF (Scalar)", "C++, Dipole (Vector)",
-        "C++, IGRF (Vector)"
-    ]
-
     color_arr = ["b", "m", "g", "c", "r", "y"]
 
     fig, ax = plt.subplots(figsize=(12, 9), constrained_layout=True)
 
-    for i, (code_type,
-            avg_evaltime) in enumerate(list(benchmark_data.items())):
-        if code_type.find("pyigrf") != -1:
-            avg_evaltime *= 1e-4
-        elif code_type.find("pydip") != -1:
-            avg_evaltime *= 1e-3
-        ax.plot(iternum_list,
-                avg_evaltime,
-                label=label_arr[i],
-                color=color_arr[i],
-                marker="o",
-                ms=3.0)
+    for i, (code_type, avg_evaltime_dict) in enumerate(
+            sorted(list(benchmark_data.items()))):
+        ax.semilogx(iternum_list,
+                    avg_evaltime_dict["values"],
+                    label=avg_evaltime_dict["label"],
+                    color=color_arr[i],
+                    marker="o",
+                    ms=3.0)
 
     ax.set_xlabel("Number of Iterations", fontsize=14)
     ax.set_ylabel("Average Evaluation Time [s]", fontsize=14)
@@ -194,13 +198,14 @@ if __name__ == "__main__":
     plabel, zenith, azimuth, part_alt, lat, lng, dec_alt, rig = initial_variables
 
     # integration parameters
-    iternum_list = [10, 50, 100, 500, 1000, 5000,
-                    10000]  # number of iterations
+    iternum_list = np.arange(1, 10000, 500)  # number of iterations
     # iternum_list = [10, 100]
+
+    reset = True  # parameter to reset benchmark data
 
     # check if the benchmark data file is already contained in data/, otherwise run the above
     fpath = os.path.join(DATA_DIR, "benchmark_data.pkl")
-    if os.path.exists(fpath):
+    if os.path.exists(fpath) and reset != True:
         benchmark_data = read_pkl(fpath)
 
     else:

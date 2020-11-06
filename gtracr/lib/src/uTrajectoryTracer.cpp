@@ -45,6 +45,7 @@ uTrajectoryTracer::uTrajectoryTracer()
     : bfield_{MagneticField()},
       charge_{1. * constants::ELEMENTARY_CHARGE},
       mass_{0.938 * constants::KG_PER_GEVC2},
+      start_altitude_{100.*(1e3)},
       escape_radius_{10. * constants::RE},
       stepsize_{1e-5},
       max_iter_{10000},
@@ -85,18 +86,20 @@ Optional Parameters
       in decimal date (default 2020.).
 */
 uTrajectoryTracer::uTrajectoryTracer(const int charge, const double &mass,
+                                      const double &start_altitude,
                                      const double &
                                          escape_radius /*= 10. * constants::RE*/
                                      ,
                                      const double &stepsize /*= 1e-5*/,
                                      const int max_iter /*= 10000*/,
-                                     const char bfield_type /*= 'd'*/,
+                                     const char bfield_type /*= 'i'*/,
                                      const std::pair<std::string, double>
                                          &igrf_params /*=
         {"/home/keito/devel/gtracr/data",
         2020.}*/)
     : charge_{charge * constants::ELEMENTARY_CHARGE},
       mass_{mass * constants::KG_PER_GEVC2},
+      start_altitude_{start_altitude},
       escape_radius_{escape_radius},
       stepsize_{stepsize},
       max_iter_{max_iter},
@@ -158,7 +161,7 @@ void uTrajectoryTracer::evaluate(double t0, std::array<double, 6> vec0) {
     }
 
     // a forbidden trajectory
-    if (traj_vector_.r < constants::RE) {
+    if (traj_vector_.r < start_altitude_ + constants::RE) {
       // std::cout << "Forbidden Trajectory!" << std::endl;
       break;
     }
@@ -252,7 +255,7 @@ uTrajectoryTracer::evaluate_and_get_trajectory(double t0,
     }
 
     // a forbidden trajectory
-    if (traj_vector_.r < constants::RE) {
+    if (traj_vector_.r < start_altitude_ + constants::RE) {
       // std::cout << "Forbidden Trajectory!" << std::endl;
       break;
     }

@@ -16,11 +16,12 @@ PYBIND11_MODULE(_libgtracr, M) {
   py::class_<TrajectoryTracer>(M, "TrajectoryTracer",
                                py::module_local())  // TrajectoryTracer class
       .def(py::init<>())
-      .def(py::init<const int, const double &, const double &, const double &,
+      .def(py::init<const int, const double &, const double &, const double &, const double &,
                     const int, const char,
                     const std::pair<std::string, double> &>())
       .def_property_readonly("charge", &TrajectoryTracer::charge)
       .def_property_readonly("mass", &TrajectoryTracer::mass)
+      .def_property_readonly("start_altitude", &TrajectoryTracer::start_altitude)
       .def_property_readonly("escape_radius", &TrajectoryTracer::escape_radius)
       .def_property_readonly("step_size", &TrajectoryTracer::stepsize)
       .def_property_readonly("max_iter", &TrajectoryTracer::max_iter)
@@ -38,11 +39,12 @@ PYBIND11_MODULE(_libgtracr, M) {
           M, "uTrajectoryTracer",
           py::module_local())  // TrajectoryTracer class unvectorized
           .def(py::init<>())
-          .def(py::init<const int, const double &, const double &,
+          .def(py::init<const int, const double &, const double &, const double &,
                         const double &, const int, const char,
                         const std::pair<std::string, double> &>())
           .def_property_readonly("charge", &uTrajectoryTracer::charge)
           .def_property_readonly("mass", &uTrajectoryTracer::mass)
+          .def_property_readonly("start_altitude", &uTrajectoryTracer::start_altitude)
           .def_property_readonly("escape_radius",
                                  &uTrajectoryTracer::escape_radius)
           .def_property_readonly("step_size", &uTrajectoryTracer::stepsize)
