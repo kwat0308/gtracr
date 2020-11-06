@@ -50,7 +50,7 @@ class GMRC():
                  date=str(date.today()),
                  min_rigidity=5.,
                  max_rigidity=55.,
-                 delta_rigidity=5.):
+                 delta_rigidity=1.):
         # set class attributes
         self.location = location
         self.palt = particle_altitude

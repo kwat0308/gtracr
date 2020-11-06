@@ -108,32 +108,26 @@ def eval_gmrc(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=
-        'Evaluates the geomagnetic cutoff rigidities of some location for N iterations using a Monte-Carlo scheme, and produces a heatmap for such geomagnetic cutoff rigidities.'
+        'Evaluates the geomagnetic cutoff rigidities of some location for N iterations using a Monte-Carlo sampling scheme, and produces a heatmap for such geomagnetic cutoff rigidities.'
     )
-    parser.add_argument(
-        '-ln',
-        '--locname',
-        dest="locname",
-        # action="store_const",
-        default="Kamioka",
-        type=str,
-        help="Detector location to evaluate GM cutoffs.")
-    parser.add_argument(
-        '-n',
-        '--iter_num',
-        dest="iter_num",
-        # action="store_const",
-        default=10000,
-        type=int,
-        help="Number of iterations for Monte-Carlo.")
-    parser.add_argument(
-        '-bf',
-        '--bfield',
-        dest="bfield_type",
-        # action="store_const",
-        default="igrf",
-        type=str,
-        help="The geomagnetic field model used.")
+    parser.add_argument('-ln',
+                        '--locname',
+                        dest="locname",
+                        default="Kamioka",
+                        type=str,
+                        help="Detector location to evaluate GM cutoffs.")
+    parser.add_argument('-n',
+                        '--iter_num',
+                        dest="iter_num",
+                        default=10000,
+                        type=int,
+                        help="Number of iterations for Monte-Carlo.")
+    parser.add_argument('-bf',
+                        '--bfield',
+                        dest="bfield_type",
+                        default="igrf",
+                        type=str,
+                        help="The geomagnetic field model used.")
     parser.add_argument('-a',
                         '--all',
                         dest="eval_all",
@@ -143,16 +137,17 @@ if __name__ == "__main__":
                         dest="show_plot",
                         action="store_true",
                         help="Show the plot in an external display.")
-    parser.add_argument('-d',
-                        '--debug',
-                        dest="debug_mode",
-                        action="store_true",
-                        help="Enable debug mode.")
-    parser.add_argument('-c',
-                        '--clean',
-                        dest="clean_dict",
-                        action="store_true",
-                        help='Clean the dataset. ')
+    parser.add_argument(
+        '-d',
+        '--debug',
+        dest="debug_mode",
+        action="store_true",
+        help="Enable debug mode. Sets N = 10 and enable --show=True.")
+    # parser.add_argument('-c',
+    #                     '--clean',
+    #                     dest="clean_dict",
+    #                     action="store_true",
+    #                     help='Clean the dataset. ')
 
     args = parser.parse_args()
     eval_gmrc(args)
