@@ -44,21 +44,19 @@ def plot_3dtraj(trajectory_datalist,
 
     # unpack dictionary
     data_list = []
-    tarrlen_list = []
-    tarr_list = []
+    max_tarr_list = []
 
-    for trajectory_data in trajectory_datalist:
-        data_list.append(
-            (trajectory_data["x"], trajectory_data["y"], trajectory_data["z"]))
-        tarrlen_list.append(len(trajectory_data["t"]))
-        tarr_list.append(trajectory_data["t"])
+    for i, trajectory_data in enumerate(trajectory_datalist):
+        data_list.append((trajectory_data["t"], trajectory_data["x"],
+                          trajectory_data["y"], trajectory_data["z"]))
+        max_tarr_list.append(np.max(trajectory_data["t"]))
 
     # get maximal array of time for plotting purposes
-    tarr_index = np.argmax(np.array(tarrlen_list))
-    t_arr = tarr_list[tarr_index]
+    max_tarr_index = np.argmax(max_tarr_list, axis=0)
+    cbar_tarr = data_list[max_tarr_index][0]
 
     print("Maximal and minimal time values: {:.3e}, {:.3e}".format(
-        np.max(t_arr), np.min(t_arr)))
+        np.max(cbar_tarr), np.min(cbar_tarr)))
 
     # set the earth wireframe
     u, v = np.mgrid[0:2 * np.pi:100j,
@@ -77,24 +75,26 @@ def plot_3dtraj(trajectory_datalist,
         ax_3d.plot_wireframe(x_sphere, y_sphere, z_sphere, color="k")
 
         # plot the trajectory
-        for (x_arr, y_arr, z_arr) in data_list:
+        for i, (t_arr, x_arr, y_arr, z_arr) in enumerate(data_list):
             cm_3d = ax_3d.scatter(x_arr,
                                   y_arr,
                                   z_arr,
                                   c=t_arr,
                                   marker='o',
                                   s=1.0)
+            if i == max_tarr_index:
+                cm3d_max = cm_3d
 
         # labels, colorbars, limits whatnot
-        cbar_3d = fig_3d.colorbar(cm_3d, ax=ax_3d)
-        ax_3d.set_xlim([-3.0, 3.0])
-        ax_3d.set_ylim([-3.0, 3.0])
-        ax_3d.set_zlim([-3.0, 3.0])
-        ax_3d.set_xlabel(r"x [$R_E$]")
-        ax_3d.set_ylabel(r"y [$R_E$]")
-        ax_3d.set_zlabel(r"z [$R_E$]")
-        cbar_3d.ax.set_ylabel("Time [s]")
-        ax_3d.set_title(title_name)
+        cbar_3d = fig_3d.colorbar(cm3d_max, ax=ax_3d)
+        ax_3d.set_xlim([-10.0, 10.0])
+        ax_3d.set_ylim([-10.0, 10.0])
+        ax_3d.set_zlim([-10.0, 10.0])
+        ax_3d.set_xlabel(r"x [$R_E$]", fontsize=12)
+        ax_3d.set_ylabel(r"y [$R_E$]", fontsize=12)
+        ax_3d.set_zlabel(r"z [$R_E$]", fontsize=12)
+        cbar_3d.ax.set_ylabel("Time [s]", fontsize=12)
+        ax_3d.set_title(title_name, fontsize=16)
 
         # make file extension to png if it is not png or jpg
         if file_name.find("png") < 0 or file_name.find("jpg") < 0:
@@ -109,21 +109,27 @@ def plot_3dtraj(trajectory_datalist,
     # plot using PlotLy
     else:
 
-        # marker setings for trajectory plot
-        traj_marker = dict(
-            size=4,
-            color=t_arr,  # set color to an array/list of desired values
-            colorscale='Viridis',  # choose a colorscale
-            opacity=0.8,
-            colorbar=dict(thickness=20, title="Time [s]"))
-
         # construct trajectory plot object
-        for (x_arr, y_arr, z_arr) in data_list:
+        traj_plots = []
+        for i, (t_arr, x_arr, y_arr, z_arr) in enumerate(data_list):
+            # marker setings for trajectory plot
+
+            traj_colorbar = dict(
+                thickness=20,
+                title="Time [s]") if i == max_tarr_index else None
+            traj_marker = dict(
+                size=4,
+                color=t_arr,  # set color to an array/list of desired values
+                colorscale='Viridis',  # choose a colorscale
+                opacity=0.8,
+                colorbar=traj_colorbar)
+
             traj_plot = go.Scatter3d(x=x_arr,
                                      y=y_arr,
                                      z=z_arr,
                                      mode='markers',
                                      marker=traj_marker)
+            traj_plots.append(traj_plot)
 
         # construct wireframe for sphere
         lines = []
@@ -133,7 +139,7 @@ def plot_3dtraj(trajectory_datalist,
                 go.Scatter3d(x=i, y=j, z=k, mode='lines', line=line_marker))
 
         # append them all and plot
-        data = lines + [traj_plot]
+        data = lines + traj_plots
         fig = go.Figure(data=data)
 
         # additional configurations
@@ -142,15 +148,16 @@ def plot_3dtraj(trajectory_datalist,
                           scene_aspectmode='cube',
                           scene=dict(
                               xaxis=dict(nticks=6,
-                                         range=[-3.0, 3.0],
+                                         range=[-10.0, 10.0],
                                          title=r"x [Re]"),
                               yaxis=dict(nticks=6,
-                                         range=[-3.0, 3.0],
+                                         range=[-10.0, 10.0],
                                          title=r"y [Re]"),
                               zaxis=dict(nticks=6,
-                                         range=[-3.0, 3.0],
+                                         range=[-10.0, 10.0],
                                          title=r"z [Re]"),
                           ),
+                          font=dict(family="Courier New, monospace", size=18),
                           showlegend=False)
 
         # make file extension to html if it is not html
@@ -165,10 +172,13 @@ def plot_3dtraj(trajectory_datalist,
 
 
 def plot_2dtraj(trajectory_datalist,
+                dim1="x",
+                dim2="y",
                 title_name="Particle Trajectory",
                 file_name="test_trajectory_proj.png",
                 mpl=False,
-                plotdir_path=PLOT_DIR):
+                plotdir_path=PLOT_DIR,
+                show_plot=False):
     '''
     Plots the projections of the trajectory in three different planes, and the time evolution of the magnitude of the trajectory. Only supported with matplotlib for now.
 
@@ -177,6 +187,8 @@ def plot_2dtraj(trajectory_datalist,
 
     - trajectory_datalist : list of dict(str, np.array)
         The list of dictionaries that stores the information of the trajectory in Cartesian coordinates.
+    - dim1, dim2 : str
+        The two dimensions in which we want to plot the trajectories on.
     - title_name : str
         The title name of the plot. Default is setot `"Particle Trajectory"`.
     - file_name : str
@@ -185,62 +197,42 @@ def plot_2dtraj(trajectory_datalist,
         Enables plotting with matplotlib instead of PlotLy (default = False).
     - plotdir_path : str
         The path to the directory in which the plots are stored in. Default is set to a directory `gtracr_plots` placed in parallel with the root directory.
+    - show_plot : bool
+        Boolean whether to show the plot or not
     '''
-    # unpack dictionary
     data_list = []
-    tarrlen_list = []
-    tarr_list = []
+    max_tarr_list = []
 
-    for trajectory_data in trajectory_datalist:
-        data_list.append(
-            (trajectory_data["x"], trajectory_data["y"], trajectory_data["z"]))
-        tarrlen_list.append(len(trajectory_data["t"]))
-        tarr_list.append(trajectory_data["t"])
+    for i, trajectory_data in enumerate(trajectory_datalist):
+        data_list.append((trajectory_data["t"], trajectory_data[dim1],
+                          trajectory_data[dim2]))
+        max_tarr_list.append(np.max(trajectory_data["t"]))
 
     # get maximal array of time for plotting purposes
-    tarr_index = np.argmax(np.array(tarrlen_list))
-    t_arr = tarr_list[tarr_index]
+    max_tarr_index = np.argmax(max_tarr_list, axis=0)
+    cbar_tarr = data_list[max_tarr_index][0]
 
-    # figures for the projections
-    fig_proj, ax_proj = plt.subplots(ncols=2,
-                                     nrows=2,
-                                     figsize=(16, 12),
-                                     constrained_layout=True)
+    print("Maximal and minimal time values: {:.3e}, {:.3e}".format(
+        np.max(cbar_tarr), np.min(cbar_tarr)))
 
-    # relabel them for each projection type
+    fig_2d, ax_2d = plt.subplots(figsize=(12, 9), constrained_layout=True)
 
-    ax_xy = ax_proj[0, 0]
-    ax_xz = ax_proj[0, 1]
-    ax_yz = ax_proj[1, 0]
-    ax_mag = ax_proj[1, 1]
+    for i, (t_arr, dim1_arr, dim2_arr) in enumerate(data_list):
+        plot_colorbar = True if i == max_tarr_index else False
+        plot_traj_projection(dim1_arr, dim2_arr, t_arr, fig_2d, ax_2d, dim1,
+                             dim2, plot_colorbar)
 
-    for (x_arr, y_arr, z_arr) in data_list:
-
-        # projection onto xy plane
-        plot_traj_projection(x_arr, y_arr, t_arr, fig_proj, ax_xy, "x", "y")
-        # projection onto xz plane
-        plot_traj_projection(x_arr, z_arr, t_arr, fig_proj, ax_xz, "x", "z")
-        # projection onto yz plane
-        plot_traj_projection(y_arr, z_arr, t_arr, fig_proj, ax_yz, "y", "z")
-
-        mag_arr = np.linalg.norm(np.array([x_arr, y_arr, z_arr]), axis=0)
-
-        # magnitude vs time
-        ax_mag.plot(t_arr, mag_arr)
-        ax_mag.set_xlabel("Time [s]")
-        ax_mag.set_ylabel(r"$\| \vec{r} \| [R_E]$")
-        ax_mag.set_title("Time Evolution of the Magnitude of the Trajectory")
-
-    fig_proj.suptitle(title_name, fontsize=16)
-    # if show_plot:
-    #     plt.show()
+    # fig_proj.suptitle(title_name, fontsize=16)
+    if show_plot:
+        plt.show()
     # html doesnt work with latex labels and suptitle, so its deprecated for now
     # mpld3.save_html(fig_proj,
     #                 os.path.join(PLOT_DIR, "test_trajectory_proj.html"))
     plt.savefig(os.path.join(PLOT_DIR, "test_trajectory_proj.png"))
 
 
-def plot_traj_projection(arr1, arr2, t_arr, fig, ax, label1, label2):
+def plot_traj_projection(arr1, arr2, t_arr, fig, ax, label1, label2,
+                         plot_colorbar):
     '''
     Plot the projection of the trajectory.
 
@@ -256,24 +248,34 @@ def plot_traj_projection(arr1, arr2, t_arr, fig, ax, label1, label2):
         matplotlib plt.Figure and plt.Axes.axes objects
     label1, label2 (str):
         the labels that indicate the identity of arr1 and arr2 resp.
+    plot_colorbar (bool):
+        boolean that decides whether to plot colorbar or not
     '''
     cm = ax.scatter(arr1, arr2, c=t_arr)
     circ = patches.Circle((0., 0.),
                           1.,
                           alpha=0.8,
-                          fc='None',
+                          fc='#1f77b4',
                           linestyle='-',
-                          ec="k",
-                          lw=2.0)
+                          ec="b",
+                          lw=4.0)
     ax.add_patch(circ)
-    cbar = fig.colorbar(cm, ax=ax)
-    ax.set_xlim([-3, 3])
-    ax.set_ylim([-3, 3])
-    ax.set_xlabel(r"{:s} [$R_E$]".format(label1))
-    ax.set_ylabel(r"{:s} [$R_E$]".format(label2))
-    cbar.ax.set_ylabel("Time [s]")
+
+    ax.set_xlim([-10, 10])
+    ax.set_ylim([-10, 10])
+    ax.set_xlabel(r"{:s} [$R_E$]".format(label1), fontsize=17)
+    ax.set_ylabel(r"{:s} [$R_E$]".format(label2), fontsize=17)
+
+    ax.tick_params(axis='x', labelsize=17)
+    ax.tick_params(axis='y', labelsize=17)
+
+    if plot_colorbar:
+        cbar = fig.colorbar(cm, ax=ax)
+        cbar.ax.set_ylabel("Time [s]", fontsize=17)
+        cbar.ax.tick_params(axis='y', labelsize=17)
     ax.set_title("Trajectory projected onto {:s}-{:s} plane".format(
-        label1, label2))
+        label1, label2),
+                 fontsize=17)
 
 
 def plot_traj_momentum(trajectory_data, p0, show_plot=False):
@@ -432,12 +434,12 @@ def plot_gmrc_heatmap(gmrc_grids,
                rcutoff_grid,
                colors="k",
                linewidths=0.5,
-               levels=len(rigidity_list),
+               levels=int(4 * len(rigidity_list) / 6),
                alpha=1.)
 
     # shrink parameter should change accordingly to
     # figsize (trial and error for now...)
-    cbar = fig.colorbar(image, ax=ax, shrink=0.6)
+    cbar = fig.colorbar(image, ax=ax, shrink=0.8)
     cbar.ax.set_ylabel("Rigidity [GV]")
 
     # ylim from 180 to 0 to follow convention in Honda 2002 paper
@@ -458,3 +460,35 @@ def plot_gmrc_heatmap(gmrc_grids,
         os.path.join(
             plotdir_path,
             "{0}_{1}_{2}_cutoffplot.png".format(locname, plabel, bfield_type)))
+
+    # fig, ax = plt.subplots(figsize=(12, 9))
+
+    # figures for the projections
+    # fig_proj, ax_proj = plt.subplots(ncols=2,
+    #                                  nrows=2,
+    #                                  figsize=(16, 12),
+    #                                  constrained_layout=True)
+
+    # # relabel them for each projection type
+
+    # ax_xy = ax_proj[0, 0]
+    # ax_xz = ax_proj[0, 1]
+    # ax_yz = ax_proj[1, 0]
+    # ax_mag = ax_proj[1, 1]
+
+    # for (t_arr, x_arr, y_arr, z_arr) in data_list:
+
+    #     # projection onto xy plane
+    #     plot_traj_projection(x_arr, y_arr, t_arr, fig_proj, ax_xy, "x", "y")
+    #     # projection onto xz plane
+    #     plot_traj_projection(x_arr, z_arr, t_arr, fig_proj, ax_xz, "x", "z")
+    #     # projection onto yz plane
+    #     plot_traj_projection(y_arr, z_arr, t_arr, fig_proj, ax_yz, "y", "z")
+
+    #     mag_arr = np.linalg.norm(np.array([x_arr, y_arr, z_arr]), axis=0)
+
+    #     # magnitude vs time
+    #     ax_mag.plot(t_arr, mag_arr)
+    #     ax_mag.set_xlabel("Time [s]")
+    #     ax_mag.set_ylabel(r"$\| \vec{r} \| [R_E]$")
+    #     ax_mag.set_title("Time Evolution of the Magnitude of the Trajectory")
