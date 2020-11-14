@@ -2,6 +2,15 @@
 
 Presents the version history of the package.
 
+### Version 1.0.0
+
+Initial release of the gtracr package.
+Major bugs are now fixed and is now ready for initial release.
+
+- Examples are cleaned up and are ready to be used with users.
+- Plotter now plots multiple trajectories
+- Minor bug fixes
+
 ### version 0.10.0
 
 Refactoring of the code was performed:
