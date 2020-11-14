@@ -6,3 +6,8 @@ include *.txt
 include LICENSE
 graft .ci
 include CHANGELOG
+include *.md
+include *.yaml
+include *.yml
+include pytest.ini
+recursive-include docs *.md
