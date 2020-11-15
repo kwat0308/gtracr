@@ -17,7 +17,6 @@ by performing a 4th-order Runge Kutta numerical integration algorithm.
 #include "MagneticField.hpp"
 #include "constants.hpp"
 #include "igrf.hpp"
-#include "SixVector.hpp"
 
 class TrajectoryTracer {
   /*
@@ -64,11 +63,11 @@ Class Members
       final_sixvector_;  // the final six-vector of the trajectory
 
   // SixVector objects to store each RK parameter
-  SixVector k1_vec;
-  SixVector k2_vec;
-  SixVector k3_vec;
-  SixVector k4_vec;
-  SixVector k_vec;
+//   SixVector k1_vec;
+//   SixVector k2_vec;
+//   SixVector k3_vec;
+//   SixVector k4_vec;
+//   SixVector k_vec;
 
 
 
@@ -89,7 +88,7 @@ Returns
      the ordinary differential equation for the six vector based on the
 Lorentz force equation
 */
-  SixVector ode_lrz(const double t, const SixVector &vec);
+  std::array<double, 6> ode_lrz(const double t, const std::array<double, 6> &vec);
 
  public:
   /* Default Constructor for TrajectoryTracer class
