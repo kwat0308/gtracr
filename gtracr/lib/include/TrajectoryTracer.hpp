@@ -62,6 +62,15 @@ Class Members
   std::array<double, 6>
       final_sixvector_;  // the final six-vector of the trajectory
 
+  // SixVector objects to store each RK parameter
+//   SixVector k1_vec;
+//   SixVector k2_vec;
+//   SixVector k3_vec;
+//   SixVector k4_vec;
+//   SixVector k_vec;
+
+
+
   /* The ordinary differential equations that describes the motion
 of charge particles in Earth's magnetic field via the Lorentz force
 in spherical coordinates.
@@ -79,7 +88,7 @@ Returns
      the ordinary differential equation for the six vector based on the
 Lorentz force equation
 */
-  std::array<double, 6> ode_lrz(const double t, std::array<double, 6> vec);
+  std::array<double, 6> ode_lrz(const double t, const std::array<double, 6> &vec);
 
  public:
   /* Default Constructor for TrajectoryTracer class
@@ -132,19 +141,20 @@ Lorentz force equation
         contains the date in which the evaluation of the trajectory is requested
         in decimal date (default 2020.).
  */
-  TrajectoryTracer(const int charge, const double &mass,
-                  const double &start_altitude = 100. * (1e3),
-                   const double &escape_radius = 10. * constants::RE,
-                   const double &stepsize = 1e-5, const int max_iter = 10000,
+  TrajectoryTracer( double charge,  
+                  double mass = 1.67e-27,
+                   double start_altitude = 100. * (1e3),
+                    double escape_radius = 10. * constants::RE,
+                    double stepsize = 1e-5,  int max_iter = 10000,
                    const char bfield_type = 'i',
                    const std::pair<std::string, double> &igrf_params = {
                        "/home/keito/devel/gtracr/data", 2020.});
 
   /* the charge of the particle associated with the Runge-Kutta
    integrator */
-  const double &charge() { return charge_ / constants::ELEMENTARY_CHARGE; }
+  const double &charge() { return charge_; }
   // the mass of the particle associated with the Runge-Kutta integrator
-  const double &mass() { return mass_ / constants::KG_PER_GEVC2; }
+  const double &mass() { return mass_; }
   // starting altitude of the particle
   const double &start_altitude() { return start_altitude_; }
   // the escape radius of the tracer

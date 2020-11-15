@@ -9,7 +9,8 @@ Major bugs are now fixed and is now ready for initial release.
 
 - Examples are cleaned up and are ready to be used with users.
 - Plotter now plots multiple trajectories
-- Minor bug fixes
+- Created a new class for array storage / operator overloading in replace to std::array
+- Bug fixes for compatibility with UNIX systems and Windows
 
 ### version 0.10.0
 

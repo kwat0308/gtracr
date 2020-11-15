@@ -6,7 +6,7 @@ from datetime import date
 from gtracr.lib._libgtracr import TrajectoryTracer, uTrajectoryTracer
 from gtracr.lib.trajectory_tracer import pTrajectoryTracer
 from gtracr.utils import particle_dict, location_dict, ymd_to_dec
-from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, RAD_PER_DEG, KG_M_S_PER_GEVC
+from gtracr.lib.constants import EARTH_RADIUS, DEG_PER_RAD, ELEMENTARY_CHARGE, KG_PER_GEVC2, RAD_PER_DEG, KG_M_S_PER_GEVC, ELEMENTARY_CHARGE
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(CURRENT_DIR, "data")
@@ -75,6 +75,8 @@ class Trajectory:
         # define particle from particle_dict
 
         self.particle = particle_dict[plabel]
+        self.charge = self.particle.charge
+        self.mass = self.particle.mass
         '''
         Geodesic coordinate configuration
         '''
@@ -97,11 +99,11 @@ class Trajectory:
         '''
         # define rigidity and energy only if they are provided, evaluate for the other member
         # also set momentum in each case
-        if rigidity is None:
+        if rigidity is None and energy is not None:
             self.particle.set_from_energy(energy)
             self.rigidity = self.particle.rigidity
             self.energy = energy
-        elif energy is None:
+        elif energy is None and rigidity is not None:
             self.particle.set_from_rigidity(rigidity)
             self.rigidity = rigidity
             self.energy = self.particle.get_energy_rigidity()
@@ -188,25 +190,29 @@ class Trajectory:
 
         # start iteration process
 
+        self.charge *= ELEMENTARY_CHARGE
+        self.mass *= KG_PER_GEVC2
+
         # initialize trajectory tracer
         if use_python:
             # the python trajectory tracer version
-            traj_tracer = pTrajectoryTracer(self.particle.charge,
-                                            self.particle.mass, self.start_alt,
-                                            self.esc_alt, dt, max_step,
-                                            self.bfield_type, self.igrf_params)
+            traj_tracer = pTrajectoryTracer(self.charge, self.mass,
+                                            self.start_alt, self.esc_alt, dt,
+                                            max_step, self.bfield_type,
+                                            self.igrf_params)
         elif use_unvectorized:
             # the unvectorized trajectory tracer version
-            traj_tracer = uTrajectoryTracer(self.particle.charge,
-                                            self.particle.mass, self.start_alt,
-                                            self.esc_alt, dt, max_step,
-                                            self.bfield_type, self.igrf_params)
+            # error prone, possible memory leaks so better not to use it
+            traj_tracer = uTrajectoryTracer(self.charge, self.mass,
+                                            self.start_alt, self.esc_alt, dt,
+                                            max_step, self.bfield_type,
+                                            self.igrf_params)
         else:
             # the vectorized trajectory tracer version
-            traj_tracer = TrajectoryTracer(self.particle.charge,
-                                           self.particle.mass, self.start_alt,
-                                           self.esc_alt, dt, max_step,
-                                           self.bfield_type, self.igrf_params)
+            traj_tracer = TrajectoryTracer(self.charge, self.mass,
+                                           self.start_alt, self.esc_alt, dt,
+                                           max_step, self.bfield_type,
+                                           self.igrf_params)
 
         # set initial values
         particle_t0 = 0.

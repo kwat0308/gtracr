@@ -28,7 +28,7 @@ the TrajectoryTracer class.
   - vec_sum (vec2) (std::array<double, 6>) :
       the element-wise sum of vec1 and vec2
 */
-inline std::array<double, 6> &operator+(std::array<double, 6> lh_vec,
+inline std::array<double, 6> operator+(std::array<double, 6> lh_vec,
                                        std::array<double, 6> rh_vec) {
   std::transform(lh_vec.begin(), lh_vec.end(), rh_vec.begin(), lh_vec.begin(),
                  std::plus<double>());
@@ -52,7 +52,7 @@ inline std::array<double, 6> &operator+(std::array<double, 6> lh_vec,
   - vec_mult (vec2) (std::array<double, 6>) :
       the element-wise multiplication of vec1 and vec2
 */
-inline std::array<double, 6> &operator*(std::array<double, 6> lh_vec,
+inline std::array<double, 6> operator*(std::array<double, 6> lh_vec,
                                        std::array<double, 6> rh_vec) {
   std::transform(lh_vec.begin(), lh_vec.end(), rh_vec.begin(), lh_vec.begin(),
                  std::multiplies<double>());
@@ -76,7 +76,7 @@ inline std::array<double, 6> &operator*(std::array<double, 6> lh_vec,
   - vec_smult (std::array<double, 6>) :
       the scalar multiplication of val and vec
 */
-inline std::array<double, 6> &operator*(const double lh_val,
+inline std::array<double, 6> operator*(const double lh_val,
                                        std::array<double, 6> rh_vec) {
   std::transform(
       rh_vec.cbegin(), rh_vec.cend(), rh_vec.begin(),
@@ -125,7 +125,7 @@ inline std::array<double, 6> &operator*(const double lh_val,
 */
 TrajectoryTracer::TrajectoryTracer()
     : bfield_{MagneticField()},
-      charge_{1. * constants::ELEMENTARY_CHARGE},
+      charge_{constants::ELEMENTARY_CHARGE},
       mass_{0.938 * constants::KG_PER_GEVC2},
       start_altitude_{100. * (1e3)},
       escape_radius_{10. * constants::RE},
@@ -191,19 +191,18 @@ Optional Parameters
       contains the date in which the evaluation of the trajectory is requested
       in decimal date (default 2020.).
 */
-TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
-                                    const double &start_altitude,
-                                   const double
-                                       &escape_radius /*= 10. * constants::RE*/,
-                                   const double &stepsize /*= 1e-5*/,
-                                   const int max_iter /* = 10000*/,
+TrajectoryTracer::TrajectoryTracer( double charge,  double mass,
+                                     double start_altitude,
+                                    double escape_radius /*= 10. * constants::RE*/,
+                                    double stepsize /*= 1e-5*/,
+                                    int max_iter /* = 10000*/,
                                    const char bfield_type /*= 'i'*/,
                                    const std::pair<std::string, double>
                                        &igrf_params /*=
       {"/home/keito/devel/gtracr/data",
       2020.}*/)
-    : charge_{charge * constants::ELEMENTARY_CHARGE},
-      mass_{mass * constants::KG_PER_GEVC2},
+    : charge_{charge},
+      mass_{mass},
       start_altitude_{start_altitude},
       escape_radius_{escape_radius},
       stepsize_{stepsize},
@@ -240,8 +239,9 @@ TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
   Lorentz force equation
 */
 std::array<double, 6> TrajectoryTracer::ode_lrz(const double t,
-                                                std::array<double, 6> vec) {
-  // unpack array for readability
+                                                const std::array<double, 6>& vec) {
+
+  // unpack array
   double r = vec[0];
   double theta = vec[1];
   double phi = vec[2];
@@ -258,7 +258,6 @@ std::array<double, 6> TrajectoryTracer::ode_lrz(const double t,
   double bf_r = bf_values[0];
   double bf_theta = bf_values[1];
   double bf_phi = bf_values[2];
-  // std::cout << bf_r << ' ' << bf_theta << ' ' << bf_phi << std::endl;
 
   // get the momentum ODE
   // Note:
@@ -292,8 +291,10 @@ std::array<double, 6> TrajectoryTracer::ode_lrz(const double t,
 
   // create the vector form of the ODE with the position components included
   // as well
-  std::array<double, 6> ode_lrz = {
-      pr, (ptheta / r), (pphi / (r * sin(theta))), dprdt, dpthetadt, dpphidt};
+  std::array<double, 6> ode_lrz = std::array<double, 6>{
+      {pr, (ptheta / r), (pphi / (r * sin(theta))), dprdt, dpthetadt, dpphidt}};
+
+  // SixVector result = ode_lrz * (1. / rel_mass);
 
   return (1. / rel_mass) * ode_lrz;
 }
@@ -317,31 +318,23 @@ void TrajectoryTracer::evaluate(const double &t0, std::array<double, 6> &vec0) {
 
   // set the initial conditions
   double t = t0;
-  std::array<double, 6> &vec = vec0;
+  std::array<double, 6> vec = vec0;
   // TODO: make arrays into references for no copying
 
   // start the loop
   for (int i = 0; i < max_iter_; ++i) {
-    // evaluate the k-coefficients
-
-    std::array<double, 6> &k1_vec = h * ode_lrz(t, vec);
-    std::array<double, 6> &k2_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec));
-    std::array<double, 6> &k3_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec));
-    std::array<double, 6> &k4_vec = h * ode_lrz(t + h, vec + k3_vec);
-
-    std::array<double, 6> &k_vec =
-        (1. / 6.) * (k1_vec + (2. * k2_vec) + (2. * k3_vec) + k4_vec);
+    std::array<double, 6> k1_vec =  h * ode_lrz(t, vec);
+    std::array<double, 6> k2_vec = h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec ));
+    std::array<double, 6> k3_vec = h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec ));
+    std::array<double, 6> k4_vec = h * ode_lrz(t + h, vec + h * k3_vec);
+    std::array<double, 6> k_vec = (1. / 6.) * (k1_vec + (2. * k2_vec ) + (2. * k3_vec ) + k4_vec);
 
     // increment by weighted sum
     vec = vec + k_vec;
     t += h;  // increase time
 
-    const double &r = vec[0];  // radius, redefine for readability
+    const double &r = vec[0];
 
-    // breaking condition
-    // if particle reaches escape radius
     if (r > escape_radius_) {
       particle_escaped_ = true;
       break;
@@ -352,6 +345,7 @@ void TrajectoryTracer::evaluate(const double &t0, std::array<double, 6> &vec0) {
     if (r < start_altitude_ + constants::RE) {
       break;
     }  // if (r < start_altitude_ + constants::RE)
+
   }    // for (int i = 0; i < max_iter_; ++i)
   // store the final time and six-vector for checking purposes
   // the last recorded time and six-vector is the final six-vector / time
@@ -390,12 +384,7 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
 
   // set the initial conditions
   double t = t0;
-  std::array<double, 6>& vec = vec0;
-
-  // for (auto val : vec) {
-  //   std::cout << val << '\t';
-  // }
-  // std::cout << std::endl;
+  std::array<double, 6> vec = vec0;
 
   // initialize array to contain data
   std::vector<double> t_arr, r_arr, theta_arr, phi_arr, pr_arr, ptheta_arr,
@@ -407,11 +396,6 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
     // how vec looks like:
     // (r, theta, phi, pr, ptheta, pphi) = vec
 
-    // for (auto val : vec) {
-    //   std::cout << val << '\t';
-    // }
-    // std::cout << std::endl;
-
     t_arr.push_back(t);
     r_arr.push_back(vec[0]);
     theta_arr.push_back(vec[1]);
@@ -420,30 +404,18 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
     ptheta_arr.push_back(vec[4]);
     pphi_arr.push_back(vec[5]);
 
-    // evaluate the k-coefficients
-
-    std::array<double, 6> &k1_vec = h * ode_lrz(t, vec);
-    std::array<double, 6> &k2_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec));
-    std::array<double, 6> &k3_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec));
-    std::array<double, 6> &k4_vec = h * ode_lrz(t + h, vec + k3_vec);
-
-    std::array<double, 6> &k_vec =
-        (1. / 6.) * (k1_vec + (2. * k2_vec) + (2. * k3_vec) + k4_vec);
-
-    // for (auto kval : k_vec) {
-    //   std::cout << kval << ' ';
-    // }
-
+  // start the loop
+    std::array<double, 6> k1_vec =  ode_lrz(t, vec);
+    std::array<double, 6> k2_vec = ode_lrz(t + (0.5 * h), vec + (0.5 * h * k1_vec ));
+    std::array<double, 6> k3_vec = ode_lrz(t + (0.5 * h), vec + (0.5 * h * k2_vec ));
+    std::array<double, 6> k4_vec = ode_lrz(t + h, vec + h * k3_vec);
+    std::array<double, 6>k_vec = (h / 6.) * (k1_vec + (2. * k2_vec ) + (2. * k3_vec ) + k4_vec);
     // increment by weighted sum
     vec = vec + k_vec;
     t += h;  // increase time
 
-    const double &r = vec[0];  // radius, redefine for readability
+    const double& r = vec[0];
 
-    // breaking condition
-    // if particle reaches escape radius
     if (r > escape_radius_) {
       particle_escaped_ = true;
       break;
@@ -455,8 +427,7 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
       break;
     }  // if (r < start_altitude_ + constants::RE)
 
-  }  // for (int i = 0; i < max_iter_; ++i)
-
+  }    // for (int i = 0; i < max_iter_; ++i)
   // store the final time and six-vector for checking purposes
   // the last recorded time and six-vector is the final six-vector / time
   final_time_ = t;
