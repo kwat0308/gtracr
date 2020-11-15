@@ -150,19 +150,19 @@ class uTrajectoryTracer {
         contains the date in which the evaluation of the trajectory is requested
         in decimal date (default 2020.).
   */
-  uTrajectoryTracer(const int charge, const double &mass,
-                    const double &start_altitude = 100. * (1e3),
-                    const double &escape_radius = 10. * constants::RE,
-                    const double &stepsize = 1e-5, const int max_iter = 10000,
+  uTrajectoryTracer(double charge, double mass,
+                    double start_altitude = 100. * (1e3),
+                    double escape_radius = 10. * constants::RE,
+                    double stepsize = 1e-5, int max_iter = 10000,
                     const char bfield_type = 'i',
                     const std::pair<std::string, double> &igrf_params = {
                         "/home/keito/devel/gtracr/data", 2020.});
 
   // return the charge of the particle associated with the Runge-Kutta
   // integrator
-  const double &charge() { return charge_ / constants::ELEMENTARY_CHARGE; }
+  const double &charge() { return charge_; }
   // return the mass of the particle associated with the Runge-Kutta integrator
-  const double &mass() { return mass_ / constants::KG_PER_GEVC2; }
+  const double &mass() { return mass_; }
   // starting altitude of the particle
   const double &start_altitude() { return start_altitude_; }
   // return the escape radius of the tracer

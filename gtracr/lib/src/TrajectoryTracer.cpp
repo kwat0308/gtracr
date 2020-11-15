@@ -5,86 +5,6 @@ by performing a 4th-order Runge Kutta numerical integration algorithm.
 
 #include "TrajectoryTracer.hpp"
 
-/*
-Operator overloading between std::array
-These are free functions and are not members of
-the TrajectoryTracer class.
-*/
-
-/* Element-wise addition of 2 std::array<double, 6>.
-    Used for compact notations when evaluating the ODE.
-
-    Example: vec = vec1 + vec2 is the same thing as:
-    for (int i=0; i<vec1.size(); ++i) {
-      vec[i] = vec1[i] + vec2[i];
-    }
-
-  Parameters
-  ------------
-  - vec1 (std::array<double, 6>) : the first array
-  - vec2 (std::array<double, 6>) : the second array
-  Returns
-  --------
-  - vec_sum (vec2) (std::array<double, 6>) :
-      the element-wise sum of vec1 and vec2
-*/
-inline std::array<double, 6> &operator+(std::array<double, 6> lh_vec,
-                                       std::array<double, 6> rh_vec) {
-  std::transform(lh_vec.begin(), lh_vec.end(), rh_vec.begin(), lh_vec.begin(),
-                 std::plus<double>());
-  return lh_vec;
-}
-
-/* Element-wise multiplication of 2 std::array<double, 6>.
-    Used for compact notations when evaluating the ODE
-
-    Example: vec = vec1 * vec2 is the same thing as:
-    for (int i=0; i<vec1.size(); ++i) {
-      vec[i] = vec1[i] * vec2[i];
-    }
-
-  Parameters
-  ------------
-  - vec1 (std::array<double, 6>) : the first array
-  - vec2 (std::array<double, 6>) : the second array
-  Returns
-  --------
-  - vec_mult (vec2) (std::array<double, 6>) :
-      the element-wise multiplication of vec1 and vec2
-*/
-inline std::array<double, 6> &operator*(std::array<double, 6> lh_vec,
-                                       std::array<double, 6> rh_vec) {
-  std::transform(lh_vec.begin(), lh_vec.end(), rh_vec.begin(), lh_vec.begin(),
-                 std::multiplies<double>());
-  return lh_vec;
-}
-
-/* Scalar multiplication between a value and a std::array
-    Used for compact notations when evaluating the ODE
-
-    Example: vec_smult = val * vec is the same thing as:
-    for (int i = 0; i < 6; ++i) {
-    vec_smult[i] = val * vec[i];
-  }
-
-  Parameters
-  ------------
-  - val (double) : the scalar
-  - vec (std::array<double, 6>) : the array
-  Returns
-  --------
-  - vec_smult (std::array<double, 6>) :
-      the scalar multiplication of val and vec
-*/
-inline std::array<double, 6> &operator*(const double lh_val,
-                                       std::array<double, 6> rh_vec) {
-  std::transform(
-      rh_vec.cbegin(), rh_vec.cend(), rh_vec.begin(),
-      std::bind(std::multiplies<double>(), std::placeholders::_1, lh_val));
-  return rh_vec;
-}
-
-
 // TrajectoryTracer class
 
 /* Default Constructor for TrajectoryTracer class
@@ -125,7 +45,7 @@ inline std::array<double, 6> &operator*(const double lh_val,
 */
 TrajectoryTracer::TrajectoryTracer()
     : bfield_{MagneticField()},
-      charge_{1. * constants::ELEMENTARY_CHARGE},
+      charge_{constants::ELEMENTARY_CHARGE},
       mass_{0.938 * constants::KG_PER_GEVC2},
       start_altitude_{100. * (1e3)},
       escape_radius_{10. * constants::RE},
@@ -191,19 +111,18 @@ Optional Parameters
       contains the date in which the evaluation of the trajectory is requested
       in decimal date (default 2020.).
 */
-TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
-                                    const double &start_altitude,
-                                   const double
-                                       &escape_radius /*= 10. * constants::RE*/,
-                                   const double &stepsize /*= 1e-5*/,
-                                   const int max_iter /* = 10000*/,
+TrajectoryTracer::TrajectoryTracer( double charge,  double mass,
+                                     double start_altitude,
+                                    double escape_radius /*= 10. * constants::RE*/,
+                                    double stepsize /*= 1e-5*/,
+                                    int max_iter /* = 10000*/,
                                    const char bfield_type /*= 'i'*/,
                                    const std::pair<std::string, double>
                                        &igrf_params /*=
       {"/home/keito/devel/gtracr/data",
       2020.}*/)
-    : charge_{charge * constants::ELEMENTARY_CHARGE},
-      mass_{mass * constants::KG_PER_GEVC2},
+    : charge_{charge},
+      mass_{mass},
       start_altitude_{start_altitude},
       escape_radius_{escape_radius},
       stepsize_{stepsize},
@@ -239,26 +158,18 @@ TrajectoryTracer::TrajectoryTracer(const int charge, const double &mass,
        the ordinary differential equation for the six vector based on the
   Lorentz force equation
 */
-std::array<double, 6> TrajectoryTracer::ode_lrz(const double t,
-                                                std::array<double, 6> vec) {
-  // unpack array for readability
-  double r = vec[0];
-  double theta = vec[1];
-  double phi = vec[2];
-  double pr = vec[3];
-  double ptheta = vec[4];
-  double pphi = vec[5];
+SixVector TrajectoryTracer::ode_lrz(const double t,
+                                                const SixVector& vec) {
 
   // get the lorentz factor
-  double gmma = lorentz_factor(pr, ptheta, pphi);
+  double gmma = lorentz_factor(vec.pr, vec.ptheta, vec.pphi);
   double rel_mass = mass_ * gmma;
 
   // evaluate B-field
-  std::array<double, 3> bf_values = bfield_.values(r, theta, phi);
+  std::array<double, 3> bf_values = bfield_.values(vec.r, vec.theta, vec.phi);
   double bf_r = bf_values[0];
   double bf_theta = bf_values[1];
   double bf_phi = bf_values[2];
-  // std::cout << bf_r << ' ' << bf_theta << ' ' << bf_phi << std::endl;
 
   // get the momentum ODE
   // Note:
@@ -268,34 +179,36 @@ std::array<double, 6> TrajectoryTracer::ode_lrz(const double t,
   //   in spherical coordiantes in the ODE
 
   // -q * (ptheta * Bphi - Btheta * pphi)
-  double dprdt_lrz = -1. * charge_ * ((ptheta * bf_phi) - (bf_theta * pphi));
+  double dprdt_lrz = -1. * charge_ * ((vec.ptheta * bf_phi) - (bf_theta * vec.pphi));
   // (ptheta^2 / r) + (pphi^2 / r)
-  double dprdt_sphcmp = (((ptheta * ptheta) + (pphi * pphi)) / r);
+  double dprdt_sphcmp = (((vec.ptheta * vec.ptheta) + (vec.pphi * vec.pphi)) / vec.r);
   // dprdt
   double dprdt = dprdt_lrz + dprdt_sphcmp;
 
   // q * (pr * Bphi - Br * pphi)
-  double dpthetadt_lrz = charge_ * ((pr * bf_phi) - (bf_r * pphi));
+  double dpthetadt_lrz = charge_ * ((vec.pr * bf_phi) - (bf_r * vec.pphi));
   // (pphi^2 * cos(theta) / (r * sin(theta))) - (pr*ptheta / r)
   double dpthetadt_sphcmp =
-      ((pphi * pphi * cos(theta)) / (r * sin(theta))) - ((pr * ptheta) / r);
+      ((vec.pphi * vec.pphi * cos(vec.theta)) / (vec.r * sin(vec.theta))) - ((vec.pr * vec.ptheta) / vec.r);
   // dpthetadt
   double dpthetadt = dpthetadt_lrz + dpthetadt_sphcmp;
 
   // -q * (pr * Btheta - Br * ptheta)
-  double dpphidt_lrz = -1. * charge_ * ((pr * bf_theta) - (bf_r * ptheta));
-  // (pr * pphi / r) + ((ptheta * pphi * cos(theta)) / (r * sin(theta)))
+  double dpphidt_lrz = -1. * charge_ * ((vec.pr * bf_theta) - (bf_r * vec.ptheta));
+  // (pr * pphi / r) + ((vec.ptheta * pphi * cos(theta)) / (r * sin(theta)))
   double dpphidt_sphcmp =
-      ((pr * pphi) / r) + ((ptheta * pphi * cos(theta)) / (r * sin(theta)));
+      ((vec.pr * vec.pphi) / vec.r) + ((vec.ptheta * vec.pphi * cos(vec.theta)) / (vec.r * sin(vec.theta)));
   // dpphidt
   double dpphidt = dpphidt_lrz - dpphidt_sphcmp;
 
   // create the vector form of the ODE with the position components included
   // as well
-  std::array<double, 6> ode_lrz = {
-      pr, (ptheta / r), (pphi / (r * sin(theta))), dprdt, dpthetadt, dpphidt};
+  SixVector ode_lrz = SixVector(
+      vec.pr, (vec.ptheta / vec.r), (vec.pphi / (vec.r * sin(vec.theta))), dprdt, dpthetadt, dpphidt);
 
-  return (1. / rel_mass) * ode_lrz;
+  // SixVector result = ode_lrz * (1. / rel_mass);
+
+  return ode_lrz * (1. / rel_mass);
 }
 /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
 algorithm.
@@ -317,46 +230,40 @@ void TrajectoryTracer::evaluate(const double &t0, std::array<double, 6> &vec0) {
 
   // set the initial conditions
   double t = t0;
-  std::array<double, 6> &vec = vec0;
+  SixVector vec = SixVector(vec0);
+
+  vec.print();
   // TODO: make arrays into references for no copying
 
   // start the loop
   for (int i = 0; i < max_iter_; ++i) {
-    // evaluate the k-coefficients
 
-    std::array<double, 6> &k1_vec = h * ode_lrz(t, vec);
-    std::array<double, 6> &k2_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec));
-    std::array<double, 6> &k3_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec));
-    std::array<double, 6> &k4_vec = h * ode_lrz(t + h, vec + k3_vec);
-
-    std::array<double, 6> &k_vec =
-        (1. / 6.) * (k1_vec + (2. * k2_vec) + (2. * k3_vec) + k4_vec);
-
+    k1_vec = ode_lrz(t, vec);
+    k2_vec = ode_lrz(t + (0.5 * h), vec + (k1_vec * 0.5 * h));
+    k3_vec = ode_lrz(t + (0.5 * h), vec + (k2_vec * 0.5 * h));
+    k4_vec = ode_lrz(t + h, vec + k3_vec * h);
+    k_vec = (k1_vec + (k2_vec * 2.) + (k3_vec * 2.) + k4_vec) * (h / 6.);
     // increment by weighted sum
     vec = vec + k_vec;
     t += h;  // increase time
 
-    const double &r = vec[0];  // radius, redefine for readability
-
     // breaking condition
     // if particle reaches escape radius
-    if (r > escape_radius_) {
+    if (vec.r > escape_radius_) {
       particle_escaped_ = true;
       break;
     }  // if (r > escape_radius_)
 
     // breaking condition
     // if particle reaches back onto Earth's surface again
-    if (r < start_altitude_ + constants::RE) {
+    if (vec.r < start_altitude_ + constants::RE) {
       break;
     }  // if (r < start_altitude_ + constants::RE)
   }    // for (int i = 0; i < max_iter_; ++i)
   // store the final time and six-vector for checking purposes
   // the last recorded time and six-vector is the final six-vector / time
   final_time_ = t;
-  final_sixvector_ = vec;
+  final_sixvector_ = vec.to_array();
 }  // evaluate
 
 /* Evaluates the trajectory of the particle using a 4th-order Runge Kutta
@@ -390,12 +297,7 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
 
   // set the initial conditions
   double t = t0;
-  std::array<double, 6>& vec = vec0;
-
-  // for (auto val : vec) {
-  //   std::cout << val << '\t';
-  // }
-  // std::cout << std::endl;
+  SixVector vec = SixVector(vec0);
 
   // initialize array to contain data
   std::vector<double> t_arr, r_arr, theta_arr, phi_arr, pr_arr, ptheta_arr,
@@ -407,51 +309,36 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
     // how vec looks like:
     // (r, theta, phi, pr, ptheta, pphi) = vec
 
-    // for (auto val : vec) {
-    //   std::cout << val << '\t';
-    // }
-    // std::cout << std::endl;
-
     t_arr.push_back(t);
-    r_arr.push_back(vec[0]);
-    theta_arr.push_back(vec[1]);
-    phi_arr.push_back(vec[2]);
-    pr_arr.push_back(vec[3]);
-    ptheta_arr.push_back(vec[4]);
-    pphi_arr.push_back(vec[5]);
+    r_arr.push_back(vec.r);
+    theta_arr.push_back(vec.theta);
+    phi_arr.push_back(vec.phi);
+    pr_arr.push_back(vec.pr);
+    ptheta_arr.push_back(vec.ptheta);
+    pphi_arr.push_back(vec.pphi);
 
     // evaluate the k-coefficients
 
-    std::array<double, 6> &k1_vec = h * ode_lrz(t, vec);
-    std::array<double, 6> &k2_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k1_vec));
-    std::array<double, 6> &k3_vec =
-        h * ode_lrz(t + (0.5 * h), vec + (0.5 * k2_vec));
-    std::array<double, 6> &k4_vec = h * ode_lrz(t + h, vec + k3_vec);
-
-    std::array<double, 6> &k_vec =
-        (1. / 6.) * (k1_vec + (2. * k2_vec) + (2. * k3_vec) + k4_vec);
-
-    // for (auto kval : k_vec) {
-    //   std::cout << kval << ' ';
-    // }
+    k1_vec = ode_lrz(t, vec);
+    k2_vec = ode_lrz(t + (0.5 * h), vec + (k1_vec * 0.5 * h));
+    k3_vec = ode_lrz(t + (0.5 * h), vec + (k2_vec * 0.5 * h));
+    k4_vec = ode_lrz(t + h, vec + k3_vec * h);
+    k_vec = (k1_vec + (k2_vec * 2.) + (k3_vec * 2.) + k4_vec) * (h / 6.);
 
     // increment by weighted sum
     vec = vec + k_vec;
     t += h;  // increase time
 
-    const double &r = vec[0];  // radius, redefine for readability
-
     // breaking condition
     // if particle reaches escape radius
-    if (r > escape_radius_) {
+    if (vec.r > escape_radius_) {
       particle_escaped_ = true;
       break;
     }  // if (r > escape_radius_)
 
     // breaking condition
     // if particle reaches back onto Earth's surface again
-    if (r < start_altitude_ + constants::RE) {
+    if (vec.r < start_altitude_ + constants::RE) {
       break;
     }  // if (r < start_altitude_ + constants::RE)
 
@@ -460,7 +347,7 @@ TrajectoryTracer::evaluate_and_get_trajectory(double &t0,
   // store the final time and six-vector for checking purposes
   // the last recorded time and six-vector is the final six-vector / time
   final_time_ = t;
-  final_sixvector_ = vec;
+  final_sixvector_ = vec.to_array();
 
   // create map that contains trajectory data
   std::map<std::string, std::vector<double>> trajectory_data = {
