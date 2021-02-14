@@ -156,9 +156,9 @@ def plot_3dtraj(trajectory_datalist,
                               zaxis=dict(nticks=6,
                                          range=[-10.0, 10.0],
                                          title=r"z [Re]"),
-                          ),
-                          font=dict(family="Courier New, monospace", size=18),
-                          showlegend=False)
+        ),
+            font=dict(family="Courier New, monospace", size=18),
+            showlegend=False)
 
         # make file extension to html if it is not html
         if file_name.find("html") < 0:
@@ -275,10 +275,10 @@ def plot_traj_projection(arr1, arr2, t_arr, fig, ax, label1, label2,
         cbar.ax.tick_params(axis='y', labelsize=17)
     ax.set_title("Trajectory projected onto {:s}-{:s} plane".format(
         label1, label2),
-                 fontsize=17)
+        fontsize=17)
 
 
-def plot_traj_momentum(trajectory_data, p0, show_plot=False):
+def plot_traj_momentum(trajectory_data, p0=None, show_plot=False, labels=None):
     '''
     Plot the time evolution of the magnitude of the momentum. 
     This is mainly used for debugging purposes as a cross-check 
@@ -298,24 +298,42 @@ def plot_traj_momentum(trajectory_data, p0, show_plot=False):
     '''
     # check momentum magnitude vs steps since |p| should be
     # constant throughout the trajectory
-    t_arr = trajectory_data["t"]
-    p_arr = np.sqrt(trajectory_data["pr"]**2. + trajectory_data["ptheta"]**2. +
-                    trajectory_data["pphi"]**2.) / KG_M_S_PER_GEVC
-    p_ratio = p_arr / p0
+    if isinstance(trajectory_data, list):
+        t_arr = np.array([td["t"] for td in trajectory_data])
+        p_arr = np.sqrt(np.array([
+            td["pr"]**2. + td["ptheta"]**2. +
+            td["pphi"]**2. for td in trajectory_data
+        ])) / KG_M_S_PER_GEVC
+        p0 = p_arr[:, 0]
+        p_ratio = p_arr / p0[:, np.newaxis]
+    else:
+        t_arr = trajectory_data["t"]
+        p_arr = np.sqrt(trajectory_data["pr"]**2. + trajectory_data["ptheta"]**2. +
+                        trajectory_data["pphi"]**2.) / KG_M_S_PER_GEVC
+        p0 = p_arr[0] if p0 is None else p0
+        p_ratio = p_arr / p0
 
     # figure for momentum vs steps
     # for physics checking
     fig_pmag, ax_pmag = plt.subplots(figsize=(12, 6), constrained_layout=True)
 
     # momentum ratio vs steps
-    ax_pmag.plot(t_arr, p_ratio, color="b", marker="o", ms=3.0)
+    if isinstance(trajectory_data, list):
+        for i, label in enumerate(labels):
+            ax_pmag.plot(t_arr[i], p_ratio[i],
+                         marker="o", ms=3.0, label=label)
+    else:
+        ax_pmag.plot(t_arr, p_ratio, color="b", marker="o", ms=3.0)
     # ax_pmag.set_ylim([0.5, 1.5])
     # ax_pmag.set_ylim([-3, 3])
     ax_pmag.set_xlabel(r"Time [s]", fontsize=14)
     ax_pmag.set_ylabel(r"$p/p_0$", fontsize=14)
     ax_pmag.set_title(
-        r"Time Variation of Momentum Magnnitude Throughout Trajectory",
+        r"Time Variation of Momentum Magnitude Throughout Trajectory",
         fontsize=15)
+
+    if isinstance(trajectory_data, list):
+        ax_pmag.legend(prop={"size": 12}, loc="upper right")
 
     if show_plot:
         plt.show()
@@ -373,7 +391,7 @@ def plot_gmrc_scatter(gmrc_data,
     plt.savefig(os.path.join(
         plotdir_path,
         "{0}_{1}_{2}_scatterplot.png".format(locname, plabel, bfield_type)),
-                dpi=800)
+        dpi=800)
 
     if show_plot:
         plt.show()
