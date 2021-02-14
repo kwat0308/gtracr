@@ -8,3 +8,5 @@ build/
 *.pyd
 *.so
 site/
+.pytest_cache/
+.benchmarks
