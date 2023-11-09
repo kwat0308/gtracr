@@ -4,3 +4,4 @@ datetime
 pytest
 pytest-cov
 tqdm
+p_tqdm

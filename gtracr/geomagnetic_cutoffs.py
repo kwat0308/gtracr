@@ -3,9 +3,11 @@ import os
 import numpy as np
 from scipy.interpolate import griddata
 from tqdm import tqdm
+from p_tqdm import p_map
 from datetime import date
 
 from gtracr.trajectory import Trajectory
+from gtracr.utils import location_dict
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
@@ -23,9 +25,19 @@ class GMRC():
     -----------
 
     - location : str
-        The location in which the geomagnetic cutoff rigidities are evaluated (default = "Kamioka"). The names must be one of the locations contained in `location_dict`, which is configured in `gtracr.utils`.
+        The location in which the geomagnetic cutoff rigidities are evaluated (default = "Kamioka"). 
+        The names must be one of the locations contained in `location_dict`, which is configured in `gtracr.utils`.
+        If set to None, location may be set manually with latitude, longitude
+    - latitude: float
+        the geographic latitude of the detector, with 0 defined at the equator in degrees. Overridden
+        if the location name is specified.
+    - longitude: float
+        the geographic longitude of the detector, with 0 defined at the Prime Meridian in degrees. Overridden
+        if the location name is specified.
     - particle_altitude : float
         The altitude in which the cosmic ray interacts with the atmosphere in km (default = 100).
+    - detector_altitude: float
+        the height of the detector from sea level in km (default = 0km). Overridden if location is specified
     - iter_num : int
         The number of iterations to perform for the Monte-Carlo sampling routine (default = 10000) 
     - bfield_type : str
@@ -40,19 +52,42 @@ class GMRC():
         The maximum rigidity to which we evaluate the cutoff rigidities for (default = 55 GV).
     - delta_rigidity : float
         The spacing between each rigidity (default = 5 GV). Sets the coarseness of the rigidity sample space.
+    - dt : float
+        The stepsize of each trajectory evaluation (default = 1e-5)
+    - max_time : float
+        The maximal time of each trajectory evaluation (default = 1.).
     '''
     def __init__(self,
                  location="Kamioka",
-                 particle_altitude=100,
+                 latitude=0.,
+                 longitude=0.,
+                 particle_altitude=100.,
+                 detector_altitude=0.,
                  iter_num=10000,
                  bfield_type="igrf",
                  particle_type="p+",
                  date=str(date.today()),
                  min_rigidity=5.,
                  max_rigidity=55.,
-                 delta_rigidity=1.):
+                 delta_rigidity=1.,
+                 dt=1e-5,
+                 max_time=1,
+                 method='serial'):
         # set class attributes
         self.location = location
+
+        # only import location dictionary and use those values if location is not None
+        if location is not None:
+            if location in location_dict:
+                loc = location_dict[location]
+
+                latitude = loc.latitude
+                longitude = loc.longitude
+                detector_altitude = loc.altitude
+
+        self.lat = latitude
+        self.lon = longitude
+        self.dalt = detector_altitude
         self.palt = particle_altitude
         self.iter_num = iter_num
         self.bfield_type = bfield_type
@@ -64,34 +99,52 @@ class GMRC():
         self.rmin = min_rigidity
         self.rmax = max_rigidity
         self.rdelta = delta_rigidity
+        self.dt = dt
+        self.max_time = max_time
+        self.method = method
 
         # generate list of rigidities
         self.rigidity_list = np.arange(self.rmin, self.rmax, self.rdelta)
 
         # initialize container for rigidity cutoffs
-        # # along with the zenith and azimuthal arrays
-        # self.azimuth_arr = np.zeros(self.iter_num)
-        # self.zenith_arr = np.zeros(self.iter_num)
-        # self.rcutoff_arr = np.zeros(self.iter_num)
+        # along with the zenith and azimuthal arrays
         self.data_dict = {
             "azimuth": np.zeros(self.iter_num),
             "zenith": np.zeros(self.iter_num),
             "rcutoff": np.zeros(self.iter_num)
         }
 
-    def evaluate(self, dt=1e-5, max_time=1):
+    def evaluate_angle(self, azimuth, zenith):
+        # iterate through each rigidity, and break the loop
+        # when particle is able to escape earth
+        for rigidity in self.rigidity_list:
+
+            traj = Trajectory(plabel=self.plabel,
+                              location_name=None,
+                              latitude = self.lat,
+                              longitude = self.lon,
+                              zenith_angle=zenith,
+                              azimuth_angle=azimuth,
+                              particle_altitude=self.palt,
+                              detector_altitude=self.dalt,
+                              rigidity=rigidity,
+                              bfield_type=self.bfield_type,
+                              date=self.date)
+
+            traj.get_trajectory(dt=self.dt, max_time=self.max_time)
+
+            # break loop and return current rigidity if particle has escaped
+            if traj.particle_escaped == True:
+                return rigidity
+
+        # didn't escape through all the rigidities in the list, return None
+        return None
+
+
+    def evaluate_serial(self):
         '''
         Evaluate the rigidity cutoff value at some provided location
         on Earth for a given cosmic ray particle.
-
-        Parameters
-        ----------
-
-        - dt : float
-            The stepsize of each trajectory evaluation (default = 1e-5)
-        - max_time : float
-            The maximal time of each trajectory evaluation (default = 1.).
-
         '''
 
         # perform Monte Carlo integration to get cutoff rigidity
@@ -103,31 +156,34 @@ class GMRC():
             azimuth *= 360.
             zenith *= 180.
 
-            # iterate through each rigidity, and break the loop
-            # when particle is able to escape earth
-            for rigidity in self.rigidity_list:
+            rigidity = self.evaluate_angle(azimuth, zenith)
 
-                traj = Trajectory(plabel=self.plabel,
-                                  location_name=self.location,
-                                  zenith_angle=zenith,
-                                  azimuth_angle=azimuth,
-                                  particle_altitude=100.,
-                                  rigidity=rigidity,
-                                  bfield_type=self.bfield_type,
-                                  date=self.date)
+            if rigidity:
+                self.data_dict["azimuth"][i] = azimuth
+                self.data_dict["zenith"][i] = zenith
+                self.data_dict["rcutoff"][i] = rigidity
 
-                traj.get_trajectory(dt=dt, max_time=max_time)
-                # break loop and append direction and current rigidity if particle has escaped
+    def evaluate_parallel(self):
+        # generate lists of random zenith and azimuth angles
+        azimuth = np.random.rand(self.iter_num) * 360.0
+        zenith = np.random.rand(self.iter_num) * 180.0
 
-                if traj.particle_escaped == True:
-                    # self.azimuth_arr[i] = azimuth
-                    # self.zenith_arr[i] = zenith
-                    # self.rcutoff_arr[i] = rigidity
-                    self.data_dict["azimuth"][i] = azimuth
-                    self.data_dict["zenith"][i] = zenith
-                    self.data_dict["rcutoff"][i] = rigidity
-                    # self.rcutoff_arr.append((azimuth, zenith, rig))
-                    break
+        rigidity = p_map(self.evaluate_angle, azimuth, zenith)
+
+        # insert the non-None's into the data_dict
+        for i in range(self.iter_num):
+            if rigidity[i]:
+                self.data_dict['azimuth'][i] = azimuth[i]
+                self.data_dict['zenith'][i] = zenith[i]
+                self.data_dict['rcutoff'][i] = rigidity[i]
+
+
+    def evaluate(self):
+        if self.method == 'serial':
+            self.evaluate_serial()
+        elif self.method == 'parallel':
+            self.evaluate_parallel()
+
 
     def interpolate_results(self,
                             method="linear",
@@ -171,3 +227,5 @@ class GMRC():
                                 method=method)
 
         return (azimuth_grid, zenith_grid, rcutoff_grid)
+
+
