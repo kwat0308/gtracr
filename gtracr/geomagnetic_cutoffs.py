@@ -7,6 +7,7 @@ from p_tqdm import p_map
 from datetime import date
 
 from gtracr.trajectory import Trajectory
+from gtracr.utils import location_dict
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
@@ -100,6 +101,7 @@ class GMRC():
         self.rdelta = delta_rigidity
         self.dt = dt
         self.max_time = max_time
+        self.method = method
 
         # generate list of rigidities
         self.rigidity_list = np.arange(self.rmin, self.rmax, self.rdelta)
@@ -119,8 +121,8 @@ class GMRC():
 
             traj = Trajectory(plabel=self.plabel,
                               location_name=None,
-                              latitude = self.latitude,
-                              longitude = self.longitude,
+                              latitude = self.lat,
+                              longitude = self.lon,
                               zenith_angle=zenith,
                               azimuth_angle=azimuth,
                               particle_altitude=self.palt,
@@ -154,7 +156,7 @@ class GMRC():
             azimuth *= 360.
             zenith *= 180.
 
-            rigidity = evaluate_angle(azimuth, zenith)
+            rigidity = self.evaluate_angle(azimuth, zenith)
 
             if rigidity:
                 self.data_dict["azimuth"][i] = azimuth
@@ -163,24 +165,24 @@ class GMRC():
 
     def evaluate_parallel(self):
         # generate lists of random zenith and azimuth angles
-        azimuth = np.random.rand(gmrc.iter_num) * 360.0
-        zenith = np.random.rand(gmrc.iter_num) * 180.0
+        azimuth = np.random.rand(self.iter_num) * 360.0
+        zenith = np.random.rand(self.iter_num) * 180.0
 
         rigidity = p_map(self.evaluate_angle, azimuth, zenith)
 
         # insert the non-None's into the data_dict
-        for i in range(gmrc.iter_num):
+        for i in range(self.iter_num):
             if rigidity[i]:
-                gmrc.data_dict['azimuth'][i] = azimuth[i]
-                gmrc.data_dict['zenith'][i] = zenith[i]
-                gmrc.data_dict['rcutoff'][i] = rigidity[i]
+                self.data_dict['azimuth'][i] = azimuth[i]
+                self.data_dict['zenith'][i] = zenith[i]
+                self.data_dict['rcutoff'][i] = rigidity[i]
 
 
     def evaluate(self):
         if self.method == 'serial':
-            evaluate_serial()
+            self.evaluate_serial()
         elif self.method == 'parallel':
-            evaluate_parallel()
+            self.evaluate_parallel()
 
 
     def interpolate_results(self,
@@ -225,3 +227,5 @@ class GMRC():
                                 method=method)
 
         return (azimuth_grid, zenith_grid, rcutoff_grid)
+
+
