@@ -95,8 +95,8 @@ TrajectoryTracer::TrajectoryTracer()
       max_iter_{10000},
       particle_escaped_{false},
       solver_type_{'r'},
-      atol_{1e-3},
-      rtol_{1e-6},
+      atol_{integrator_control::DEFAULT_ATOL},
+      rtol_{integrator_control::DEFAULT_RTOL},
       nsteps_{0} {}
 
 TrajectoryTracer::TrajectoryTracer(double charge, double mass, double start_altitude,
@@ -194,6 +194,32 @@ std::array<double, 3> TrajectoryTracer::bfield_at(double r, double theta, double
   }
 }
 
+// ---------------------------------------------------------------------------
+// Rigidity-aware escape criterion
+// ---------------------------------------------------------------------------
+
+double TrajectoryTracer::dipole_b0() {
+  if (dipole_b0_ <= 0.) {
+    dipole_b0_ = integrator_control::dipole_b0([this](double theta, double phi) {
+      return igrf_ ? igrf_->values(constants::RE, theta, phi)[0]
+                   : dipole_.values(constants::RE, theta, phi)[0];
+    });
+  }
+  return dipole_b0_;
+}
+
+double TrajectoryTracer::stormer_length(double p) {
+  return integrator_control::stormer_length(dipole_b0(), charge_, p);
+}
+
+void TrajectoryTracer::prepare_run(const std::array<double, 6>& vec0) {
+  const double p = std::sqrt(vec0[3] * vec0[3] + vec0[4] * vec0[4] + vec0[5] * vec0[5]);
+  const bool scaled = escape_factor_ > 0. || time_factor_ > 0.;
+  run_limits_ =
+      integrator_control::run_limits(escape_radius_, max_iter_, stepsize_, escape_factor_,
+                                     time_factor_, scaled ? dipole_b0() : 0., charge_, mass_, p);
+}
+
 inline double TrajectoryTracer::lorentz_factor(const double& pr, const double& ptheta,
                                                const double& pphi) {
   double pmag = sqrt((pr * pr) + (ptheta * ptheta) + (pphi * pphi));
@@ -206,6 +232,7 @@ inline double TrajectoryTracer::lorentz_factor(const double& pr, const double& p
 // ---------------------------------------------------------------------------
 
 void TrajectoryTracer::evaluate(const double& t0, std::array<double, 6>& vec0) {
+  prepare_run(vec0);
   TrajRecorder rec(false);
   switch (solver_type_) {
     case 'b':
@@ -226,6 +253,7 @@ void TrajectoryTracer::evaluate(const double& t0, std::array<double, 6>& vec0) {
 
 std::map<std::string, std::vector<double>> TrajectoryTracer::evaluate_and_get_trajectory(
     double& t0, std::array<double, 6>& vec0) {
+  prepare_run(vec0);
   TrajRecorder rec(true);
   // For adaptive RK45, estimate far fewer steps than max_iter_.
   int reserve_hint = (solver_type_ == 'a') ? std::max(100, max_iter_ / 10) : max_iter_;
@@ -333,7 +361,7 @@ void TrajectoryTracer::run_rk4(const double& t0, std::array<double, 6>& vec0, Tr
   std::array<double, 6> vec = vec0;                // spherical, for recording and the result
   std::array<double, 6> cart = sph_to_cart(vec0);  // integrated state
 
-  for (int i = 0; i < max_iter_; ++i) {
+  for (int i = 0; i < run_limits_.max_iter; ++i) {
     if (Record) rec.record(t, vec);
 
     const std::array<double, 3> bf = field_to_cart(cart, bfield_at(vec[0], vec[1], vec[2]));
@@ -348,7 +376,7 @@ void TrajectoryTracer::run_rk4(const double& t0, std::array<double, 6>& vec0, Tr
     ++nsteps_;
 
     const double r = vec[0];
-    if (r > escape_radius_) {
+    if (r > run_limits_.escape_radius) {
       particle_escaped_ = true;
       break;
     }
@@ -381,7 +409,7 @@ void TrajectoryTracer::run_boris(const double& t0, std::array<double, 6>& vec0, 
   double t = t0;
   std::array<double, 6> vec = vec0;
 
-  for (int i = 0; i < max_iter_; ++i) {
+  for (int i = 0; i < run_limits_.max_iter; ++i) {
     if (Record) rec.record(t, vec);
 
     const double r = vec[0], theta = vec[1], phi = vec[2];
@@ -442,7 +470,7 @@ void TrajectoryTracer::run_boris(const double& t0, std::array<double, 6>& vec0, 
     t += h;
     ++nsteps_;
 
-    if (r_n > escape_radius_) {
+    if (r_n > run_limits_.escape_radius) {
       particle_escaped_ = true;
       break;
     }
@@ -503,11 +531,6 @@ void TrajectoryTracer::run_rk45(const double& t0, std::array<double, 6>& vec0, T
     const std::array<double, 6> s = cart_to_sph(c);
     return ode_lrz_cart(c, field_to_cart(c, bfield_at(s[0], s[1], s[2])), charge_, mass_);
   };
-  // The error is measured on the dimensionless state (position / RE,
-  // momentum / |p0|), so atol/rtol act like they did on the spherical angles.
-  const double p0 = std::sqrt(cart[3] * cart[3] + cart[4] * cart[4] + cart[5] * cart[5]);
-  const double pos_scale = 1.0 / constants::RE;
-  const double mom_scale = p0 > 0.0 ? 1.0 / p0 : 1.0;
 
   // Compute k1 once; FSAL reuses it as k1 of the next step.
   std::array<double, 6> k1 = f(cart);
@@ -515,14 +538,14 @@ void TrajectoryTracer::run_rk45(const double& t0, std::array<double, 6>& vec0, T
   int accepted_steps = 0;
   // Hard upper bound on total iterations (accepted + rejected) to prevent
   // indefinite looping when the step-size controller oscillates pathologically.
-  const int max_total_iters = max_iter_ * 10;
-  int total_iters = 0;
+  const int64_t max_total_iters = static_cast<int64_t>(run_limits_.max_iter) * 10;
+  int64_t total_iters = 0;
   int nan_streak = 0;  // consecutive NaN error estimates
 
-  while (accepted_steps < max_iter_) {
+  const double t_end = t0 + run_limits_.max_time;
+  while (accepted_steps < run_limits_.max_iter) {
     if (++total_iters > max_total_iters) break;
-    // Clamp step to avoid overshooting max_time (approximated by max_iter_*stepsize_).
-    const double t_end = t0 + max_iter_ * stepsize_;
+    // Clamp step to avoid overshooting the time budget.
     if (t + h > t_end) h = t_end - t;
     if (!(h > 0.0)) break;  // catches h<=0 AND h=NaN
 
@@ -541,16 +564,17 @@ void TrajectoryTracer::run_rk45(const double& t0, std::array<double, 6>& vec0, T
     // k7 = f(y_new) — needed for error estimate and FSAL
     std::array<double, 6> k7 = f(y_new);
 
-    // Error estimate (RMS of scaled component errors)
-    double err_sq = 0.0;
-    for (int j = 0; j < 6; ++j) {
-      const double scale = j < 3 ? pos_scale : mom_scale;
-      double err_j =
-          h * (E1 * k1[j] + E3 * k3[j] + E4 * k4[j] + E5 * k5[j] + E6 * k6[j] + E7 * k7[j]);
-      double sc = atol_ + rtol_ * std::max(std::abs(cart[j]), std::abs(y_new[j])) * scale;
-      err_sq += (err_j * scale / sc) * (err_j * scale / sc);
-    }
-    double err_norm = sqrt(err_sq / 6.0);
+    // Error norm on the dimensionless state (IntegratorControl.hpp).
+    double err_c[6];
+    for (int j = 0; j < 6; ++j)
+      err_c[j] = h * (E1 * k1[j] + E3 * k3[j] + E4 * k4[j] + E5 * k5[j] + E6 * k6[j] + E7 * k7[j]);
+    const double r_sc =
+        std::max(std::sqrt(cart[0] * cart[0] + cart[1] * cart[1] + cart[2] * cart[2]),
+                 std::sqrt(y_new[0] * y_new[0] + y_new[1] * y_new[1] + y_new[2] * y_new[2]));
+    const double err_norm = integrator_control::rk45_error_norm(
+        err_c[0] * err_c[0] + err_c[1] * err_c[1] + err_c[2] * err_c[2],
+        err_c[3] * err_c[3] + err_c[4] * err_c[4] + err_c[5] * err_c[5], r_sc,
+        std::sqrt(cart[3] * cart[3] + cart[4] * cart[4] + cart[5] * cart[5]), atol_, rtol_);
 
     if (!(err_norm >= 0.0)) {        // NaN/Inf guard
       if (++nan_streak > 20) break;  // state is unrecoverable; abort trajectory
@@ -572,7 +596,7 @@ void TrajectoryTracer::run_rk45(const double& t0, std::array<double, 6>& vec0, T
       ++nsteps_;
 
       const double r = vec[0];
-      if (r > escape_radius_) {
+      if (r > run_limits_.escape_radius) {
         particle_escaped_ = true;
         break;
       }

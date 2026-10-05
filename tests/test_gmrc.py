@@ -177,6 +177,10 @@ def test_gmrc_flags_cutoffs_above_rmax():
         min_rigidity=1.0,
         max_rigidity=3.0,
         delta_rigidity=1.0,
+        # fixed 10 RE / max_time criterion: the short budget keeps this a test
+        # of the flag logic, not of slow low-rigidity escapes
+        escape_factor=0,
+        time_factor=0,
     )
     np.testing.assert_allclose(gmrc.rigidity_list, [1.0, 2.0, 3.0])
     gmrc.evaluate(dt=1e-4, max_time=0.05)
@@ -197,6 +201,8 @@ def test_gmrc_batch_flags_cutoffs_above_rmax():
         max_rigidity=3.0,
         delta_rigidity=1.0,
         date="2024-01-15",
+        escape_factor=0,
+        time_factor=0,
     )
     gmrc.evaluate_batch(dt=1e-4, max_time=0.05, base_seed=1)
     assert len(gmrc.data_dict["rcutoff"]) == 20

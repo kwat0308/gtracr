@@ -2,7 +2,7 @@
 
 Presents the version history of the package.
 
-### Version 3.0.0 (unreleased)
+### Version 3.0.0
 
 Breaking changes:
 
@@ -19,6 +19,25 @@ Breaking changes:
   rigidity list includes `max_rigidity`.
 - IGRF-14 replaces IGRF-13 (`igrf14.json`, `IGRF14.shc`, `IGRF14.COF`);
   `gtracr.bfield.IGRF13` is a deprecated alias of `IGRF14`.
+- **Escape criterion.** A trajectory is allowed when it reaches
+  `max(escape_radius, k·C_St(p))` (Störmer length C_St of the field model's dipole)
+  within `max(max_time, N·r_esc/(βc))`; defaults k = 4, N = 80. `max_time` and the
+  escape radius are now lower bounds; `escape_factor=0, time_factor=0` restores the
+  fixed criterion. Changes cutoffs below about 10 GV (South Pole: 0.20 → 0.067 GV).
+- **RK45 defaults and norm.** The error is measured on the dimensionless state
+  (position in R_E with tolerance atol + rtol·r/R_E, momentum in |p| with
+  atol + rtol); defaults change from `atol=1e-3, rtol=1e-6` to `atol=0, rtol=1e-7`.
+
+New:
+
+- `GMRC(method="penumbra")`: Cooke et al. (1991) R_L, R_U, R_eff per direction on a
+  geometric rigidity ladder (adaptive scan) in the C++ batch engine
+  (`batch_gmrc_penumbra`); explicit direction grids via
+  `evaluate_batch(zenith=..., azimuth=...)`; `store_ladder=True` returns the
+  allowed/forbidden ladder. The default `method="bisection"` is unchanged.
+- Escape criterion parameters `escape_factor` / `time_factor` on `Trajectory`, `GMRC`
+  and `TrajectoryTracer.set_escape_scaling`; logic in `IntegratorControl.hpp` and
+  `gtracr.escape`.
 
 Fixes:
 
@@ -31,6 +50,9 @@ Fixes:
 - C++ IGRF epoch selection: dates more than 2.5 years after an epoch were
   interpolated from the following epoch (up to 0.9 % field error).
 - CTA-South longitude (#23).
+- RK45 error norm: tolerances were applied to raw SI components, so `atol=1e-3`
+  meant about 6 km in angle and the momentum was uncontrolled (up to 7.7 % in R_eff).
+- Batch mode with `bfield_type="dipole"` builds the dipole tracer directly.
 - Docs: conventions page; corrected azimuth and energy docstrings.
 
 ### Version 1.0.0
