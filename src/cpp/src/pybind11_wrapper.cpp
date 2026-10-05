@@ -293,7 +293,7 @@ PYBIND11_MODULE(_libgtracr, M) {
              } else if (bfield_type == "dipole") {
                field.reset(new muon::MuonField(dipole_g10, dipole_r_ref));
              } else if (bfield_type == "shell") {
-               field.reset(new muon::MuonField(igrf_params.first + "/igrf13.json",
+               field.reset(new muon::MuonField(igrf_params.first + "/" + igrf_const::JSON_FILE,
                                                igrf_params.second, r_ground, shell_n_h,
                                                shell_n_colat, shell_n_lon, shell_h_max));
              } else {

@@ -85,7 +85,7 @@ enum Fate : int8_t {
 
 // ---------------------------------------------------------------------------
 // Magnetic field: 'z' zero, 'u' uniform, 'd' axial dipole (gtracr
-// convention), 's' IGRF-13 thin-shell table (trilinear in h/colat/lon,
+// convention), 's' IGRF-14 thin-shell table (trilinear in h/colat/lon,
 // generated from the C++ IGRF at construction).
 // Cartesian in/out, positions in cm, B in Tesla.
 // ---------------------------------------------------------------------------
@@ -96,7 +96,7 @@ class MuonField {
   // Dipole: g10 in Tesla, reference radius in cm (field normalisation
   // only — distinct from the tracer's ground radius).
   MuonField(double g10_T, double r_ref_cm);
-  // IGRF-13 shell table: nodes at r = r_ground + h for h in
+  // IGRF-14 shell table: nodes at r = r_ground + h for h in
   // [0, h_max_cm] (n_h linear), colat [0, 180] deg (n_colat), lon
   // [0, 360] deg inclusive (n_lon; the 360 column duplicates 0 so the
   // interpolation never wraps).  Queries outside the h range clamp to

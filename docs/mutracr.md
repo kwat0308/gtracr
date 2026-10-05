@@ -53,7 +53,7 @@ print(res["bank"]["e_mu"][:3]) # decay deposit rows
 Constructor arguments:
 
 - `bfield` — `"none"`, `"dipole"` (gtracr's ideal centred dipole),
-  `"shell"` (IGRF-13 tabulated on an (h, colat, lon) grid over the
+  `"shell"` (IGRF-14 tabulated on an (h, colat, lon) grid over the
   atmospheric shell, trilinear interpolation, built once at
   construction; validated against direct IGRF to <0.1%), or
   `("uniform", (bx, by, bz))` in Tesla.

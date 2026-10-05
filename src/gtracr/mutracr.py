@@ -58,7 +58,7 @@ class MuonTracer:
         - ``"dipole"`` — gtracr's ideal centred dipole (IGRF-2020
           g10, reference radius 6371.2 km; the reference radius is
           field normalisation only, independent of `r_ground`).
-        - ``"shell"`` — IGRF-13 tabulated on an (h, colat, lon) grid
+        - ``"shell"`` — IGRF-14 tabulated on an (h, colat, lon) grid
           over the atmospheric shell [0, `shell_h_max`] above
           `r_ground`, trilinearly interpolated (recommended for
           physics runs; the table is built once at construction).

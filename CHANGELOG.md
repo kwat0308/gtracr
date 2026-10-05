@@ -45,7 +45,7 @@ New features:
   production and decay — RK4 with per-ray adaptive time steps, continuous
   dE/dX loss, expected-decay weight deposition (deterministic, no Monte
   Carlo), Fermi–Eyges MCS variance, and std::thread parallelism. Field
-  backends: uniform / dipole / IGRF-13 thin-shell table; atmospheres:
+  backends: uniform / dipole / IGRF-14 thin-shell table; atmospheres:
   US-Std layers / uniform / tabulated (MSIS-ready). Deposit consumers:
   bank, per-charge spectrum tally, angular tally. Includes the polarized
   Michel mu → nu kernels, a vendored pure-numpy reference implementation
