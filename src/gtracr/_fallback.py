@@ -20,7 +20,7 @@ class pTrajectoryTracer:
     Pure-Python trajectory tracer (RK4).
 
     Mirrors the C++ ``TrajectoryTracer`` interface so it can be used as a
-    drop-in for testing.  B-field support: dipole (``"d"``) and IGRF-13
+    drop-in for testing.  B-field support: dipole (``"d"``) and IGRF-14
     (``"i"``).
 
     Parameters
@@ -38,7 +38,7 @@ class pTrajectoryTracer:
     max_step : int
         Maximum number of integration steps (default 10 000).
     bfield_type : str
-        ``"d"`` for dipole or ``"i"`` for IGRF-13 (default ``"d"``).
+        ``"d"`` for dipole or ``"i"`` for IGRF-14 (default ``"d"``).
     igrf_params : tuple or None
         ``(data_dir, decimal_year)`` required when *bfield_type* is ``"i"``.
     """
@@ -54,7 +54,7 @@ class pTrajectoryTracer:
         bfield_type="d",
         igrf_params=None,
     ):
-        from gtracr.bfield import IGRF13, MagneticField
+        from gtracr.bfield import IGRF14, MagneticField
 
         self.charge = charge
         self.mass = mass
@@ -72,7 +72,7 @@ class pTrajectoryTracer:
                     "igrf_params=(data_dir, decimal_year) required for bfield_type='i'"
                 )
             year = igrf_params[1]
-            self.bfield = IGRF13(year, nmax=13)
+            self.bfield = IGRF14(year, nmax=13)
         else:
             raise ValueError(f"Unknown bfield_type {bfield_type!r}: use 'd' or 'i'")
 

@@ -13,6 +13,7 @@ from gtracr._libgtracr import TrajectoryTracer as CppTrajectoryTracer
 from gtracr.constants import (
     EARTH_RADIUS,
     ELEMENTARY_CHARGE,
+    IGRF_GENERATION,
     KG_M_S_PER_GEVC,
     KG_PER_GEVC2,
     SOLVER_CHARS,
@@ -92,15 +93,17 @@ _TABLE_CACHE_DIR = _DATA_DIR
 def _get_or_generate_igrf_table(datapath, dec_date):
     """Load a cached IGRF table from disk, or generate and cache it.
 
-    The table depends on the decimal year and the compile-time grid
-    constants (Nr, Ntheta, Nphi).  The cache files (.npy for the table,
-    .npz for the params) are stored alongside igrf13.json.
+    The table depends on the IGRF generation, the decimal year and the
+    compile-time grid constants (Nr, Ntheta, Nphi).  The cache files (.npy
+    for the table, .npz for the params) are stored alongside the IGRF
+    coefficient files; the generation is part of their names.
     """
     from gtracr._libgtracr import TableParams
     from gtracr._libgtracr import generate_igrf_table as _gen_table
 
-    cache_table = _TABLE_CACHE_DIR / f"igrf_table_{dec_date:.4f}.npy"
-    cache_params = _TABLE_CACHE_DIR / f"igrf_table_{dec_date:.4f}_params.npz"
+    tag = f"igrf{IGRF_GENERATION}_table_{dec_date:.4f}"
+    cache_table = _TABLE_CACHE_DIR / f"{tag}.npy"
+    cache_params = _TABLE_CACHE_DIR / f"{tag}_params.npz"
 
     if cache_table.is_file() and cache_params.is_file():
         table_flat = np.load(str(cache_table))

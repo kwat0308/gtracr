@@ -26,7 +26,7 @@ User (Python)
         │     rigidity scanning, std::thread parallelism.
         │
         ├── IGRF (C++)                   ← direct B-field model
-        │     Degree-13 spherical harmonic expansion (IGRF-13).
+        │     Degree-13 spherical harmonic expansion (IGRF-14).
         │
         └── IGRF Table (C++)             ← tabulated B-field model
               3D lookup table with trilinear interpolation.
@@ -52,7 +52,7 @@ relativistic momentum in SI units; `phi` is reported in (-pi, pi].
 | Model | `bfield_type=` | C++ class | Description |
 |-------|----------------|-----------|-------------|
 | Dipole | `"dipole"` | `MagneticField` | Ideal dipole, 1/r^3 falloff |
-| Direct IGRF | `"igrf"` | `IGRF` | IGRF-13 spherical harmonics, degree 13 |
+| Direct IGRF | `"igrf"` | `IGRF` | IGRF-14 spherical harmonics, degree 13 |
 | Tabulated IGRF | `"table"` | `igrf_table` | 3D lookup table (64x128x256), trilinear interpolation |
 
 The tabulated field is ~7x faster than direct IGRF evaluation. It is
@@ -84,7 +84,7 @@ The GIL is released during C++ integration, allowing true parallelism with
 
 | File | Description |
 |------|-------------|
-| `gtracr/data/igrf13.json` | IGRF-13 coefficients (loaded by C++ at runtime) |
-| `gtracr/data/IGRF13.shc` | Spherical harmonic coefficients (Python IGRF) |
+| `gtracr/data/igrf14.json` | IGRF-14 coefficients (loaded by C++ at runtime) |
+| `gtracr/data/IGRF14.shc` | Spherical harmonic coefficients (Python IGRF) |
 | `gtracr/data/igrf_table_<year>.npy` | Cached 3D lookup table (auto-generated) |
 | `gtracr/data/igrf_table_<year>_params.npz` | Grid metadata for cached table |

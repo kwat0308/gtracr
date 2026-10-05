@@ -331,11 +331,11 @@ def test_ptrajectorytracer_igrf():
     assert tracer.final_time > 0.0
 
 
-def test_igrf13_leap_year():
-    """IGRF13 with a leap year date covers the leap_year=True branch (line 111)"""
-    from gtracr.bfield.igrf import IGRF13
+def test_igrf14_leap_year():
+    """IGRF14 with a leap year date covers the leap_year=True branch (line 111)"""
+    from gtracr.bfield.igrf import IGRF14
 
-    pyigrf = IGRF13(2000)  # 2000 is a leap year
+    pyigrf = IGRF14(2000)  # 2000 is a leap year
     # Just verify it initializes and returns valid values
     from gtracr.constants import EARTH_RADIUS
 
@@ -343,11 +343,11 @@ def test_igrf13_leap_year():
     assert len(bf) == 3
 
 
-def test_igrf13_large_theta():
-    """IGRF13.values() with theta > pi normalizes it (covers line 140)"""
-    from gtracr.bfield.igrf import IGRF13
+def test_igrf14_large_theta():
+    """IGRF14.values() with theta > pi normalizes it (covers line 140)"""
+    from gtracr.bfield.igrf import IGRF14
 
-    pyigrf = IGRF13(2015)
+    pyigrf = IGRF14(2015)
     from gtracr.constants import EARTH_RADIUS
 
     # theta in radians: convert to degrees inside values()
@@ -358,11 +358,11 @@ def test_igrf13_large_theta():
     assert len(bf) == 3
 
 
-def test_igrf13_large_phi():
-    """IGRF13.values() with phi > 2*pi normalizes it (covers line 143)"""
-    from gtracr.bfield.igrf import IGRF13
+def test_igrf14_large_phi():
+    """IGRF14.values() with phi > 2*pi normalizes it (covers line 143)"""
+    from gtracr.bfield.igrf import IGRF14
 
-    pyigrf = IGRF13(2015)
+    pyigrf = IGRF14(2015)
     from gtracr.constants import EARTH_RADIUS
 
     # phi_rad = 7.5 → phi_deg ≈ 430 > 360, triggers normalization

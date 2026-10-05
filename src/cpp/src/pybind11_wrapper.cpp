@@ -27,7 +27,7 @@ PYBIND11_MODULE(_libgtracr, M) {
   M.def(
       "generate_igrf_table",
       [](const std::string& data_dir, double decimal_year) {
-        IGRF igrf(data_dir + "/igrf13.json", decimal_year);
+        IGRF igrf(data_dir + "/" + igrf_const::JSON_FILE, decimal_year);
         TableParams params;
         std::vector<float> table = generate_igrf_table(igrf, params);
 

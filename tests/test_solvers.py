@@ -228,7 +228,7 @@ def test_igrf_table_field_accuracy():
 
     data_dir = str(Path(__file__).parent.parent / "src" / "gtracr" / "data")
 
-    igrf = IGRF(str(Path(data_dir) / "igrf13.json"), 2020.0)
+    igrf = IGRF(str(Path(data_dir) / "igrf14.json"), 2020.0)
 
     r = EARTH_RADIUS + 100e3  # 100 km altitude
     theta = np.pi / 2.0  # equator

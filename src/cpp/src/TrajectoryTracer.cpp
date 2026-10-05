@@ -120,13 +120,15 @@ TrajectoryTracer::TrajectoryTracer(double charge, double mass, double start_alti
     case 'd':
       break;  // dipole_ is default-constructed; no IGRF needed
     case 't':
-      igrf_ = std::make_unique<IGRF>(igrf_params.first + "/igrf13.json", igrf_params.second);
+      igrf_ = std::make_unique<IGRF>(igrf_params.first + "/" + igrf_const::JSON_FILE,
+                                     igrf_params.second);
       table_ = generate_igrf_table(*igrf_, table_params_);
       break;
     case 'i':
     default:
       bfield_type_ = 'i';
-      igrf_ = std::make_unique<IGRF>(igrf_params.first + "/igrf13.json", igrf_params.second);
+      igrf_ = std::make_unique<IGRF>(igrf_params.first + "/" + igrf_const::JSON_FILE,
+                                     igrf_params.second);
       break;
   }
 }
@@ -153,7 +155,8 @@ TrajectoryTracer::TrajectoryTracer(const float* shared_table, const TableParams&
       nsteps_{0} {
   // Own IGRF for out-of-range fallback (IGRF::values writes to member state,
   // so each thread needs its own instance).
-  igrf_ = std::make_unique<IGRF>(igrf_params.first + "/igrf13.json", igrf_params.second);
+  igrf_ =
+      std::make_unique<IGRF>(igrf_params.first + "/" + igrf_const::JSON_FILE, igrf_params.second);
 }
 
 // ---------------------------------------------------------------------------
