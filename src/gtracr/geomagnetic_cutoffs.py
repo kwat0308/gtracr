@@ -17,6 +17,7 @@ from gtracr.constants import (
     KG_PER_GEVC2,
     SOLVER_CHARS,
 )
+from gtracr.escape import resolve_escape_scaling
 from gtracr.location import Location
 from gtracr.trajectory import Trajectory
 
@@ -45,13 +46,22 @@ def _init_worker(common_params):
     ----------
     common_params : tuple
         ``(plabel, bfield_type_char, date_str, palt, dt, max_time,
-           solver_char, atol, rtol)``
+           solver_char, atol, rtol[, escape_factor, time_factor])``
     """
     global _worker_tracer
 
-    plabel, bfield_type_char, date_str, palt, dt, max_time, solver_char, atol, rtol = (
-        common_params
-    )
+    (
+        plabel,
+        bfield_type_char,
+        date_str,
+        palt,
+        dt,
+        max_time,
+        solver_char,
+        atol,
+        rtol,
+        *escape,
+    ) = common_params
 
     from gtracr.utils import particle_dict, ymd_to_dec
 
@@ -83,6 +93,7 @@ def _init_worker(common_params):
         atol,
         rtol,
     )
+    _worker_tracer.set_escape_scaling(*resolve_escape_scaling(*escape))
 
 
 # Directory for cached IGRF tables (next to the data files).
@@ -151,7 +162,7 @@ def _evaluate_single_direction(args):
     ----------
     args : tuple
         (location, plabel, bfield_type, date_str, palt, rigidity_list, dt, max_time,
-         seed, solver_char, atol, rtol)
+         seed, solver_char, atol, rtol[, escape_factor, time_factor])
 
     Returns
     -------
@@ -170,6 +181,7 @@ def _evaluate_single_direction(args):
         solver_char,
         atol,
         rtol,
+        *escape,
     ) = args
     rng = np.random.default_rng(seed)
     azimuth, zenith = rng.random(2) * np.array([360.0, 180.0])
@@ -212,6 +224,7 @@ def _evaluate_single_direction(args):
             atol,
             rtol,
         )
+        tracer.set_escape_scaling(*resolve_escape_scaling(*escape))
 
     # Precompute momentum direction unit vector (fixed across rigidities).
     ref_mom_si = traj.particle.momentum * KG_M_S_PER_GEVC
@@ -261,6 +274,7 @@ def _evaluate_direction_cpp_only(args):
         mom_factor,
         azimuth,
         zenith,
+        *escape,
     ) = args
 
     tracer = getattr(_thread_local, "tracer", None)
@@ -279,6 +293,7 @@ def _evaluate_direction_cpp_only(args):
             atol,
             rtol,
         )
+        tracer.set_escape_scaling(*resolve_escape_scaling(*escape))
         _thread_local.tracer = tracer
     else:
         tracer.set_start_altitude(start_alt)
@@ -326,7 +341,13 @@ class GMRC:
         Integration method: "rk4" (frozen-field RK4, default), "boris" (Boris pusher),
         or "rk45" (adaptive Dormand-Prince).
     - atol, rtol : float, optional
-        Absolute and relative tolerances for the RK45 adaptive solver (defaults 1e-3, 1e-6).
+        Tolerances of the RK45 adaptive solver (defaults 0 and 1e-7; dimensionless,
+        see ``Trajectory``).
+    - escape_factor, time_factor : float, optional
+        Rigidity-aware escape criterion (see ``gtracr.escape``): escape radius
+        ``max(10 RE, escape_factor * C_St(R))`` with the Störmer length C_St, time
+        budget ``max(max_time, time_factor * r_esc / (beta c))``. ``None`` uses the
+        defaults; ``0, 0`` restores the fixed 10 RE / ``max_time`` criterion.
     - method : str, optional
         ``"bisection"`` (default): bisection on a linear rigidity grid, returns the first
         escaping rigidity found and drops directions whose cutoff exceeds ``max_rigidity``.
@@ -382,8 +403,10 @@ class GMRC:
         delta_rigidity=1.0,
         n_workers=None,
         solver="rk4",
-        atol=1e-3,
-        rtol=1e-6,
+        atol=0.0,
+        rtol=1e-7,
+        escape_factor=None,
+        time_factor=None,
         method="bisection",
         ladder_delta=0.005,
         coarse=8,
@@ -395,6 +418,9 @@ class GMRC:
                 f"method must be 'bisection' or 'penumbra', got {method!r}"
             )
         self.method = method
+        self.escape_factor, self.time_factor = resolve_escape_scaling(
+            escape_factor, time_factor
+        )
         penumbra = method == "penumbra"
         if min_rigidity is None:
             min_rigidity = 0.3 if penumbra else 5.0
@@ -530,6 +556,8 @@ class GMRC:
                         mom_factor,
                         azimuth,
                         zenith,
+                        self.escape_factor,
+                        self.time_factor,
                     )
                 )
 
@@ -566,6 +594,8 @@ class GMRC:
                     self.solver_char,
                     self.atol,
                     self.rtol,
+                    self.escape_factor,
+                    self.time_factor,
                 )
                 for i in range(self.iter_num)
             ]
@@ -584,6 +614,8 @@ class GMRC:
                     self.solver_char,
                     self.atol,
                     self.rtol,
+                    self.escape_factor,
+                    self.time_factor,
                 )
                 results = []
                 with ProcessPoolExecutor(
@@ -701,6 +733,8 @@ class GMRC:
         p.n_threads = self.n_workers
         p.max_attempts_factor = 30
         p.base_seed = base_seed
+        p.escape_factor = self.escape_factor
+        p.time_factor = self.time_factor
 
         if self.method == "penumbra":
             self._evaluate_penumbra(

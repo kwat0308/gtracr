@@ -195,7 +195,9 @@ def test_trajectories_stepsize():
 def test_trajectories_maxtimes():
     """
     Test the final times of the trajectory evaluation in the igrf field for
-    different maximal times
+    different maximal times. The rigidity-aware time budget treats max_time as
+    a lower bound, so it is switched off (time_factor=0) to test max_time as
+    the hard limit.
     """
 
     expected_times = [0.00999999999999976,
@@ -237,6 +239,7 @@ def test_trajectories_maxtimes():
             energy=en,
             bfield_type="igrf",
             date=IGRF_DATE,
+            time_factor=0,
         )
 
         traj.get_trajectory(dt=dt, max_time=max_time)

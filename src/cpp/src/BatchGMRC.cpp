@@ -225,7 +225,8 @@ static WorkerResult thread_worker(const float* shared_table, const TableParams& 
                                   double ref_momentum_gevc, double mom_factor, double charge_si,
                                   double mass_si, double escape_radius, double dt, int max_step,
                                   char solver_type, char bfield_type, double atol, double rtol,
-                                  int quota, int max_attempts, uint64_t seed,
+                                  double escape_factor, double time_factor, int quota,
+                                  int max_attempts, uint64_t seed,
                                   const std::atomic<bool>* stop_flag, int thread_id) {
 #ifdef GTRACR_DEBUG_PRINT
   std::fprintf(stderr,
@@ -258,6 +259,7 @@ static WorkerResult thread_worker(const float* shared_table, const TableParams& 
     }
   };
   TrajectoryTracer tracer = make_tracer();
+  tracer.set_escape_scaling(escape_factor, time_factor);
 
 #ifdef GTRACR_DEBUG_PRINT
   std::fprintf(stderr, "[Thread %d] TrajectoryTracer constructed\n", thread_id);
@@ -371,11 +373,11 @@ BatchGMRCResult batch_gmrc_evaluate(const float* shared_table, const TableParams
     uint64_t seed = params.base_seed + static_cast<uint64_t>(t) * 1000003ULL;
 
     threads[t] = std::thread([&, t, quota, max_attempts, seed]() {
-      results[t] =
-          thread_worker(shared_table, table_params, igrf_params, ctx, rigidities_asc,
-                        ref_momentum_gevc, mom_factor, charge_si, mass_si, params.escape_radius,
-                        params.dt, max_step, params.solver_type, params.bfield_type, params.atol,
-                        params.rtol, quota, max_attempts, seed, params.stop_flag, t);
+      results[t] = thread_worker(
+          shared_table, table_params, igrf_params, ctx, rigidities_asc, ref_momentum_gevc,
+          mom_factor, charge_si, mass_si, params.escape_radius, params.dt, max_step,
+          params.solver_type, params.bfield_type, params.atol, params.rtol, params.escape_factor,
+          params.time_factor, quota, max_attempts, seed, params.stop_flag, t);
     });
   }
 
@@ -421,10 +423,11 @@ static Ladder build_ladder(double r_lo, double r_hi, double delta) {
   L.centre.resize(n);
   L.lo.resize(n);
   L.hi.resize(n);
+  // shared edges, so that hi[k] == lo[k + 1] exactly
   for (int k = 0; k < n; ++k) {
     L.centre[k] = r_lo * std::pow(q, k);
-    L.lo[k] = L.centre[k] / sq;
-    L.hi[k] = L.centre[k] * sq;
+    L.lo[k] = k > 0 ? L.hi[k - 1] : r_lo / sq;
+    L.hi[k] = r_lo * sq * std::pow(q, k);
   }
   return L;
 }
@@ -491,7 +494,8 @@ static void summarize_ladder(const uint8_t* allowed, const Ladder& L, double& r_
   if (iu == K - 1) flag = 2;  // top rung forbidden: cutoff at or above the ladder top
   r_upper = L.hi[iu];
   r_lower = il >= 0 ? L.lo[il] : L.hi[K - 1];
-  r_eff = L.lo[0] + forbidden_width;
+  // equal to R_L (or R_U) without a penumbra; clamp the rounding of the sum
+  r_eff = std::min(std::max(L.lo[0] + forbidden_width, r_lower), r_upper);
 }
 
 PenumbraResult batch_gmrc_penumbra(const float* shared_table, const TableParams& table_params,
@@ -561,6 +565,7 @@ PenumbraResult batch_gmrc_penumbra(const float* shared_table, const TableParams&
                                 params.solver_type, params.atol, params.rtol);
       };
       TrajectoryTracer tracer = make_tracer();
+      tracer.set_escape_scaling(params.escape_factor, params.time_factor);
       int i;
       while ((i = next.fetch_add(1)) < n) {
         if (params.stop_flag && params.stop_flag->load(std::memory_order_relaxed)) break;

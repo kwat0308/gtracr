@@ -88,8 +88,9 @@ The same object is accepted by `Trajectory(location_name=...)`.
 | `delta_rigidity` | `1.` | Rigidity step size (GV). |
 | `n_workers` | physical CPUs | Number of parallel workers. |
 | `solver` | `"rk4"` | Integrator: `"rk4"`, `"boris"`, or `"rk45"`. |
-| `atol` | `1e-3` | Absolute tolerance (RK45). |
-| `rtol` | `1e-6` | Relative tolerance (RK45). |
+| `atol` | `0.` | Absolute tolerance (RK45, dimensionless). |
+| `rtol` | `1e-7` | Relative tolerance (RK45). |
+| `escape_factor`, `time_factor` | `4`, `80` | Escape criterion (see below); `0, 0` = fixed 10 R_E / `max_time`. |
 | `method` | `"bisection"` | `"bisection"` or `"penumbra"` (see below). |
 | `ladder_delta` | `0.005` | Penumbra: relative rung spacing. |
 | `coarse`, `guard` | `8`, `2` | Penumbra: adaptive-scan parameters. |
@@ -100,7 +101,7 @@ The same object is accepted by `Trajectory(location_name=...)`.
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `dt` | `1e-5` | Time step in seconds. |
-| `max_time` | `1.` | Maximum integration time per trajectory (seconds). |
+| `max_time` | `1.` | Integration time per trajectory (seconds); lower bound of the rigidity-aware budget. |
 | `base_seed` | `None` | Integer RNG seed for reproducibility. Random if `None`. |
 | `zenith`, `azimuth` | `None` | Penumbra only: explicit directions (degrees) instead of `iter_num` random draws. |
 
@@ -158,7 +159,9 @@ rung centres and `gmrc.ladder_allowed` (shape (n, K), bool) the
 allowed/forbidden flag of every rung and direction. Averaging the flags over
 directions gives a transmission function.
 
-**Cost.** About 190 trajectories per direction with the defaults
+**Cost** (measured with the fixed 10 R_E / 1 s escape criterion and the old
+RK45 tolerances; see [Escape criterion](#escape-criterion) for the current
+defaults). About 190 trajectories per direction with the defaults
 (0.3–100 GV, δ = 0.5 %, coarse 8, guard 2), against about 7 for bisection on
 5–55 GV in 1 GV steps. That is about 30× the wall time at equal sample count. The
 full ladder takes 1166 trajectories per direction. Kamioka, `bfield_type="table"`, 2000
@@ -175,14 +178,64 @@ to the horizon. These are the cases where the penumbra is wide. Bisection is
 fine for quick looks where an error of a few GV inside the penumbra does not
 matter.
 
-**Escape criterion.** Both modes call a trajectory allowed when it reaches
-10 R_E within `max_time`. Near the cutoff, escaping trajectories can loop
-for longer than the default `max_time = 1 s`. They are then counted as
-forbidden, which raises R_L. For example, in the dipole at 60° latitude
-the vertical R_L is 0.99 GV at 1 s and 0.87 GV at 10 s, against a Störmer
-value of 0.85 GV. Raise `max_time` (cheap with `rk45`) for cutoffs below about
-1 GV. Below about 0.5 GV the Störmer length exceeds 10 R_E, so "escaped"
-no longer implies "connected to infinity".
+## Escape criterion
+
+A back-traced trajectory is *allowed* when it reaches the escape radius before
+it returns below the starting altitude, and *forbidden* when it returns or runs
+out of time. A fixed sphere of 10 R_E and a fixed `max_time = 1 s` are too small
+at low rigidity. The Störmer length C_St = R_E √(B0 R_E |q| / p) is 24 R_E at
+0.1 GV. Near the cutoff, escaping trajectories also loop for many seconds.
+Both effects count allowed trajectories as forbidden. With the fixed criterion,
+R_L in the dipole at 60° comes out up to 18 % too high (16 % for the vertical
+direction). At the South Pole
+(IGRF) the cutoffs come out at 0.20 GV instead of 0.067 GV.
+
+gtracr therefore scales both limits with the rigidity of each trajectory
+(all solvers, the single-trajectory path and both GMRC modes):
+
+    r_esc = max(escape_radius, k · C_St(p)),
+    t_max = max(max_time, N · r_esc / (β c)),
+
+where B0 = √(g10² + g11² + h11²) is the dipole strength of the active field
+model, computed once per tracer. The defaults are `escape_factor` k = 4 and
+`time_factor` N = 80. `escape_radius` and `max_time` stay lower bounds.
+`escape_factor=0, time_factor=0` restores the fixed criterion.
+`Trajectory`, `GMRC` and `TrajectoryTracer.set_escape_scaling` accept both
+parameters.
+
+**Convergence study** (RK45 rtol 1e-9, full penumbra ladder δ = 0.5 %, Cartesian
+integrator; maximum deviation over the directions vs k = 4, N = 640):
+
+| case | fixed (10 R_E, 1 s) | N = 20 | N = 40 | **N = 80** | N = 160 | N = 320 |
+|------|------|------|------|------|------|------|
+| dipole 65°, 7 dirs, R_eff | 15.6 % | 1.0 % | 0.5 % | **0.0 %** | 0.0 % | 0.0 % |
+| dipole 70°, 7 dirs, R_eff | 25.7 % | 1.0 % | 0.5 % | **0.0 %** | 0.0 % | 0.0 % |
+| Oulu (IGRF), 4 dirs, R_eff | 18.8 % | 3.9 % | 2.0 % | **0.49 %** | 0.48 % | 0.0 % |
+| South Pole (IGRF), 4 dirs, R_eff | 213 % | 3.0 % | 3.0 % | **3.0 %** | 2.5 % | 1.5 % |
+| cost (full ladder, high latitude) | 1 | 3–7 | 5–12 | **7–17** | 9–22 | 10–35 |
+
+With k = 4 and N = 80, the vertical dipole R_L at 55–73° is within one
+rung (0.25 %) of Störmer's value: R_L/R_St = 0.9997–1.0022. The escape radius is
+converged at k = 4: doubling it to k = 8 at N = 80 changes R_eff by at most
+one rung (0.25 %) in all 7 directions (separate δ = 0.25 % runs). At the South Pole the
+cutoffs are about 0.067 GV, so the remaining 3 % is 2 MV. There, long-lived
+quasi-trapped orbits keep escaping as the budget grows. R_L converges more
+slowly than R_eff everywhere, because it is set by single isolated allowed rungs.
+The cost factors refer to scans that trace many forbidden low-rigidity rungs. Above about
+10 GV the radius stays at 10 R_E and only bound trajectories run longer.
+
+**Cost at the defaults.** Kamioka, `bfield_type="table"`, 2000 random
+directions, 48 threads:
+
+| solver | method | old defaults (fixed criterion, `atol=1e-3`) | new tolerances, fixed criterion | new defaults |
+|--------|--------|------|------|------|
+| rk45 | bisection 5–55 GV | 0.05 s | 0.06 s | 0.07 s |
+| rk45 | penumbra 0.3–100 GV | 0.39 s | 1.44 s | 3.2 s |
+| rk4 | bisection 5–55 GV | 1.5 s | — | 1.6 s |
+| rk4 | penumbra 0.3–100 GV | 32 s | — | 211 s |
+
+Fixed-step solvers pay the full time budget in steps for every bound orbit.
+For scans that reach below about 1 GV, use `rk45`.
 
 ## Solver recommendation
 

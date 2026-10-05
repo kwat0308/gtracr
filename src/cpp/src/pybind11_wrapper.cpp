@@ -24,6 +24,11 @@ PYBIND11_MODULE(_libgtracr, M) {
 
   // Standalone function: generate the IGRF lookup table once in Python,
   // return (numpy array, TableParams) so threads can share the table.
+  M.attr("DEFAULT_ESCAPE_FACTOR") = TrajectoryTracer::DEFAULT_ESCAPE_FACTOR;
+  M.attr("DEFAULT_TIME_FACTOR") = TrajectoryTracer::DEFAULT_TIME_FACTOR;
+  M.attr("DEFAULT_ATOL") = integrator_control::DEFAULT_ATOL;
+  M.attr("DEFAULT_RTOL") = integrator_control::DEFAULT_RTOL;
+
   M.def(
       "generate_igrf_table",
       [](const std::string& data_dir, double decimal_year) {
@@ -64,7 +69,9 @@ PYBIND11_MODULE(_libgtracr, M) {
       .def_readwrite("n_samples", &BatchGMRCParams::n_samples)
       .def_readwrite("n_threads", &BatchGMRCParams::n_threads)
       .def_readwrite("max_attempts_factor", &BatchGMRCParams::max_attempts_factor)
-      .def_readwrite("base_seed", &BatchGMRCParams::base_seed);
+      .def_readwrite("base_seed", &BatchGMRCParams::base_seed)
+      .def_readwrite("escape_factor", &BatchGMRCParams::escape_factor)
+      .def_readwrite("time_factor", &BatchGMRCParams::time_factor);
 
   // Bind batch_gmrc_evaluate: takes numpy table (or None for direct IGRF),
   // TableParams, igrf_params, BatchGMRCParams.
@@ -178,7 +185,8 @@ PYBIND11_MODULE(_libgtracr, M) {
            py::arg("escape_radius") = 10. * 6371.2e3, py::arg("stepsize") = 1e-5,
            py::arg("max_iter") = 10000, py::arg("bfield_type") = 'i',
            py::arg("igrf_params") = std::pair<std::string, double>{"", 2020.},
-           py::arg("solver_type") = 'r', py::arg("atol") = 1e-3, py::arg("rtol") = 1e-6)
+           py::arg("solver_type") = 'r', py::arg("atol") = integrator_control::DEFAULT_ATOL,
+           py::arg("rtol") = integrator_control::DEFAULT_RTOL)
       // Shared-table constructor: borrows a numpy array as the IGRF table.
       .def(py::init([](py::array_t<float, py::array::c_style | py::array::forcecast> shared_table,
                        const TableParams& table_params, double charge, double mass,
@@ -193,7 +201,8 @@ PYBIND11_MODULE(_libgtracr, M) {
            py::arg("shared_table"), py::arg("table_params"), py::arg("charge"), py::arg("mass"),
            py::arg("start_altitude"), py::arg("escape_radius"), py::arg("stepsize"),
            py::arg("max_iter"), py::arg("igrf_params"), py::arg("solver_type") = 'r',
-           py::arg("atol") = 1e-3, py::arg("rtol") = 1e-6,
+           py::arg("atol") = integrator_control::DEFAULT_ATOL,
+           py::arg("rtol") = integrator_control::DEFAULT_RTOL,
            // prevent the numpy array from being garbage-collected while tracer lives
            py::keep_alive<1, 2>())
       .def_property_readonly("charge", &TrajectoryTracer::charge)
@@ -207,6 +216,15 @@ PYBIND11_MODULE(_libgtracr, M) {
       .def_property_readonly("final_sixvector", &TrajectoryTracer::final_sixvector)
       .def_property_readonly("nsteps", &TrajectoryTracer::nsteps)
       .def_property_readonly("solver_type", &TrajectoryTracer::solver_type)
+      .def_property_readonly("escape_factor", &TrajectoryTracer::escape_factor)
+      .def_property_readonly("time_factor", &TrajectoryTracer::time_factor)
+      .def_property_readonly("run_escape_radius", &TrajectoryTracer::run_escape_radius)
+      .def_property_readonly("run_max_time", &TrajectoryTracer::run_max_time)
+      .def_property_readonly("run_max_iter", &TrajectoryTracer::run_max_iter)
+      .def("dipole_b0", &TrajectoryTracer::dipole_b0)
+      .def("stormer_length", &TrajectoryTracer::stormer_length, py::arg("momentum"))
+      .def("set_escape_scaling", &TrajectoryTracer::set_escape_scaling, py::arg("escape_factor"),
+           py::arg("time_factor"))
       .def("reset", &TrajectoryTracer::reset, py::call_guard<py::gil_scoped_release>())
       .def("set_start_altitude", &TrajectoryTracer::set_start_altitude,
            py::call_guard<py::gil_scoped_release>())
