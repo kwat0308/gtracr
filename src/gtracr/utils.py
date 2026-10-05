@@ -170,10 +170,10 @@ def set_particledict():
 
     # different cosmic ray particles
     particles = [
-        Particle("positron", -11, 0.5109 * (1e-3), 1, "e+"),
-        Particle("electron", 11, 0.5109 * (1e-3), -1, "e-"),
-        Particle("proton", 2212, 0.937272, 1, "p+"),
-        Particle("anti-proton", -2212, 0.937272, -1, "p-"),
+        Particle("positron", -11, 0.51099895e-3, 1, "e+"),
+        Particle("electron", 11, 0.51099895e-3, -1, "e-"),
+        Particle("proton", 2212, 0.938272088, 1, "p+"),
+        Particle("anti-proton", -2212, 0.938272088, -1, "p-"),
     ]
 
     # add particle to particle_dict if it does not exist

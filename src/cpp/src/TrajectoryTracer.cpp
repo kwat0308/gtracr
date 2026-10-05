@@ -35,7 +35,7 @@ inline std::array<double, 6> operator*(const double lh_val, std::array<double, 6
 TrajectoryTracer::TrajectoryTracer()
     : bfield_type_{'d'},
       charge_{constants::ELEMENTARY_CHARGE},
-      mass_{0.938 * constants::KG_PER_GEVC2},
+      mass_{0.938272088 * constants::KG_PER_GEVC2},
       start_altitude_{100. * (1e3)},
       escape_radius_{10. * constants::RE},
       stepsize_{1e-5},
