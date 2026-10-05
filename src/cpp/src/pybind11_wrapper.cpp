@@ -68,7 +68,8 @@ PYBIND11_MODULE(_libgtracr, M) {
 
   // Bind batch_gmrc_evaluate: takes numpy table (or None for direct IGRF),
   // TableParams, igrf_params, BatchGMRCParams.
-  // Returns (zenith, azimuth, rcutoff, total_trajectories).
+  // Returns (zenith, azimuth, rcutoff, above_max, total_trajectories);
+  // above_max is a bool array, True where the cutoff exceeds max_rigidity.
   M.def(
       "batch_gmrc_evaluate",
       [](py::object shared_table_obj, const TableParams& table_params,
@@ -99,9 +100,15 @@ PYBIND11_MODULE(_libgtracr, M) {
                                      free_when_done);
         };
 
-        return py::make_tuple(make_array(std::move(result.zenith)),
-                              make_array(std::move(result.azimuth)),
-                              make_array(std::move(result.rcutoff)), result.total_trajectories);
+        py::array_t<bool> above_max(static_cast<py::ssize_t>(result.above_max.size()));
+        auto above_max_view = above_max.mutable_unchecked<1>();
+        for (py::ssize_t i = 0; i < above_max_view.shape(0); ++i) {
+          above_max_view(i) = result.above_max[static_cast<size_t>(i)] != 0;
+        }
+
+        return py::make_tuple(
+            make_array(std::move(result.zenith)), make_array(std::move(result.azimuth)),
+            make_array(std::move(result.rcutoff)), above_max, result.total_trajectories);
       },
       py::arg("shared_table"), py::arg("table_params"), py::arg("igrf_params"), py::arg("params"));
 

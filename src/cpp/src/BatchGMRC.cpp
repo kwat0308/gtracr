@@ -214,6 +214,7 @@ static double find_cutoff_rigidity_bisect(
 
 struct WorkerResult {
   std::vector<double> zenith, azimuth, rcutoff;
+  std::vector<uint8_t> above_max;
   int64_t n_trajectories = 0;
 };
 
@@ -238,6 +239,7 @@ static WorkerResult thread_worker(const float* shared_table, const TableParams& 
   result.zenith.reserve(quota);
   result.azimuth.reserve(quota);
   result.rcutoff.reserve(quota);
+  result.above_max.reserve(quota);
 
   std::mt19937_64 rng(seed);
   std::uniform_real_distribution<double> dist_az(0.0, 360.0);
@@ -293,12 +295,15 @@ static WorkerResult thread_worker(const float* shared_table, const TableParams& 
     double rc = find_cutoff_rigidity_bisect(tracer, ic.pos, ic.mom_unit, rigidities_asc, mom_factor,
                                             result.n_trajectories);
 
-    if (rc > 0.0) {
-      result.zenith.push_back(zenith);
-      result.azimuth.push_back(azimuth);
-      result.rcutoff.push_back(rc);
-      ++successes;
-    }
+    // rc == 0: no tested rigidity escaped, so the cutoff exceeds
+    // max_rigidity. Keep the direction (dropping it would bias the sky map
+    // toward low cutoffs) with max_rigidity as a lower bound, flagged.
+    const bool above_max = !(rc > 0.0);
+    result.zenith.push_back(zenith);
+    result.azimuth.push_back(azimuth);
+    result.rcutoff.push_back(above_max ? rigidities_asc.back() : rc);
+    result.above_max.push_back(above_max ? 1 : 0);
+    ++successes;
   }
 
 #ifdef GTRACR_DEBUG_PRINT
@@ -394,11 +399,13 @@ BatchGMRCResult batch_gmrc_evaluate(const float* shared_table, const TableParams
   output.zenith.reserve(total);
   output.azimuth.reserve(total);
   output.rcutoff.reserve(total);
+  output.above_max.reserve(total);
 
   for (auto& r : results) {
     output.zenith.insert(output.zenith.end(), r.zenith.begin(), r.zenith.end());
     output.azimuth.insert(output.azimuth.end(), r.azimuth.begin(), r.azimuth.end());
     output.rcutoff.insert(output.rcutoff.end(), r.rcutoff.begin(), r.rcutoff.end());
+    output.above_max.insert(output.above_max.end(), r.above_max.begin(), r.above_max.end());
   }
 
   return output;

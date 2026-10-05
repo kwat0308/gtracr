@@ -30,7 +30,10 @@ struct BatchGMRCParams {
 
 struct BatchGMRCResult {
   std::vector<double> zenith, azimuth, rcutoff;  // each size <= n_samples
-  int64_t total_trajectories;                    // total evaluate() calls across all threads
+  // 1 where no tested rigidity escaped (cutoff > max_rigidity); rcutoff then
+  // holds max_rigidity, a lower bound.
+  std::vector<uint8_t> above_max;
+  int64_t total_trajectories;  // total evaluate() calls across all threads
 };
 
 // shared_table may be nullptr when params.bfield_type == 'i' (direct IGRF).

@@ -325,6 +325,15 @@ class GMRC:
     - atol, rtol : float, optional
         Absolute and relative tolerances for the RK45 adaptive solver (defaults 1e-3, 1e-6).
 
+    Results
+    -------
+    ``data_dict`` holds one entry per sampled direction: ``azimuth``,
+    ``zenith``, ``rcutoff`` and ``above_rmax``. ``rcutoff`` is the lowest
+    tested rigidity that escapes; it is clipped to the tested range, so
+    ``min_rigidity`` means "cutoff at or below min_rigidity" and, where
+    ``above_rmax`` is True (no tested rigidity escaped), ``max_rigidity`` is a
+    lower bound.
+
     Examples
     --------
     Python-orchestrated evaluation:
@@ -375,15 +384,31 @@ class GMRC:
         self.rmax = max_rigidity
         self.rdelta = delta_rigidity
 
-        # generate list of rigidities
-        self.rigidity_list = np.arange(self.rmin, self.rmax, self.rdelta)
+        # generate list of rigidities, max_rigidity included (as in the C++
+        # batch mode)
+        self.rigidity_list = np.arange(
+            self.rmin, self.rmax + 0.5 * self.rdelta, self.rdelta
+        )
 
         # initialize container for rigidity cutoffs
         self.data_dict = {
             "azimuth": np.zeros(self.iter_num),
             "zenith": np.zeros(self.iter_num),
             "rcutoff": np.zeros(self.iter_num),
+            "above_rmax": np.zeros(self.iter_num, dtype=bool),
         }
+
+    def _flag_above_rmax(self):
+        """Mark directions where no tested rigidity escaped.
+
+        The per-direction workers return 0.0 when the cutoff exceeds the
+        highest tested rigidity; store that rigidity as a lower bound instead
+        and set ``data_dict["above_rmax"]``.
+        """
+        rc = self.data_dict["rcutoff"]
+        above = rc <= 0.0
+        rc[above] = self.rigidity_list[-1]
+        self.data_dict["above_rmax"] = above
 
     def evaluate(self, dt=1e-5, max_time=1):
         """
@@ -558,6 +583,8 @@ class GMRC:
                     self.data_dict["zenith"][i] = zen
                     self.data_dict["rcutoff"][i] = rc
 
+        self._flag_above_rmax()
+
     def evaluate_batch(self, dt=1e-5, max_time=1.0, base_seed=None):
         """
         Evaluate rigidity cutoffs entirely in C++ (batch mode).
@@ -639,7 +666,7 @@ class GMRC:
             f"Running cutoff calculations..."
         )
 
-        zenith, azimuth, rcutoff, total_traj = _batch_eval(
+        zenith, azimuth, rcutoff, above_rmax, total_traj = _batch_eval(
             shared_table, table_params, igrf_params, p
         )
 
@@ -662,6 +689,7 @@ class GMRC:
             "azimuth": azimuth,
             "zenith": zenith,
             "rcutoff": rcutoff,
+            "above_rmax": np.asarray(above_rmax, dtype=bool),
         }
         if n < self.iter_num:
             import warnings

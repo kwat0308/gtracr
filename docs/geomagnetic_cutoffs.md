@@ -39,10 +39,21 @@ gmrc.evaluate_batch(dt=1e-5, max_time=1., base_seed=42)
 Pass `base_seed` for reproducible results. If omitted, a random seed is
 chosen at runtime.
 
-**Safety limit**: the C++ loop retries failed directions up to
-`30 × iter_num` total attempts. If this limit is reached before
-`iter_num` successful samples are collected, a `UserWarning` is raised and
-`bin_results()` / `interpolate_results()` will have sparser coverage.
+## Cutoffs outside the scanned range
+
+Every sampled direction is kept. `rcutoff` is clipped to the scanned
+rigidity range `[min_rigidity, max_rigidity]` (both ends included):
+
+- `rcutoff == min_rigidity`: the lowest rigidity already escapes, the cutoff
+  is at or below `min_rigidity`;
+- `data_dict["above_rmax"]` is `True`: no scanned rigidity escapes, the
+  cutoff is above `max_rigidity` and `rcutoff` holds `max_rigidity` as a
+  lower bound. Mask these directions or raise `max_rigidity` if the high
+  cutoffs matter.
+
+Earlier versions dropped such directions in the batch mode (and redrew
+until `iter_num` directions had a cutoff below `max_rigidity`) and stored
+`0.0` in the Python mode; both biased sky maps toward low cutoffs.
 
 ## Getting results
 
