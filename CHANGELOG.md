@@ -2,6 +2,17 @@
 
 Presents the version history of the package.
 
+### Unreleased
+
+- `GMRC(method="penumbra")`: penumbra-resolving cutoffs in the C++ batch engine
+  (`batch_gmrc_penumbra`). Each direction gets the Cooke et al. (1991) R_L, R_U and R_eff
+  on a geometric rigidity ladder, via an adaptive scan, and every direction is kept with a flag.
+  `evaluate_batch(zenith=..., azimuth=...)` takes explicit direction grids.
+  `store_ladder=True` returns the allowed/forbidden ladder for transmission functions.
+  The default `method="bisection"` is unchanged.
+- Batch mode with `bfield_type="dipole"` now builds the dipole tracer directly instead of
+  reaching it through the table tracer's out-of-range fallback. The results do not change.
+
 ### Version 1.0.0
 
 Initial release of the gtracr package.

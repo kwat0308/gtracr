@@ -105,6 +105,69 @@ PYBIND11_MODULE(_libgtracr, M) {
       },
       py::arg("shared_table"), py::arg("table_params"), py::arg("igrf_params"), py::arg("params"));
 
+  py::class_<PenumbraParams>(M, "PenumbraParams", py::module_local())
+      .def(py::init<>())
+      .def_readwrite("r_lo", &PenumbraParams::r_lo)
+      .def_readwrite("r_hi", &PenumbraParams::r_hi)
+      .def_readwrite("delta", &PenumbraParams::delta)
+      .def_readwrite("coarse", &PenumbraParams::coarse)
+      .def_readwrite("guard", &PenumbraParams::guard)
+      .def_readwrite("store_ladder", &PenumbraParams::store_ladder);
+
+  // Bind batch_gmrc_penumbra. Returns a dict with zenith, azimuth, r_lower, r_upper, r_eff,
+  // flag, ladder, total_trajectories and (if store_ladder) allowed of shape (n, K).
+  M.def(
+      "batch_gmrc_penumbra",
+      [](py::object shared_table_obj, const TableParams& table_params,
+         const std::pair<std::string, double>& igrf_params, const BatchGMRCParams& params,
+         const PenumbraParams& pparams, std::vector<double> zenith, std::vector<double> azimuth) {
+        if (zenith.size() != azimuth.size())
+          throw std::invalid_argument("zenith and azimuth must have the same length");
+        if (!(pparams.r_lo > 0.0) || !(pparams.r_hi > pparams.r_lo) || !(pparams.delta > 0.0))
+          throw std::invalid_argument("penumbra ladder needs 0 < r_lo < r_hi and delta > 0");
+        py::array_t<float, py::array::c_style | py::array::forcecast> shared_table;
+        const float* tbl_ptr = nullptr;
+        if (!shared_table_obj.is_none()) {
+          shared_table = shared_table_obj
+                             .cast<py::array_t<float, py::array::c_style | py::array::forcecast>>();
+          tbl_ptr = shared_table.data();
+        }
+        if (params.bfield_type == 't' && tbl_ptr == nullptr)
+          throw std::invalid_argument("bfield_type 't' requires a shared table");
+
+        PenumbraResult r;
+        {
+          py::gil_scoped_release release;
+          r = batch_gmrc_penumbra(tbl_ptr, table_params, igrf_params, params, pparams, zenith,
+                                  azimuth);
+        }
+        auto arr = [](const auto& v) {
+          using T = typename std::decay_t<decltype(v)>::value_type;
+          py::array_t<T> a(static_cast<py::ssize_t>(v.size()));
+          std::copy(v.begin(), v.end(), a.mutable_data());
+          return a;
+        };
+        py::dict d;
+        d["zenith"] = arr(r.zenith);
+        d["azimuth"] = arr(r.azimuth);
+        d["r_lower"] = arr(r.r_lower);
+        d["r_upper"] = arr(r.r_upper);
+        d["r_eff"] = arr(r.r_eff);
+        d["flag"] = arr(r.flag);
+        d["ladder"] = arr(r.ladder);
+        d["total_trajectories"] = r.total_trajectories;
+        if (pparams.store_ladder) {
+          py::array_t<bool> a({static_cast<py::ssize_t>(r.zenith.size()),
+                               static_cast<py::ssize_t>(r.ladder.size())});
+          std::copy(r.allowed.begin(), r.allowed.end(), a.mutable_data());
+          d["allowed"] = a;
+        }
+        return d;
+      },
+      py::arg("shared_table"), py::arg("table_params"), py::arg("igrf_params"), py::arg("params"),
+      py::arg("penumbra_params"), py::arg("zenith") = std::vector<double>{},
+      py::arg("azimuth") = std::vector<double>{});
+
   py::class_<TrajectoryTracer>(M, "TrajectoryTracer", py::module_local())
       .def(py::init<>())
       // Full constructor with optional solver_type / atol / rtol.

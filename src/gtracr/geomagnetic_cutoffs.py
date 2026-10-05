@@ -311,11 +311,14 @@ class GMRC:
     - date : str
         The specific date in which the geomagnetic rigidity cutoffs are evaluated. Defaults to the current date.
     - min_rigidity : float
-        The minimum rigidity to which we evaluate the cutoff rigidities for (default = 5 GV).
+        The minimum rigidity to which we evaluate the cutoff rigidities for (default = 5 GV;
+        0.3 GV for ``method="penumbra"``).
     - max_rigidity : float
-        The maximum rigidity to which we evaluate the cutoff rigidities for (default = 55 GV).
+        The maximum rigidity to which we evaluate the cutoff rigidities for (default = 55 GV;
+        100 GV for ``method="penumbra"``).
     - delta_rigidity : float
-        The spacing between each rigidity (default = 5 GV). Sets the coarseness of the rigidity sample space.
+        The spacing between each rigidity (default = 1 GV). Sets the coarseness of the rigidity
+        sample space for ``method="bisection"``.
     - n_workers : int, optional
         Number of parallel worker processes to use. Defaults to os.cpu_count()
         (all logical CPUs). Set to 1 to disable parallelism (useful for debugging).
@@ -324,6 +327,24 @@ class GMRC:
         or "rk45" (adaptive Dormand-Prince).
     - atol, rtol : float, optional
         Absolute and relative tolerances for the RK45 adaptive solver (defaults 1e-3, 1e-6).
+    - method : str, optional
+        ``"bisection"`` (default): bisection on a linear rigidity grid, returns the first
+        escaping rigidity found and drops directions whose cutoff exceeds ``max_rigidity``.
+        This assumes there is no penumbra. ``"penumbra"``: resolves the penumbra on a
+        geometric rigidity ladder and returns the Cooke et al. (1991) lower, upper and
+        effective cutoffs R_L, R_U, R_eff for every direction (``evaluate_batch`` only).
+        See ``docs/geomagnetic_cutoffs.md``.
+    - ladder_delta : float, optional
+        Relative rung spacing of the penumbra ladder, R_k = R_min (1 + ladder_delta)^k
+        (default 0.005).
+    - coarse, guard : int, optional
+        Adaptive penumbra scan: every ``coarse``-th rung is traced first, and coarse
+        intervals within ``guard`` intervals of an allowed/forbidden change are refined
+        rung by rung (defaults 8 and 2; ``coarse=1`` traces every rung).
+    - store_ladder : bool, optional
+        Keep the allowed/forbidden flag of every rung and direction in
+        ``self.ladder_allowed`` (shape (n, K); rung centres in ``self.ladder``), e.g. to
+        build a transmission function (default False).
 
     Examples
     --------
@@ -332,6 +353,13 @@ class GMRC:
     >>> gmrc = GMRC(location="Kamioka", iter_num=1000, bfield_type="igrf")
     >>> gmrc.evaluate(dt=1e-5, max_time=1.)
     >>> az, zen, cutoffs = gmrc.interpolate_results()
+
+    Penumbra-resolving cutoffs (R_L, R_U, R_eff) on a fixed direction grid:
+
+    >>> gmrc = GMRC(location="Kamioka", bfield_type="igrf", solver="rk45",
+    ...             method="penumbra")
+    >>> gmrc.evaluate_batch(zenith=[0.0, 30.0], azimuth=[0.0, 90.0])
+    >>> gmrc.data_dict["r_eff"]
 
     C++ batch mode (fastest):
 
@@ -349,14 +377,39 @@ class GMRC:
         bfield_type="igrf",
         particle_type="p+",
         date=str(date.today()),
-        min_rigidity=5.0,
-        max_rigidity=55.0,
+        min_rigidity=None,
+        max_rigidity=None,
         delta_rigidity=1.0,
         n_workers=None,
         solver="rk4",
         atol=1e-3,
         rtol=1e-6,
+        method="bisection",
+        ladder_delta=0.005,
+        coarse=8,
+        guard=2,
+        store_ladder=False,
     ):
+        if method not in ("bisection", "penumbra"):
+            raise ValueError(
+                f"method must be 'bisection' or 'penumbra', got {method!r}"
+            )
+        self.method = method
+        penumbra = method == "penumbra"
+        if min_rigidity is None:
+            min_rigidity = 0.3 if penumbra else 5.0
+        if max_rigidity is None:
+            max_rigidity = 100.0 if penumbra else 55.0
+        if penumbra and not (0.0 < min_rigidity < max_rigidity and ladder_delta > 0.0):
+            raise ValueError(
+                "penumbra ladder needs 0 < min_rigidity < max_rigidity and ladder_delta > 0"
+            )
+        self.ladder_delta = ladder_delta
+        self.coarse = coarse
+        self.guard = guard
+        self.store_ladder = store_ladder
+        self.ladder = None
+        self.ladder_allowed = None
         # set class attributes
         self.location = location
         self.palt = particle_altitude
@@ -402,6 +455,10 @@ class GMRC:
             The maximal time of each trajectory evaluation (default = 1.).
 
         """
+        if self.method == "penumbra":
+            raise NotImplementedError(
+                "method='penumbra' is only available in evaluate_batch()"
+            )
         rigidity_list = list(self.rigidity_list)
 
         # Build argument list for each MC sample, using distinct random seeds
@@ -558,13 +615,20 @@ class GMRC:
                     self.data_dict["zenith"][i] = zen
                     self.data_dict["rcutoff"][i] = rc
 
-    def evaluate_batch(self, dt=1e-5, max_time=1.0, base_seed=None):
+    def evaluate_batch(
+        self, dt=1e-5, max_time=1.0, base_seed=None, zenith=None, azimuth=None
+    ):
         """
         Evaluate rigidity cutoffs entirely in C++ (batch mode).
 
         The entire MC loop — RNG, coordinate transforms, rigidity scanning,
         and threading — runs in a single C++ call, eliminating all Python
         overhead per ray.
+
+        With ``method="penumbra"`` every direction is kept and ``data_dict``
+        additionally holds ``r_lower``, ``r_upper``, ``r_eff`` (GV) and ``flag``
+        (0 = resolved, 1 = cutoff below ``min_rigidity``, 2 = cutoff at or above
+        ``max_rigidity``); ``rcutoff`` is ``r_eff``.
 
         Parameters
         ----------
@@ -574,6 +638,9 @@ class GMRC:
             Maximum integration time per trajectory (default 1 s).
         base_seed : int, optional
             RNG seed for reproducibility. If None, a random seed is used.
+        zenith, azimuth : array-like, optional
+            Explicit arrival directions in degrees (``method="penumbra"`` only).
+            If given, these are evaluated instead of ``iter_num`` random draws.
         """
         import time as _time
 
@@ -584,7 +651,9 @@ class GMRC:
         t_wall_start = _time.monotonic()
 
         use_table = self.bfield_type[0] == "t"
-        field_label = "table" if use_table else "direct IGRF"
+        field_label = {"t": "table", "d": "dipole"}.get(
+            self.bfield_type[0], "direct IGRF"
+        )
         print(
             f"Initializing batch GMRC for {self.location} "
             f"({self.iter_num} samples, {self.n_workers} threads, "
@@ -633,6 +702,20 @@ class GMRC:
         p.max_attempts_factor = 30
         p.base_seed = base_seed
 
+        if self.method == "penumbra":
+            self._evaluate_penumbra(
+                p,
+                shared_table,
+                table_params,
+                igrf_params,
+                zenith,
+                azimuth,
+                t_wall_start,
+            )
+            return
+        if zenith is not None or azimuth is not None:
+            raise ValueError("explicit directions require method='penumbra'")
+
         t_init_done = _time.monotonic()
         print(
             f"Initialized in {t_init_done - t_wall_start:.2f}s. "
@@ -670,6 +753,56 @@ class GMRC:
                 f"Batch GMRC: only {n}/{self.iter_num} successful samples "
                 f"(safety limit reached). Results may be sparse."
             )
+
+    def _evaluate_penumbra(
+        self, p, shared_table, table_params, igrf_params, zenith, azimuth, t_wall_start
+    ):
+        import time as _time
+
+        from gtracr._libgtracr import PenumbraParams
+        from gtracr._libgtracr import batch_gmrc_penumbra as _penumbra
+
+        if (zenith is None) != (azimuth is None):
+            raise ValueError("give both zenith and azimuth, or neither")
+        if zenith is None:
+            zen_in, az_in = [], []
+        else:
+            zen_in = np.atleast_1d(np.asarray(zenith, dtype=float)).tolist()
+            az_in = np.atleast_1d(np.asarray(azimuth, dtype=float)).tolist()
+            if len(zen_in) != len(az_in):
+                raise ValueError("zenith and azimuth must have the same length")
+
+        pp = PenumbraParams()
+        pp.r_lo = float(self.rmin)
+        pp.r_hi = float(self.rmax)
+        pp.delta = float(self.ladder_delta)
+        pp.coarse = int(self.coarse)
+        pp.guard = int(self.guard)
+        pp.store_ladder = bool(self.store_ladder)
+
+        t0 = _time.monotonic()
+        res = _penumbra(shared_table, table_params, igrf_params, p, pp, zen_in, az_in)
+        elapsed = _time.monotonic() - t0
+        n = len(res["zenith"])
+        total_traj = res["total_trajectories"]
+        print(
+            f"Completed {n} penumbra cutoffs in {elapsed:.2f}s "
+            f"({total_traj} trajectories, {total_traj / max(n, 1):.0f} per direction, "
+            f"{_time.monotonic() - t_wall_start:.2f}s total)"
+        )
+
+        self.data_dict = {
+            "azimuth": res["azimuth"],
+            "zenith": res["zenith"],
+            "rcutoff": res["r_eff"],
+            "r_lower": res["r_lower"],
+            "r_upper": res["r_upper"],
+            "r_eff": res["r_eff"],
+            "flag": res["flag"],
+        }
+        self.ladder = res["ladder"]
+        self.ladder_allowed = res.get("allowed")
+        self.total_trajectories = total_traj
 
     def interpolate_results(self, method="linear", ngrid_azimuth=70, ngrid_zenith=70):
         """
