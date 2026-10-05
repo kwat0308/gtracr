@@ -49,14 +49,6 @@ class TrajectoryTracer {
   double final_time_;
   std::array<double, 6> final_sixvector_;
 
-  // ODE right-hand side using a pre-evaluated B-field (frozen-field approximation).
-  std::array<double, 6> ode_lrz_bf(const double t, const std::array<double, 6>& vec,
-                                   const std::array<double, 3>& bf);
-
-  // ODE right-hand side that evaluates the B-field internally (used by RK45 stages).
-  // Delegates to ode_lrz_bf; exists so RK45 can call a single-argument variant.
-  std::array<double, 6> ode_lrz(const double t, const std::array<double, 6>& vec);
-
   // --------------------------------------------------------------------------
   // Optional trajectory recorder passed to the run_*<Record> templates.
   // When Record=false the compiler eliminates all if(Record) blocks; when

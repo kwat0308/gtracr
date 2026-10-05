@@ -18,8 +18,8 @@ equation, all implemented in C++.
 Use **`"rk4"`** or **`"boris"`** with `bfield_type="igrf"`:
 
 - Fixed time steps produce regularly spaced output points, good for plotting.
-- Boris is faster and conserves energy better, but outputs Cartesian
-  internally (converted back to spherical).
+- All three solvers advance the state in Cartesian (ECEF) coordinates, which
+  are regular at the geographic poles, and report the spherical six-vector.
 - RK4 is the safe default.
 
 ### GMRC cutoff scanning
@@ -42,6 +42,10 @@ traj = Trajectory(..., solver="rk45", atol=1e-6, rtol=1e-6)
 ```
 
 ## Tolerance tuning (RK45)
+
+The error is measured on the dimensionless state (position / R_E,
+momentum / |p_0|), so `atol = 1e-3` allows ~6 km in position and 0.1 % in
+|p| per step.
 
 | `atol` | `rtol` | Use case |
 |--------|--------|----------|

@@ -1,8 +1,10 @@
 """
 Pure-Python fallback trajectory integrator.
 
-Implements the same relativistic Lorentz ODE as the C++ ``TrajectoryTracer``
-using a fixed-step RK4 scheme in Python/NumPy.  This is used for testing,
+Implements the relativistic Lorentz ODE of the C++ ``TrajectoryTracer`` in its
+spherical form (the C++ RK integrators advance the Cartesian form) using a
+fixed-step RK4 scheme in Python/NumPy, with the field evaluated at every stage.
+Paths passing close to a geographic pole are less accurate here.  This is used for testing,
 debugging, and as a reference implementation.  The production integrator is
 ``gtracr._libgtracr.TrajectoryTracer`` (C++ via pybind11), which is ~100×
 faster.
@@ -10,7 +12,7 @@ faster.
 
 import numpy as np
 
-from gtracr.constants import EARTH_RADIUS, SPEED_OF_LIGHT
+from gtracr.constants import EARTH_RADIUS, MIN_SIN_THETA, SPEED_OF_LIGHT
 
 
 class pTrajectoryTracer:
@@ -101,19 +103,25 @@ class pTrajectoryTracer:
 
         bf_r, bf_theta, bf_phi = self.bfield.values(r, theta, phi)
 
+        # Regularise the polar-axis singularity as in the C++ tracer.
+        sin_theta = np.sin(theta)
+        if abs(sin_theta) < MIN_SIN_THETA:
+            sin_theta = -MIN_SIN_THETA if np.signbit(sin_theta) else MIN_SIN_THETA
+        cos_theta = np.cos(theta)
+
         dprdt = (
             -self.charge * (ptheta * bf_phi - bf_theta * pphi)
             + (ptheta**2.0 + pphi**2.0) / r
         )
         dpthetadt = (
             self.charge * (pr * bf_phi - bf_r * pphi)
-            + (pphi**2.0 * np.cos(theta)) / (r * np.sin(theta))
+            + (pphi**2.0 * cos_theta) / (r * sin_theta)
             - (pr * ptheta) / r
         )
         dpphidt = (
             -self.charge * (pr * bf_theta - bf_r * ptheta)
             - (pr * pphi) / r
-            - (ptheta * pphi * np.cos(theta)) / (r * np.sin(theta))
+            - (ptheta * pphi * cos_theta) / (r * sin_theta)
         )
 
         return (
@@ -121,7 +129,7 @@ class pTrajectoryTracer:
                 [
                     pr,
                     ptheta / r,
-                    pphi / (r * np.sin(theta)),
+                    pphi / (r * sin_theta),
                     dprdt,
                     dpthetadt,
                     dpphidt,

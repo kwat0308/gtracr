@@ -34,7 +34,9 @@ User (Python)
 
 ## Coordinate system
 
-All integration is in **geocentric spherical coordinates** `(r, theta, phi)`:
+Initial conditions, recorded trajectories and results use **geocentric
+spherical coordinates** `(r, theta, phi)`; the integrators advance the
+equivalent Cartesian (ECEF) state, which is regular on the polar axis:
 
 | Component | Description | Units |
 |-----------|-------------|-------|
@@ -43,7 +45,7 @@ All integration is in **geocentric spherical coordinates** `(r, theta, phi)`:
 | `phi` | Azimuthal angle / longitude | radians |
 
 The 6-vector state is `(r, theta, phi, p_r, p_theta, p_phi)` where `p` is
-relativistic momentum in SI units.
+relativistic momentum in SI units; `phi` is reported in (-pi, pi].
 
 ## Magnetic field models
 
