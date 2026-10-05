@@ -41,7 +41,7 @@ trajectory was allowed (`True`) or forbidden (`False`).
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `zenith_angle` | float | Angle from local zenith (degrees). 0 = overhead, 90 = horizontal. |
-| `azimuth_angle` | float | Angle from geographic south in the tangent plane (degrees). |
+| `azimuth_angle` | float | Azimuth of the arrival direction from geographic north, clockwise (degrees): 0 = from north, 90 = from east. See [Conventions](conventions.md). |
 | `energy` | float | Total energy in GeV (mutually exclusive with `rigidity`). |
 | `rigidity` | float | Rigidity in GV (mutually exclusive with `energy`). |
 
@@ -93,7 +93,7 @@ Baikal-GVD, TA.
 ```python
 from gtracr.trajectory import Trajectory
 
-# 20 GV proton from the west at Kamioka, using Boris pusher
+# 20 GV proton from the east at Kamioka, using Boris pusher
 traj = Trajectory(
     zenith_angle=45., azimuth_angle=90., rigidity=20.,
     location_name="Kamioka", solver="boris",

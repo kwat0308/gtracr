@@ -8,6 +8,9 @@ Cutoffs are determined via Monte Carlo: random (zenith, azimuth) directions
 are sampled, and for each direction the code scans rigidities from low to
 high until the trajectory escapes Earth's field.
 
+Angles give the arrival direction; azimuth 0 = from north, 90 = from east,
+clockwise (see [Conventions](conventions.md)).
+
 ## Two evaluation modes
 
 ### `evaluate()` — Python-orchestrated

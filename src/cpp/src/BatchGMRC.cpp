@@ -73,8 +73,10 @@ static void get_particle_coord(double zenith_deg, double azimuth_deg, double alt
   const double xi = zenith_deg * constants::DEG_TO_RAD;
   const double alpha = azimuth_deg * constants::DEG_TO_RAD;
 
+  // Arrival-direction azimuth from geographic north, clockwise (90 = from
+  // east); detector frame x = east, y = north, z = up.
   xt = magnitude * std::sin(xi) * std::sin(alpha);
-  yt = -magnitude * std::sin(xi) * std::cos(alpha);
+  yt = magnitude * std::sin(xi) * std::cos(alpha);
   zt = magnitude * std::cos(xi) + altitude;
 }
 

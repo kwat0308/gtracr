@@ -295,6 +295,10 @@ class GMRC:
 
     The resulting cutoffs can be plotted as 2-dimensional heatmap.
 
+    Angles describe the arrival direction (where the particle comes from);
+    azimuth is measured from geographic north, clockwise: 0 = from north,
+    90 = from east (see docs/conventions.md).
+
     Parameters
     -----------
 

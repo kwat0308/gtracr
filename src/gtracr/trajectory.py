@@ -35,10 +35,14 @@ class Trajectory:
         Angle from local zenith in degrees. 0 = directly overhead,
         90 = horizontal, >90 = upward-moving (from other side of Earth).
     azimuth_angle : float
-        Angle from geographic north in the local tangent plane, in degrees.
-        0 = south, 90 = west, 180 = north, 270 = east.
+        Azimuth of the arrival direction (the direction the particle comes
+        from) in degrees, measured from geographic north, clockwise seen from
+        above: 0 = from north, 90 = from east, 180 = from south, 270 = from
+        west (the astropy AltAz convention). Before gtracr 3.0 the azimuth
+        followed Honda's convention (0 = from south, 90 = from east);
+        convert with ``(180 - azimuth_old) % 360``. See docs/conventions.md.
     energy : float, optional
-        Cosmic ray kinetic energy in GeV. Mutually exclusive with *rigidity*.
+        Cosmic ray total energy in GeV. Mutually exclusive with *rigidity*.
     rigidity : float, optional
         Cosmic ray rigidity (momentum / charge) in GV. Mutually exclusive
         with *energy*.
@@ -364,10 +368,10 @@ class Trajectory:
         """Convert zenith/azimuth angles to a detector-frame Cartesian vector."""
         xi = self.zangle * RAD_PER_DEG
         alpha = self.azangle * RAD_PER_DEG
-        # Convention: azimuth=0 points south (Honda 2002); xt/yt are swapped
-        # from standard spherical so that north pole is at azimuth=180°.
+        # Arrival-direction azimuth from geographic north, clockwise (90 =
+        # from east); detector frame x = east, y = north, z = up.
         xt = magnitude * np.sin(xi) * np.sin(alpha)
-        yt = -magnitude * np.sin(xi) * np.cos(alpha)
+        yt = magnitude * np.sin(xi) * np.cos(alpha)
         zt = magnitude * np.cos(xi) + altitude
 
         return np.array([xt, yt, zt])

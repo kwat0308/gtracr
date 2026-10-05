@@ -19,7 +19,7 @@ def test_get_data_keys():
     """get_trajectory(get_data=True) should return a dict with the expected keys"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         latitude=0.0,
         longitude=0.0,
@@ -38,7 +38,7 @@ def test_get_data_array_types():
     """Values in the returned dict should be numpy arrays"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         bfield_type="dipole",
     )
@@ -56,7 +56,7 @@ def test_location_name_param():
     """Construct Trajectory with location_name instead of lat/lng/alt"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=10.0,
         location_name="Kamioka",
         bfield_type="dipole",
@@ -70,7 +70,7 @@ def test_energy_input():
     """Construct Trajectory with energy= instead of rigidity="""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         energy=10.0,
         bfield_type="dipole",
     )
@@ -83,7 +83,7 @@ def test_error_both_none():
     with pytest.raises(Exception):
         Trajectory(
             zenith_angle=0.0,
-            azimuth_angle=0.0,
+            azimuth_angle=180.0,
             energy=None,
             rigidity=None,
             bfield_type="dipole",
@@ -94,7 +94,7 @@ def test_particle_escaped_low_rigidity():
     """Very low rigidity (0.1 GV) proton at equator should NOT escape"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=0.1,
         latitude=0.0,
         longitude=0.0,
@@ -108,7 +108,7 @@ def test_particle_escaped_high_rigidity():
     """High rigidity (50 GV) proton pointing up should escape"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         latitude=0.0,
         longitude=0.0,
@@ -122,7 +122,7 @@ def test_electron_minus():
     '''Construct Trajectory with plabel="e-"'''
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=10.0,
         plabel="e-",
         bfield_type="dipole",
@@ -134,7 +134,7 @@ def test_proton_minus():
     '''Construct Trajectory with plabel="p-"'''
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=10.0,
         plabel="p-",
         bfield_type="dipole",
@@ -151,7 +151,7 @@ def test_use_python_runs():
     """use_python=True should run without error (smoke test)"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         bfield_type="dipole",
     )
@@ -169,7 +169,7 @@ def test_convert_to_cartesian():
     """convert_to_cartesian should add x, y, z keys to the dict"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         bfield_type="dipole",
     )
@@ -190,7 +190,7 @@ def test_geodesic_to_cartesian():
     """geodesic_to_cartesian at lat=0, lng=0 should give (RE, 0, 0)"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         latitude=0.0,
         longitude=0.0,
@@ -207,7 +207,7 @@ def test_transform_matrix_identity():
     """At lat=0, lng=0 the transform matrix has specific known structure"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         latitude=0.0,
         longitude=0.0,
@@ -225,7 +225,7 @@ def test_cartesian_to_spherical():
     """cartesian_to_spherical: point on x-axis at radius R"""
     traj = Trajectory(
         zenith_angle=0.0,
-        azimuth_angle=0.0,
+        azimuth_angle=180.0,
         rigidity=50.0,
         bfield_type="dipole",
     )
