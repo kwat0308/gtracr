@@ -139,7 +139,7 @@ def set_locationdict():
         Location("SNOLAB", 46.471983, -81.186701, 0.0),
         Location("UofA", 53.523230, -113.526319, 0.0),
         Location("CTA-North", 28.76216, -17.89201, 0.0),
-        Location("CTA-South", -24.68342778, -24.68342778, 0.0),
+        Location("CTA-South", -24.68342778, -70.31634444, 0.0),
         Location("ORCA", 42.80000000, 6.0333333, 0.0),
         Location("ANTARES", 42.8, 6.1666666, 0.0),
         Location("Baikal-GVD", 51.77139, 104.3978, 0.0),
